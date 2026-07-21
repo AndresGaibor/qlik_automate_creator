@@ -1,0 +1,17 @@
+{
+  "name": "qlik-automatizaciones",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "bun --bun run --cwd apps/web dev",
+    "dev:api": "bun --bun run --cwd apps/api dev",
+    "build": "bun run build",
+    "test": "bun test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "typescript": "^5.5.0"
+  }
+}

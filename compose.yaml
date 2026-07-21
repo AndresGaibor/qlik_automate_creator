@@ -1,0 +1,18 @@
+services:
+  base_datos:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qlik_automatizaciones
+      POSTGRES_USER: qlik_app
+      POSTGRES_PASSWORD: desarrollo
+    volumes:
+      - postgres_datos:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qlik_app -d qlik_automatizaciones"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_datos:
