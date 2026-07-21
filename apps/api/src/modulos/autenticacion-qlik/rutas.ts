@@ -3,7 +3,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { db } from "../../../infraestructura/base-datos/conexion.js";
+import { db } from "../../infraestructura/base-datos/conexion.js";
 import {
   credencialesQlik,
   identidadesQlik,
@@ -11,11 +11,11 @@ import {
   sesionesUsuario,
   tenantsQlik,
   usuarios,
-} from "../../../infraestructura/base-datos/esquema.js";
-import { servicioCifrado } from "../../../infraestructura/cifrado/servicio.js";
+} from "../../infraestructura/base-datos/esquema.js";
+import { servicioCifrado } from "../../infraestructura/cifrado/servicio.js";
 import { ClienteOAuthQlik } from "./qlik-oauth.js";
 
-const router = new Hono();
+export const autenticacionQlikRouter = new Hono();
 
 const getRequiredEnv = (key: string): string => {
   const value = process.env[key];
@@ -25,18 +25,21 @@ const getRequiredEnv = (key: string): string => {
   return value;
 };
 
-const oauth = new ClienteOAuthQlik(
-  getRequiredEnv("QLIK_CLIENT_ID"),
-  getRequiredEnv("QLIK_CLIENT_SECRET"),
-  getRequiredEnv("QLIK_REDIRECT_URI"),
-  "l676lvg3emfvcq2.us.qlikcloud.com",
-);
+const getOAuthCliente = (): ClienteOAuthQlik => {
+  return new ClienteOAuthQlik(
+    getRequiredEnv("QLIK_CLIENT_ID"),
+    getRequiredEnv("QLIK_CLIENT_SECRET"),
+    getRequiredEnv("QLIK_REDIRECT_URI"),
+    "l676lvg3emfvcq2.us.qlikcloud.com",
+  );
+};
 
 const SESION_COOKIE = "sesion_usuario";
 const ESTADO_COOKIE = "oauth_estado";
 const VERIFIER_COOKIE = "oauth_verifier";
 
-router.get("/iniciar", async (c) => {
+autenticacionQlikRouter.get("/iniciar", async (c) => {
+  const oauth = getOAuthCliente();
   const estado = oauth.generarEstado();
   const verifier = oauth.generarCodeVerifier();
   const challenge = await oauth.generarCodeChallenge(verifier);
@@ -61,7 +64,7 @@ router.get("/iniciar", async (c) => {
   return c.redirect(url);
 });
 
-router.get("/callback", async (c) => {
+autenticacionQlikRouter.get("/callback", async (c) => {
   const { code, state } = c.req.query();
   const estadoGuardado = getCookie(c, ESTADO_COOKIE);
   const verifier = getCookie(c, VERIFIER_COOKIE);
@@ -73,6 +76,7 @@ router.get("/callback", async (c) => {
     return c.json({ success: false, error: "OAuth state inválido" }, 400);
   }
 
+  const oauth = getOAuthCliente();
   const tokens = await oauth.intercambiaCodigoPorTokens(code, verifier);
   const usuarioQlik = await oauth.obtenerUsuario(tokens.accessToken);
 
@@ -219,7 +223,7 @@ router.get("/callback", async (c) => {
   return c.redirect("/");
 });
 
-router.get("/sesion", async (c) => {
+autenticacionQlikRouter.get("/sesion", async (c) => {
   const sesionToken = getCookie(c, SESION_COOKIE);
   if (!sesionToken) {
     return c.json({ success: false, error: "No hay sesión" }, 401);
@@ -273,7 +277,7 @@ router.get("/sesion", async (c) => {
   });
 });
 
-router.post("/cerrar-sesion", async (c) => {
+autenticacionQlikRouter.post("/cerrar-sesion", async (c) => {
   const sesionToken = getCookie(c, SESION_COOKIE);
   if (sesionToken) {
     const sesionHash = crypto
@@ -290,5 +294,3 @@ router.post("/cerrar-sesion", async (c) => {
   deleteCookie(c, SESION_COOKIE);
   return c.json({ success: true });
 });
-
-export default router;

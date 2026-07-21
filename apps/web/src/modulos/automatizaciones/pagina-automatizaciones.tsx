@@ -1,7 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/componentes/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/componentes/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/componentes/ui/card";
 import { apiCliente } from "@/infraestructura/api/cliente";
+import { useQuery } from "@tanstack/react-query";
 
 interface Automatizacion {
   id: string;

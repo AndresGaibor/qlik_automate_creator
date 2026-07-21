@@ -47,6 +47,29 @@ export const crearServicioCifrado = (): ServicioCifrado => {
   return new ServicioCifrado(clave);
 };
 
-export const servicioCifrado = process.env.CIFRADO_CLAVE_PRINCIPAL
-  ? new ServicioCifrado(process.env.CIFRADO_CLAVE_PRINCIPAL)
-  : null;
+class ServicioCifradoWrapper {
+  private servicio: ServicioCifrado | null = null;
+
+  private obtenerInstancia(): ServicioCifrado {
+    if (!this.servicio) {
+      const clave = process.env.CIFRADO_CLAVE_PRINCIPAL;
+      if (!clave) {
+        throw new Error(
+          "CIFRADO_CLAVE_PRINCIPAL environment variable is not set. Cannot encrypt/decrypt tokens without it.",
+        );
+      }
+      this.servicio = new ServicioCifrado(clave);
+    }
+    return this.servicio;
+  }
+
+  cifrar(textoPlano: string) {
+    return this.obtenerInstancia().cifrar(textoPlano);
+  }
+
+  descifrar(cifrado: string, iv: string, tag: string) {
+    return this.obtenerInstancia().descifrar(cifrado, iv, tag);
+  }
+}
+
+export const servicioCifrado = new ServicioCifradoWrapper();

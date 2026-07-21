@@ -150,12 +150,8 @@
           "name": "auditoria_eventos_organizacion_id_organizaciones_id_fk",
           "tableFrom": "auditoria_eventos",
           "tableTo": "organizaciones",
-          "columnsFrom": [
-            "organizacion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organizacion_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -163,12 +159,8 @@
           "name": "auditoria_eventos_usuario_id_usuarios_id_fk",
           "tableFrom": "auditoria_eventos",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -280,12 +272,8 @@
           "name": "automatizaciones_qlik_cache_tenant_qlik_id_tenants_qlik_id_fk",
           "tableFrom": "automatizaciones_qlik_cache",
           "tableTo": "tenants_qlik",
-          "columnsFrom": [
-            "tenant_qlik_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_qlik_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -295,10 +283,7 @@
         "automatizaciones_unique": {
           "name": "automatizaciones_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_qlik_id",
-            "automatizacion_id_qlik"
-          ]
+          "columns": ["tenant_qlik_id", "automatizacion_id_qlik"]
         }
       }
     },
@@ -490,12 +475,8 @@
           "name": "configuraciones_automatizacion_organizacion_id_organizaciones_id_fk",
           "tableFrom": "configuraciones_automatizacion",
           "tableTo": "organizaciones",
-          "columnsFrom": [
-            "organizacion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organizacion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -503,12 +484,8 @@
           "name": "configuraciones_automatizacion_tenant_qlik_id_tenants_qlik_id_fk",
           "tableFrom": "configuraciones_automatizacion",
           "tableTo": "tenants_qlik",
-          "columnsFrom": [
-            "tenant_qlik_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_qlik_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -516,12 +493,8 @@
           "name": "configuraciones_automatizacion_creado_por_usuario_id_usuarios_id_fk",
           "tableFrom": "configuraciones_automatizacion",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "creado_por_usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["creado_por_usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -531,9 +504,7 @@
         "configuraciones_automatizacion_clave_idempotencia_unique": {
           "name": "configuraciones_automatizacion_clave_idempotencia_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "clave_idempotencia"
-          ]
+          "columns": ["clave_idempotencia"]
         }
       }
     },
@@ -607,12 +578,8 @@
           "name": "credenciales_qlik_identidad_qlik_id_identidades_qlik_id_fk",
           "tableFrom": "credenciales_qlik",
           "tableTo": "identidades_qlik",
-          "columnsFrom": [
-            "identidad_qlik_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["identidad_qlik_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -622,9 +589,7 @@
         "credenciales_qlik_identidad_qlik_id_unique": {
           "name": "credenciales_qlik_identidad_qlik_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "identidad_qlik_id"
-          ]
+          "columns": ["identidad_qlik_id"]
         }
       }
     },
@@ -733,12 +698,8 @@
           "name": "destinos_cache_organizacion_id_organizaciones_id_fk",
           "tableFrom": "destinos_cache",
           "tableTo": "organizaciones",
-          "columnsFrom": [
-            "organizacion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organizacion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -748,11 +709,7 @@
         "destinos_unique": {
           "name": "destinos_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "organizacion_id",
-            "proveedor",
-            "id_externo"
-          ]
+          "columns": ["organizacion_id", "proveedor", "id_externo"]
         }
       }
     },
@@ -830,12 +787,8 @@
           "name": "espacios_qlik_cache_tenant_qlik_id_tenants_qlik_id_fk",
           "tableFrom": "espacios_qlik_cache",
           "tableTo": "tenants_qlik",
-          "columnsFrom": [
-            "tenant_qlik_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_qlik_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -845,10 +798,7 @@
         "espacios_unique": {
           "name": "espacios_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_qlik_id",
-            "espacio_id_qlik"
-          ]
+          "columns": ["tenant_qlik_id", "espacio_id_qlik"]
         }
       }
     },
@@ -938,12 +888,8 @@
           "name": "flujos_qlik_cache_tenant_qlik_id_tenants_qlik_id_fk",
           "tableFrom": "flujos_qlik_cache",
           "tableTo": "tenants_qlik",
-          "columnsFrom": [
-            "tenant_qlik_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_qlik_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -953,10 +899,7 @@
         "flujos_unique": {
           "name": "flujos_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_qlik_id",
-            "flujo_id_qlik"
-          ]
+          "columns": ["tenant_qlik_id", "flujo_id_qlik"]
         }
       }
     },
@@ -1047,12 +990,8 @@
           "name": "identidades_qlik_usuario_id_usuarios_id_fk",
           "tableFrom": "identidades_qlik",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1060,12 +999,8 @@
           "name": "identidades_qlik_tenant_qlik_id_tenants_qlik_id_fk",
           "tableFrom": "identidades_qlik",
           "tableTo": "tenants_qlik",
-          "columnsFrom": [
-            "tenant_qlik_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_qlik_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1075,10 +1010,7 @@
         "identidades_unique": {
           "name": "identidades_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_qlik_id",
-            "usuario_id_qlik"
-          ]
+          "columns": ["tenant_qlik_id", "usuario_id_qlik"]
         }
       }
     },
@@ -1161,9 +1093,7 @@
         "intentos_oauth_qlik_hash_estado_unique": {
           "name": "intentos_oauth_qlik_hash_estado_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "hash_estado"
-          ]
+          "columns": ["hash_estado"]
         }
       }
     },
@@ -1204,12 +1134,8 @@
           "name": "membresias_organizacion_organizacion_id_organizaciones_id_fk",
           "tableFrom": "membresias_organizacion",
           "tableTo": "organizaciones",
-          "columnsFrom": [
-            "organizacion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organizacion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1217,12 +1143,8 @@
           "name": "membresias_organizacion_usuario_id_usuarios_id_fk",
           "tableFrom": "membresias_organizacion",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1232,10 +1154,7 @@
         "membresias_pk": {
           "name": "membresias_pk",
           "nullsNotDistinct": false,
-          "columns": [
-            "organizacion_id",
-            "usuario_id"
-          ]
+          "columns": ["organizacion_id", "usuario_id"]
         }
       }
     },
@@ -1351,12 +1270,8 @@
           "name": "programaciones_automatizacion_configuracion_id_configuraciones_automatizacion_id_fk",
           "tableFrom": "programaciones_automatizacion",
           "tableTo": "configuraciones_automatizacion",
-          "columnsFrom": [
-            "configuracion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["configuracion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1366,9 +1281,7 @@
         "programaciones_automatizacion_configuracion_id_unique": {
           "name": "programaciones_automatizacion_configuracion_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "configuracion_id"
-          ]
+          "columns": ["configuracion_id"]
         }
       }
     },
@@ -1470,12 +1383,8 @@
           "name": "sesiones_usuario_usuario_id_usuarios_id_fk",
           "tableFrom": "sesiones_usuario",
           "tableTo": "usuarios",
-          "columnsFrom": [
-            "usuario_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["usuario_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1483,12 +1392,8 @@
           "name": "sesiones_usuario_identidad_qlik_id_identidades_qlik_id_fk",
           "tableFrom": "sesiones_usuario",
           "tableTo": "identidades_qlik",
-          "columnsFrom": [
-            "identidad_qlik_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["identidad_qlik_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1498,9 +1403,7 @@
         "sesiones_usuario_token_sesion_hash_unique": {
           "name": "sesiones_usuario_token_sesion_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_sesion_hash"
-          ]
+          "columns": ["token_sesion_hash"]
         }
       }
     },
@@ -1567,12 +1470,8 @@
           "name": "tenants_qlik_organizacion_id_organizaciones_id_fk",
           "tableFrom": "tenants_qlik",
           "tableTo": "organizaciones",
-          "columnsFrom": [
-            "organizacion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organizacion_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1582,16 +1481,12 @@
         "tenants_tenant_id_unique": {
           "name": "tenants_tenant_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id_qlik"
-          ]
+          "columns": ["tenant_id_qlik"]
         },
         "tenants_host_unique": {
           "name": "tenants_host_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "host"
-          ]
+          "columns": ["host"]
         }
       }
     },

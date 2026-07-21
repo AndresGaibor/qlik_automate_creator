@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
-import { db } from "../../../infraestructura/base-datos/conexion.js";
+import { db } from "../../infraestructura/base-datos/conexion.js";
 import {
   auditoriaEventos,
   configuracionesAutomatizacion,
   programacionesAutomatizacion,
-} from "../../../infraestructura/base-datos/esquema.js";
-import type { ClienteDestinos } from "../../../infraestructura/destinos-api/cliente.js";
-import type { ClienteQlik } from "../../../infraestructura/qlik/cliente.js";
+} from "../../infraestructura/base-datos/esquema.js";
+import type { ClienteDestinos } from "../../infraestructura/destinos-api/cliente.js";
+import type { ClienteQlik } from "../../infraestructura/qlik/cliente.js";
 
 export interface CrearAutomatizacionInput {
   nombre: string;

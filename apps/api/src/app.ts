@@ -1,5 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { autenticacionQlikRouter } from "./modulos/autenticacion-qlik/rutas.js";
+import { flujosRouter } from "./modulos/flujos/rutas.js";
+import { automatizacionesRouter } from "./modulos/automatizaciones/rutas.js";
+import { destinosRouter } from "./modulos/destinos/rutas.js";
 
 export const app = new Hono();
 
@@ -18,6 +22,11 @@ app.get("/api/salud", (c) => {
     data: { estado: "ok", fecha: new Date().toISOString() },
   });
 });
+
+app.route("/api/auth/qlik", autenticacionQlikRouter);
+app.route("/api/flujos", flujosRouter);
+app.route("/api/automatizaciones", automatizacionesRouter);
+app.route("/api/destinos", destinosRouter);
 
 app.notFound((c) => {
   return c.json({ success: false, error: "No encontrado" }, 404);

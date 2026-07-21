@@ -1,16 +1,25 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { ClienteDestinos } from "../../../infraestructura/destinos-api/cliente.js";
-import { ClienteQlik } from "../../../infraestructura/qlik/cliente.js";
+import { ClienteDestinos } from "../../infraestructura/destinos-api/cliente.js";
+import { ClienteQlik } from "../../infraestructura/qlik/cliente.js";
 import { ServicioAutomatizaciones } from "./servicio.js";
 
-const router = new Hono();
+export const automatizacionesRouter = new Hono();
 
 const getClienteDestinos = () =>
   new ClienteDestinos(
     process.env.REMOTE_API_URL ?? "",
     process.env.REMOTE_API_KEY ?? "",
   );
+
+const getClienteQlik = (c: any) => {
+  const host = c.req.header("x-qlik-host") ?? process.env.QLIK_API_HOST;
+  const token = c.req.header("x-qlik-token") ?? process.env.QLIK_API_TOKEN;
+  if (!host || !token) {
+    throw new Error("Qlik credentials not available. TODO: Implement session-based credential retrieval from DB.");
+  }
+  return new ClienteQlik(host, token);
+};
 
 const CrearAutomatizacionSchema = z.object({
   nombre: z.string().min(1),
@@ -30,14 +39,14 @@ const CrearAutomatizacionSchema = z.object({
   claveIdempotencia: z.string().optional(),
 });
 
-router.get("/", async (c) => {
+automatizacionesRouter.get("/", async (c) => {
   const tenantQlikId = c.req.header("x-tenant-id");
   if (!tenantQlikId) {
     return c.json({ success: false, error: "Tenant ID requerido" }, 400);
   }
 
   const servicio = new ServicioAutomatizaciones(
-    new ClienteQlik("host", "token"),
+    getClienteQlik(c),
     getClienteDestinos(),
   );
 
@@ -45,7 +54,7 @@ router.get("/", async (c) => {
   return c.json({ success: true, data: configs });
 });
 
-router.post("/", async (c) => {
+automatizacionesRouter.post("/", async (c) => {
   const body = await c.req.json();
   const input = CrearAutomatizacionSchema.parse(body);
 
@@ -54,7 +63,7 @@ router.post("/", async (c) => {
   const organizacionId = c.req.header("x-organizacion-id") ?? "organizacion-id";
 
   const servicio = new ServicioAutomatizaciones(
-    new ClienteQlik("host", "token"),
+    getClienteQlik(c),
     getClienteDestinos(),
   );
 
@@ -77,10 +86,10 @@ router.post("/", async (c) => {
   }
 });
 
-router.get("/:id", async (c) => {
+automatizacionesRouter.get("/:id", async (c) => {
   const { id } = c.req.param();
   const servicio = new ServicioAutomatizaciones(
-    new ClienteQlik("host", "token"),
+    getClienteQlik(c),
     getClienteDestinos(),
   );
 
@@ -91,13 +100,13 @@ router.get("/:id", async (c) => {
   return c.json({ success: true, data: config });
 });
 
-router.post("/:id/ejecutar", async (c) => {
+automatizacionesRouter.post("/:id/ejecutar", async (c) => {
   const { id } = c.req.param();
   const usuarioId = c.req.header("x-usuario-id") ?? "usuario-id";
   const organizacionId = c.req.header("x-organizacion-id") ?? "organizacion-id";
 
   const servicio = new ServicioAutomatizaciones(
-    new ClienteQlik("host", "token"),
+    getClienteQlik(c),
     getClienteDestinos(),
   );
 
@@ -114,5 +123,3 @@ router.post("/:id/ejecutar", async (c) => {
     );
   }
 });
-
-export default router;

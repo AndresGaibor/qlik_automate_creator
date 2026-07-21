@@ -1,15 +1,15 @@
+import { Button } from "@/componentes/ui/button";
+import { PaginaLogin } from "@/modulos/autenticacion/pagina-login";
+import { PaginaAutomatizaciones } from "@/modulos/automatizaciones/pagina-automatizaciones";
+import { PaginaFlujos } from "@/modulos/flujos/pagina-flujos";
+import { useMutation } from "@tanstack/react-query";
 import {
+  Outlet,
   createRootRoute,
   createRoute,
   createRouter,
-  Outlet,
   useNavigate,
 } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
-import { Button } from "@/componentes/ui/button";
-import { PaginaLogin } from "@/modulos/autenticacion/pagina-login";
-import { PaginaFlujos } from "@/modulos/flujos/pagina-flujos";
-import { PaginaAutomatizaciones } from "@/modulos/automatizaciones/pagina-automatizaciones";
 
 function LayoutPrincipal() {
   const navigate = useNavigate();
@@ -30,10 +30,7 @@ function LayoutPrincipal() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold">Qlik Automatizaciones</h1>
           <div className="flex gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate({ to: "/flujos" })}
-            >
+            <Button variant="ghost" onClick={() => navigate({ to: "/flujos" })}>
               Flujos
             </Button>
             <Button

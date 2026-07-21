@@ -1,10 +1,10 @@
-import { describe, expect, it, beforeEach, vi } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "bun:test";
 import { ClienteQlik } from "./cliente.js";
 import type {
-  EspacioQlik,
-  FlujoQlik,
   AutomatizacionQlik,
   EjecucionQlik,
+  EspacioQlik,
+  FlujoQlik,
 } from "./tipos.js";
 
 const MOCK_HOST = "test.qlik.com";
@@ -223,7 +223,11 @@ describe("ClienteQlik", () => {
         json: () => Promise.resolve({ data: { id: "new-auto-1" } }),
       }) as unknown as typeof fetch;
 
-      const result = await cliente.crearAutomatizacion("Nueva Auto", "esp-1", "flujo-1");
+      const result = await cliente.crearAutomatizacion(
+        "Nueva Auto",
+        "esp-1",
+        "flujo-1",
+      );
 
       expect(result).toEqual({ id: "new-auto-1" });
       expect(fetch).toHaveBeenCalledWith(

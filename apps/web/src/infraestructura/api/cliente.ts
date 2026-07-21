@@ -20,7 +20,10 @@ export class ClienteApi {
     this.baseUrl = baseUrl;
   }
 
-  private async buildUrl(endpoint: string, params?: Record<string, string | number | undefined>): Promise<string> {
+  private async buildUrl(
+    endpoint: string,
+    params?: Record<string, string | number | undefined>,
+  ): Promise<string> {
     const url = new URL(`${this.baseUrl}${endpoint}`, window.location.origin);
 
     if (params) {
@@ -44,7 +47,11 @@ export class ClienteApi {
     return this.handleResponse<T>(res);
   }
 
-  async post<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
+  async post<T>(
+    endpoint: string,
+    data?: unknown,
+    config?: RequestConfig,
+  ): Promise<T> {
     const res = await fetch(`${this.baseUrl}${endpoint}`, {
       ...config,
       method: "POST",
@@ -58,7 +65,11 @@ export class ClienteApi {
     return this.handleResponse<T>(res);
   }
 
-  async put<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
+  async put<T>(
+    endpoint: string,
+    data?: unknown,
+    config?: RequestConfig,
+  ): Promise<T> {
     const res = await fetch(`${this.baseUrl}${endpoint}`, {
       ...config,
       method: "PUT",

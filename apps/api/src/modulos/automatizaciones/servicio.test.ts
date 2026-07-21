@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
-import type { ClienteDestinos } from "../../../infraestructura/destinos-api/cliente.js";
-import type { ClienteQlik } from "../../../infraestructura/qlik/cliente.js";
+import type { ClienteDestinos } from "../../infraestructura/destinos-api/cliente.js";
+import type { ClienteQlik } from "../../infraestructura/qlik/cliente.js";
 import type { CrearAutomatizacionInput } from "./servicio.js";
 
 const mockDb = {
@@ -29,13 +29,13 @@ const mockDb = {
   },
 };
 
-vi.mock("../../../infraestructura/base-datos/conexion.js", () => ({
+vi.mock("../../infraestructura/base-datos/conexion.js", () => ({
   get db() {
     return mockDb;
   },
 }));
 
-vi.mock("../../../infraestructura/base-datos/esquema.js", () => ({
+vi.mock("../../infraestructura/base-datos/esquema.js", () => ({
   get configuracionesAutomatizacion() {
     return {};
   },

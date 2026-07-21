@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.js.map
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test
+coverage/
+
+# Bun
+.bun/
+
+# Vite
+apps/web/dist/
+apps/web/node_modules/
+
+# Drizzle
+drizzle/
+apps/api/drizzle/
+
+# Superpowers
+.superpowers/

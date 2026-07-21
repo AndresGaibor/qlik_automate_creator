@@ -1,16 +1,20 @@
 import { Hono } from "hono";
-import { ClienteQlik } from "../../../infraestructura/qlik/cliente.js";
+import { ClienteQlik } from "../../infraestructura/qlik/cliente.js";
 
-const router = new Hono();
+export const flujosRouter = new Hono();
 
-router.get("/", async (c) => {
+flujosRouter.get("/", async (c) => {
   const tenantQlikId = c.req.header("x-tenant-id");
   if (!tenantQlikId) {
     return c.json({ success: false, error: "Tenant ID requerido" }, 400);
   }
 
-  const host = c.req.header("x-qlik-host") ?? "host";
-  const token = c.req.header("x-qlik-token") ?? "token";
+  const host = c.req.header("x-qlik-host") ?? process.env.QLIK_API_HOST;
+  const token = c.req.header("x-qlik-token") ?? process.env.QLIK_API_TOKEN;
+
+  if (!host || !token) {
+    return c.json({ success: false, error: "Qlik credentials not available. TODO: Implement session-based credential retrieval." }, 401);
+  }
 
   const cliente = new ClienteQlik(host, token);
   const espacioId = c.req.query("espacioId");
@@ -29,5 +33,3 @@ router.get("/", async (c) => {
     );
   }
 });
-
-export default router;

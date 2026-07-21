@@ -1,8 +1,8 @@
 import type {
-  EspacioQlik,
-  FlujoQlik,
   AutomatizacionQlik,
   EjecucionQlik,
+  EspacioQlik,
+  FlujoQlik,
 } from "./tipos.js";
 
 export class ClienteQlik {
@@ -14,7 +14,10 @@ export class ClienteQlik {
     this.accessToken = accessToken;
   }
 
-  private async request<T>(endpoint: string, opciones: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    opciones: RequestInit = {},
+  ): Promise<T> {
     const url = `https://${this.host}${endpoint}`;
     const response = await fetch(url, {
       ...opciones,
@@ -26,7 +29,9 @@ export class ClienteQlik {
     });
 
     if (!response.ok) {
-      throw new Error(`Qlik API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Qlik API error: ${response.status} ${response.statusText}`,
+      );
     }
 
     return response.json();
@@ -39,7 +44,9 @@ export class ClienteQlik {
 
   async listarFlujos(espacioId?: string): Promise<FlujoQlik[]> {
     const params = espacioId ? `?spaceId=${espacioId}` : "";
-    const data = await this.request<{ data: FlujoQlik[] }>(`/api/v1/dataflows${params}`);
+    const data = await this.request<{ data: FlujoQlik[] }>(
+      `/api/v1/dataflows${params}`,
+    );
     return data.data;
   }
 
@@ -81,15 +88,18 @@ export class ClienteQlik {
     espacioId: string,
     flujoId: string,
   ): Promise<{ id: string }> {
-    const data = await this.request<{ data: { id: string } }>("/api/workflows/automations", {
-      method: "POST",
-      body: JSON.stringify({
-        name: nombre,
-        spaceId: espacioId,
-        trigger: { type: "manual" },
-        actions: [{ type: "executeDataFlow", dataFlowId: flujoId }],
-      }),
-    });
+    const data = await this.request<{ data: { id: string } }>(
+      "/api/workflows/automations",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name: nombre,
+          spaceId: espacioId,
+          trigger: { type: "manual" },
+          actions: [{ type: "executeDataFlow", dataFlowId: flujoId }],
+        }),
+      },
+    );
     return data.data;
   }
 

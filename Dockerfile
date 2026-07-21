@@ -13,4 +13,4 @@ COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/package.json ./
 RUN bun install --production
 EXPOSE 3000
-CMD ["bun", "run", "entrada-node.js"]
+CMD ["bun", "run", "dist/entrada-node.js"]

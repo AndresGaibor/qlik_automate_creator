@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { ClienteDestinos } from "../../../infraestructura/destinos-api/cliente.js";
+import { ClienteDestinos } from "../../infraestructura/destinos-api/cliente.js";
 
-const router = new Hono();
+export const destinosRouter = new Hono();
 
 const getClienteDestinos = () =>
   new ClienteDestinos(
@@ -9,7 +9,7 @@ const getClienteDestinos = () =>
     process.env.REMOTE_API_KEY ?? "",
   );
 
-router.get("/bases-datos", async (c) => {
+destinosRouter.get("/bases-datos", async (c) => {
   const cliente = getClienteDestinos();
 
   try {
@@ -29,7 +29,7 @@ router.get("/bases-datos", async (c) => {
   }
 });
 
-router.get("/bases-datos/:database/tablas", async (c) => {
+destinosRouter.get("/bases-datos/:database/tablas", async (c) => {
   const { database } = c.req.param();
   const cliente = getClienteDestinos();
 
@@ -48,7 +48,7 @@ router.get("/bases-datos/:database/tablas", async (c) => {
   }
 });
 
-router.get("/bases-datos/:database/tablas/:tabla/columnas", async (c) => {
+destinosRouter.get("/bases-datos/:database/tablas/:tabla/columnas", async (c) => {
   const { database, tabla } = c.req.param();
   const cliente = getClienteDestinos();
 
@@ -67,7 +67,7 @@ router.get("/bases-datos/:database/tablas/:tabla/columnas", async (c) => {
   }
 });
 
-router.get("/dataflows", async (c) => {
+destinosRouter.get("/dataflows", async (c) => {
   const cliente = getClienteDestinos();
 
   try {
@@ -84,5 +84,3 @@ router.get("/dataflows", async (c) => {
     );
   }
 });
-
-export default router;
