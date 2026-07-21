@@ -16,7 +16,7 @@ interface RequestConfig extends RequestInit {
 export class ClienteApi {
   private baseUrl: string;
 
-  constructor(baseUrl: string = "/api") {
+  constructor(baseUrl = "/api") {
     this.baseUrl = baseUrl;
   }
 
@@ -24,11 +24,11 @@ export class ClienteApi {
     const url = new URL(`${this.baseUrl}${endpoint}`, window.location.origin);
 
     if (params) {
-      Object.entries(params).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(params)) {
         if (value !== undefined) {
           url.searchParams.append(key, String(value));
         }
-      });
+      }
     }
 
     return url.toString();

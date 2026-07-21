@@ -63,6 +63,7 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: function Index() {
+    const navigate = useNavigate();
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-4">Bienvenido</h2>
@@ -70,12 +71,12 @@ const indexRoute = createRoute({
           Gestiona tus automatizaciones de Qlik
         </p>
         <div className="flex gap-4 justify-center">
-          <Button onClick={() => (window.location.href = "/flujos")}>
+          <Button onClick={() => navigate({ to: "/flujos" })}>
             Ver flujos
           </Button>
           <Button
             variant="outline"
-            onClick={() => (window.location.href = "/automatizaciones")}
+            onClick={() => navigate({ to: "/automatizaciones" })}
           >
             Ver automatizaciones
           </Button>
