@@ -22,14 +22,18 @@ describe("Task 1.1: Configurar raíz del monorepo", () => {
   });
 
   test("package.json tiene name, private y workspaces correctos", () => {
-    const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));
+    const pkg = JSON.parse(
+      readFileSync(resolve(ROOT, "package.json"), "utf-8"),
+    );
     expect(pkg.name).toBe("qlik-automatizaciones");
     expect(pkg.private).toBe(true);
     expect(pkg.workspaces).toEqual(["apps/*", "packages/*"]);
   });
 
   test("package.json tiene scripts requeridos", () => {
-    const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));
+    const pkg = JSON.parse(
+      readFileSync(resolve(ROOT, "package.json"), "utf-8"),
+    );
     expect(pkg.scripts).toHaveProperty("dev");
     expect(pkg.scripts).toHaveProperty("dev:api");
     expect(pkg.scripts).toHaveProperty("build");
@@ -39,14 +43,16 @@ describe("Task 1.1: Configurar raíz del monorepo", () => {
   });
 
   test("package.json tiene devDependencies correctas", () => {
-    const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));
+    const pkg = JSON.parse(
+      readFileSync(resolve(ROOT, "package.json"), "utf-8"),
+    );
     expect(pkg.devDependencies).toHaveProperty("@biomejs/biome");
     expect(pkg.devDependencies).toHaveProperty("typescript");
   });
 
   test("tsconfig.base.json tiene compilerOptions requeridos", () => {
     const tsconfig = JSON.parse(
-      readFileSync(resolve(ROOT, "tsconfig.base.json"), "utf-8")
+      readFileSync(resolve(ROOT, "tsconfig.base.json"), "utf-8"),
     );
     expect(tsconfig.compilerOptions.target).toBe("ES2022");
     expect(tsconfig.compilerOptions.module).toBe("ESNext");
@@ -55,7 +61,9 @@ describe("Task 1.1: Configurar raíz del monorepo", () => {
   });
 
   test("biome.json tiene linter y formatter habilitados", () => {
-    const biome = JSON.parse(readFileSync(resolve(ROOT, "biome.json"), "utf-8"));
+    const biome = JSON.parse(
+      readFileSync(resolve(ROOT, "biome.json"), "utf-8"),
+    );
     expect(biome.linter.enabled).toBe(true);
     expect(biome.formatter.enabled).toBe(true);
     expect(biome.organizeImports.enabled).toBe(true);
