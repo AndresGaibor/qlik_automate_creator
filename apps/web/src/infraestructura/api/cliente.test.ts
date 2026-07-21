@@ -1,5 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+/// <reference types="vitest" />
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ClienteApi } from "./cliente";
+
+globalThis.window = {
+  location: { origin: "http://localhost" },
+} as unknown as Window;
 
 describe("ClienteApi", () => {
   const originalFetch = global.fetch;
@@ -21,7 +26,7 @@ describe("ClienteApi", () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/test"),
-        expect.objectContaining({ method: "GET" })
+        expect.objectContaining({ method: "GET" }),
       );
       expect(result).toEqual([{ id: "1" }]);
     });
@@ -69,8 +74,10 @@ describe("ClienteApi", () => {
         expect.stringContaining("/api/test"),
         expect.objectContaining({
           method: "POST",
-          headers: expect.objectContaining({ "Content-Type": "application/json" }),
-        })
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+          }),
+        }),
       );
       expect(result).toEqual({ id: "1" });
     });
@@ -89,7 +96,7 @@ describe("ClienteApi", () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/test/1"),
-        expect.objectContaining({ method: "DELETE" })
+        expect.objectContaining({ method: "DELETE" }),
       );
     });
   });
