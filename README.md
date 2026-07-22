@@ -106,9 +106,51 @@ Copiar el resultado y asignarlo a `CIFRADO_CLAVE_PRINCIPAL` en `.env`.
    - **Name:** Qlik Automate Creator
    - **Type:** Web Application
    - **Redirect URIs:** `http://localhost:3000/api/auth/qlik/callback`
-   - **Scopes:** `openid profile email offline_access`
-   - **Note:** `offline_access` es necesario para obtener refresh tokens
+   - **Scopes:** (ver sección siguiente)
 5. Copiar `Client ID` y `Client Secret` al `.env`
+
+#### Scopes OAuth requeridos
+
+En Qlik Cloud, los scopes OIDC básicos vienen del grupo **identity**:
+
+| Scope | Propósito |
+|-------|-----------|
+| `identity.name:read` | Nombre del usuario |
+| `identity.email:read` | Correo electrónico del usuario |
+| `identity.subject:read` | ID único del usuario (sub) |
+| `identity.picture:read` | Avatar del usuario |
+| `offline_access` | **Refresh tokens** para renovar sesiones sin re-autenticar |
+
+**Scopes de automatización:**
+
+| Scope | Propósito |
+|-------|-----------|
+| `automations` | Leer y administrar automatizaciones |
+| `automations.private` | Automatizaciones en espacio personal |
+| `automations.shared` | Automatizaciones en espacios compartidos |
+
+**Scopes de espacios y datos:**
+
+| Scope | Propósito |
+|-------|-----------|
+| `spaces.data` | Espacios de datos |
+| `spaces.shared` | Espacios compartidos |
+| `spaces.managed` | Espacios administrados |
+| `data-connections` | Conexiones de datos |
+| `apps` | Leer apps (flujos de datos) |
+
+**Todos los scopes - copiar/pegar:**
+
+```
+identity.name:read identity.email:read identity.subject:read identity.picture:read offline_access automations automations.private automations.shared spaces.data spaces.shared spaces.managed data-connections apps
+```
+
+#### Orígenes permitidos (Allowed Origins)
+
+```
+http://localhost:5173
+https://tu-dominio.com
+```
 
 ### 4. Levantar PostgreSQL
 
