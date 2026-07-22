@@ -107,6 +107,7 @@ Copiar el resultado y asignarlo a `CIFRADO_CLAVE_PRINCIPAL` en `.env`.
    - **Type:** Web Application
    - **Redirect URIs:** `http://localhost:3000/api/auth/qlik/callback`
    - **Scopes:** `openid profile email offline_access`
+   - **Note:** `offline_access` es necesario para obtener refresh tokens
 5. Copiar `Client ID` y `Client Secret` al `.env`
 
 ### 4. Levantar PostgreSQL
