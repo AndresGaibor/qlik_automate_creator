@@ -18,6 +18,8 @@ const QLIK_AUTH_URL = "https://{host}/oauth/authorize";
 const QLIK_TOKEN_URL = "https://{host}/oauth/token";
 const QLIK_USER_URL = "https://{host}/api/v1/users/me";
 
+const QLIK_SCOPES = "openid profile email offline_access";
+
 export class ClienteOAuthQlik {
   private clientId: string;
   private clientSecret: string;
@@ -58,6 +60,7 @@ export class ClienteOAuthQlik {
       state: estado,
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
+      scope: QLIK_SCOPES,
     });
     return `${url}?${params}`;
   }
