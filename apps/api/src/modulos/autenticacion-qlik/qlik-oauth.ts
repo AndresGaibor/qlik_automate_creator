@@ -18,7 +18,15 @@ const QLIK_AUTH_URL = "https://{host}/oauth/authorize";
 const QLIK_TOKEN_URL = "https://{host}/oauth/token";
 const QLIK_USER_URL = "https://{host}/api/v1/users/me";
 
-const QLIK_SCOPES = "openid profile email offline_access";
+// Scopes necesarios para leer identidad del usuario vía /api/v1/users/me
+const QLIK_SCOPES = [
+  "user_default",
+  "offline_access",
+  "identity.name:read",
+  "identity.email:read",
+  "identity.subject:read",
+  "identity.picture:read",
+].join(" ");
 
 export class ClienteOAuthQlik {
   private clientId: string;
@@ -85,10 +93,38 @@ export class ClienteOAuthQlik {
 
     if (!response.ok) {
       const error = await response.text();
+      const errorSanitizado = error.replace(/<[^>]+>/g, "").slice(0, 200);
+      console.error(
+        `OAuth token exchange error: { status: ${response.status}, endpoint: "token", body: "${errorSanitizado}" }`,
+      );
       throw new Error(`Error intercambiando código: ${error}`);
     }
 
-    return response.json();
+    console.info(
+      `OAuth token exchange: { status: ${response.status}, endpoint: "token" }`,
+    );
+    const data = await response.json();
+
+    const accessToken = data.access_token ?? data.accessToken;
+    const expiresIn = data.expires_in ?? data.expiresIn;
+
+    if (!accessToken || typeof accessToken !== "string") {
+      throw new Error(
+        "Token exchange: access_token ausente en respuesta de Qlik",
+      );
+    }
+    if (expiresIn === undefined || expiresIn === null) {
+      throw new Error(
+        "Token exchange: expires_in ausente en respuesta de Qlik",
+      );
+    }
+
+    return {
+      accessToken,
+      refreshToken: data.refresh_token ?? data.refreshToken,
+      expiresIn: Number(expiresIn),
+      scope: data.scope ?? "",
+    };
   }
 
   async obtenerUsuario(accessToken: string): Promise<UsuarioQlik> {
@@ -101,9 +137,21 @@ export class ClienteOAuthQlik {
     });
 
     if (!response.ok) {
-      throw new Error("Error obteniendo usuario de Qlik");
+      // Extraer información segura del error (sin tokens, secrets ni cookies)
+      const cuerpoSeguro = await response.text().catch(() => "(no body)");
+      const cuerpoSanitizado = cuerpoSeguro
+        .replace(/<[^>]+>/g, "")
+        .slice(0, 200);
+      console.error(
+        `OAuth users/me error: { status: ${response.status}, endpoint: "users/me", body: "${cuerpoSanitizado}" }`,
+      );
+      const mensajeSeguro = `Qlik API error: ${response.status} ${response.statusText} - ${cuerpoSanitizado}`;
+      throw new Error(mensajeSeguro);
     }
 
+    console.info(
+      `OAuth users/me: { status: ${response.status}, endpoint: "users/me" }`,
+    );
     const data = await response.json();
     return {
       id: data.id,

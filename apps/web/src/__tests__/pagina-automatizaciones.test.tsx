@@ -83,10 +83,8 @@ describe("PaginaAutomatizaciones", () => {
   });
 
   it("llama a fetch al hacer clic en Reintentar y muestra un segundo toast real (no dedup por mensaje)", async () => {
-    // Use fake timers to advance past first toast's auto-close
     vi.useFakeTimers();
 
-    // First fetch fails
     fetchMock.mockResolvedValue(
       createErrorResponse(401, "Sesión requerida") as unknown as Response,
     );
@@ -99,16 +97,13 @@ describe("PaginaAutomatizaciones", () => {
 
     expect(document.body.textContent).toContain("Sesión requerida");
 
-    // Let first toast auto-close (5000ms) so it doesn't overlap with second
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5000);
     });
 
-    // After auto-close: only EstadoError remains (1 alert)
     const alertasAfterAutoClose = container.querySelectorAll('[role="alert"]');
-    expect(alertasAfterAutoClose.length).toBe(1); // only EstadoError
+    expect(alertasAfterAutoClose.length).toBe(1);
 
-    // Click reintentar - second fetch also fails with SAME message
     fetchMock.mockResolvedValue(
       createErrorResponse(401, "Sesión requerida") as unknown as Response,
     );
@@ -121,12 +116,10 @@ describe("PaginaAutomatizaciones", () => {
       await vi.advanceTimersByTimeAsync(100);
     });
 
-    // Verify fetch was called at least twice (initial + retry)
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
-    // Verify second toast appeared (EstadoError + toast2 = 2)
     const alertasDespues = container.querySelectorAll('[role="alert"]');
-    expect(alertasDespues.length).toBe(2); // EstadoError + toast2
+    expect(alertasDespues.length).toBe(2);
   });
 
   it("muestra toast para errores con mensajes distintos", async () => {
@@ -142,7 +135,6 @@ describe("PaginaAutomatizaciones", () => {
 
     expect(document.body.textContent).toContain("Sesión requerida");
 
-    // Click reintentar - second fetch fails with DIFFERENT message
     fetchMock.mockResolvedValue(
       createErrorResponse(
         500,
@@ -163,7 +155,6 @@ describe("PaginaAutomatizaciones", () => {
   });
 
   it("usa fallback estable cuando json() es rechazado", async () => {
-    // json() rejects - network error or malformed response
     fetchMock.mockResolvedValue({
       ok: false,
       status: 0,
@@ -185,7 +176,6 @@ describe("PaginaAutomatizaciones", () => {
   });
 
   it("usa fallback estable cuando success:false sin campo error", async () => {
-    // API returns { success: false } without error field
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -206,39 +196,39 @@ describe("PaginaAutomatizaciones", () => {
     ).not.toBeNull();
   });
 
-  it("renderiza automatizaciones con payload real de Qlik", async () => {
-    const automatizacionesQlik = [
+  it("renderiza automatizaciones con payload real del backend", async () => {
+    const payload = [
       {
         id: "auto-1",
         name: "Sync diario",
         spaceId: "space-abc",
-        owner: { id: "usr-1", name: "Juan Pérez" },
+        espacioNombre: "Espacio Producción",
+        ownerNombre: "Juan Pérez",
         isEnabled: true,
-        state: "Activa",
         triggerType: "scheduled",
-        lastExecution: {
-          id: "run-1",
-          status: "completed",
-          startTime: "2026-07-01T10:00:00Z",
-        },
-        createdDate: "2026-06-01T08:00:00Z",
-        modifiedDate: "2026-06-15T09:00:00Z",
+        ejecucionActiva: false,
+        puedeEjecutar: true,
+        creadoEn: "2026-06-01T08:00:00Z",
+        modificadoEn: "2026-06-15T09:00:00Z",
       },
       {
         id: "auto-2",
         name: "Backup semanal",
+        espacioNombre: "Sin espacio",
+        ownerNombre: "Admin",
         isEnabled: false,
         triggerType: "manual",
-        createdDate: "2026-05-01T08:00:00Z",
-        modifiedDate: "2026-05-01T08:00:00Z",
+        ejecucionActiva: false,
+        puedeEjecutar: false,
+        creadoEn: "2026-05-01T08:00:00Z",
+        modificadoEn: "2026-05-01T08:00:00Z",
       },
     ];
 
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
-      json: () =>
-        Promise.resolve({ success: true, data: automatizacionesQlik }),
+      json: () => Promise.resolve({ success: true, data: payload }),
     } as unknown as Response);
 
     renderWithProviders(<PaginaAutomatizaciones />);
@@ -247,24 +237,29 @@ describe("PaginaAutomatizaciones", () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
-    // Nombres de automatizaciones
+    // Nombres
     expect(document.body.textContent).toContain("Sync diario");
     expect(document.body.textContent).toContain("Backup semanal");
 
-    // Estados derivados: state tiene prioridad, luego isEnabled
+    // Estados derivados
     expect(document.body.textContent).toContain("Estado: Activa");
     expect(document.body.textContent).toContain("Estado: Inactiva");
 
-    // Disparadores derivados de triggerType
+    // Disparadores
     expect(document.body.textContent).toContain("Disparador: scheduled");
     expect(document.body.textContent).toContain("Disparador: manual");
 
-    // Propietario (solo presente en la primera)
-    expect(document.body.textContent).toContain("Juan Pérez");
+    // Espacios con nombre (no ID)
+    expect(document.body.textContent).toContain("Espacio: Espacio Producción");
+    expect(document.body.textContent).toContain("Espacio: Sin espacio");
 
-    // Última ejecución (solo presente en la primera)
-    expect(document.body.textContent).toContain("Última ejecución:");
-    expect(document.body.textContent).toContain("completed");
+    // Propietarios
+    expect(document.body.textContent).toContain("Propietario: Juan Pérez");
+    expect(document.body.textContent).toContain("Propietario: Admin");
+
+    // Fechas
+    expect(document.body.textContent).toContain("Creado:");
+    expect(document.body.textContent).toContain("Modificado:");
 
     // Botones de acción
     const botones = container.querySelectorAll("button");
@@ -273,7 +268,7 @@ describe("PaginaAutomatizaciones", () => {
     expect(textos.filter((t) => t?.includes("Editar")).length).toBe(2);
   });
 
-  it("muestra 'Manual' como disparador cuando triggerType, trigger y runMode son undefined", async () => {
+  it("muestra espacio, fechas y enlace a detalle en cada tarjeta", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -282,11 +277,16 @@ describe("PaginaAutomatizaciones", () => {
           success: true,
           data: [
             {
-              id: "auto-sin-trigger",
-              name: "Sin triggers",
+              id: "auto-1",
+              name: "Sync diario",
+              espacioNombre: "Espacio Producción",
+              ownerNombre: "Juan Pérez",
               isEnabled: true,
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
+              triggerType: "scheduled",
+              ejecucionActiva: false,
+              puedeEjecutar: true,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-15T09:00:00Z",
             },
           ],
         }),
@@ -298,10 +298,18 @@ describe("PaginaAutomatizaciones", () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
-    expect(document.body.textContent).toContain("Disparador: Manual");
+    expect(document.body.textContent).toContain("Espacio: Espacio Producción");
+    expect(document.body.textContent).toContain("Juan Pérez");
+    expect(document.body.textContent).toContain("Creado:");
+    expect(document.body.textContent).toContain("Modificado:");
+
+    const enlaceDetalle = container.querySelector(
+      'a[href="/automatizaciones/auto-1"]',
+    );
+    expect(enlaceDetalle).not.toBeNull();
   });
 
-  it("muestra 'Manual' cuando triggerType es string vacío", async () => {
+  it("deshabilita el botón ejecutar cuando ejecucionActiva es true", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -310,12 +318,16 @@ describe("PaginaAutomatizaciones", () => {
           success: true,
           data: [
             {
-              id: "auto-empty",
-              name: "Trigger vacío",
+              id: "auto-1",
+              name: "Sync activo",
+              espacioNombre: "Espacio A",
+              ownerNombre: "Test",
               isEnabled: true,
-              triggerType: "",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
+              triggerType: "scheduled",
+              ejecucionActiva: true,
+              puedeEjecutar: false,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-01T08:00:00Z",
             },
           ],
         }),
@@ -327,10 +339,15 @@ describe("PaginaAutomatizaciones", () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
-    expect(document.body.textContent).toContain("Disparador: Manual");
+    const botonEjecutar = container.querySelector(
+      'button[data-accion="ejecutar"]',
+    ) as HTMLButtonElement;
+    expect(botonEjecutar).not.toBeNull();
+    expect(botonEjecutar.disabled).toBe(true);
+    expect(botonEjecutar.textContent).toContain("En ejecución");
   });
 
-  it("deriva disparador desde trigger.type cuando triggerType no existe", async () => {
+  it("deshabilita el botón ejecutar cuando puedeEjecutar es false", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -339,12 +356,16 @@ describe("PaginaAutomatizaciones", () => {
           success: true,
           data: [
             {
-              id: "auto-trigger-obj",
-              name: "Con trigger object",
-              isEnabled: true,
-              trigger: { type: "event" },
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
+              id: "auto-1",
+              name: "Inhabilitada",
+              espacioNombre: "Espacio A",
+              ownerNombre: "Test",
+              isEnabled: false,
+              triggerType: "manual",
+              ejecucionActiva: false,
+              puedeEjecutar: false,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-01T08:00:00Z",
             },
           ],
         }),
@@ -356,36 +377,11 @@ describe("PaginaAutomatizaciones", () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
-    expect(document.body.textContent).toContain("Disparador: event");
-  });
-
-  it("deriva disparador desde runMode cuando triggerType y trigger no existen", async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () =>
-        Promise.resolve({
-          success: true,
-          data: [
-            {
-              id: "auto-runmode",
-              name: "Con runMode",
-              isEnabled: true,
-              runMode: "nonblocking",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-          ],
-        }),
-    } as unknown as Response);
-
-    renderWithProviders(<PaginaAutomatizaciones />);
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    expect(document.body.textContent).toContain("Disparador: nonblocking");
+    const botonEjecutar = container.querySelector(
+      'button[data-accion="ejecutar"]',
+    ) as HTMLButtonElement;
+    expect(botonEjecutar).not.toBeNull();
+    expect(botonEjecutar.disabled).toBe(true);
   });
 
   it("muestra empty state cuando la API devuelve data vacía", async () => {
@@ -404,8 +400,6 @@ describe("PaginaAutomatizaciones", () => {
     expect(document.body.textContent).toContain(
       "No hay automatizaciones para mostrar.",
     );
-
-    // No debe haber tarjetas con automatizaciones
     expect(document.body.textContent).toContain("Automatizaciones");
     expect(container.querySelector("[data-accion='reintentar']")).toBeNull();
   });
@@ -428,7 +422,7 @@ describe("PaginaAutomatizaciones", () => {
     );
   });
 
-  it("usa lastRunStatus como fallback cuando isEnabled no está en el payload", async () => {
+  it("muestra fallback seguro para fechas vacías o inválidas", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -437,92 +431,16 @@ describe("PaginaAutomatizaciones", () => {
           success: true,
           data: [
             {
-              id: "auto-running",
-              name: "En proceso",
-              lastRunStatus: "running",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-            {
-              id: "auto-failed",
-              name: "Con error",
-              lastRunStatus: "failed",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-            {
-              id: "auto-pending",
-              name: "En cola",
-              lastRunStatus: "pending",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-            {
-              id: "auto-success",
-              name: "Completada",
-              lastRunStatus: "success",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-          ],
-        }),
-    } as unknown as Response);
-
-    renderWithProviders(<PaginaAutomatizaciones />);
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    expect(document.body.textContent).toContain("Estado: En ejecución");
-    expect(document.body.textContent).toContain("Estado: Error");
-    expect(document.body.textContent).toContain("Estado: En espera");
-    expect(document.body.textContent).toContain("Estado: Activa");
-  });
-
-  it("muestra Desconocido cuando no hay state, isEnabled ni lastRunStatus válido", async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () =>
-        Promise.resolve({
-          success: true,
-          data: [
-            {
-              id: "auto-unknown",
-              name: "Sin datos de estado",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-          ],
-        }),
-    } as unknown as Response);
-
-    renderWithProviders(<PaginaAutomatizaciones />);
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    expect(document.body.textContent).toContain("Estado: Desconocido");
-  });
-
-  it("muestra el valor de state directamente cuando está presente", async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () =>
-        Promise.resolve({
-          success: true,
-          data: [
-            {
-              id: "auto-state",
-              name: "Con state explícito",
-              state: "Pausada",
+              id: "auto-bad-dates",
+              name: "Fechas rotas",
+              espacioNombre: "Espacio X",
+              ownerNombre: "Test",
               isEnabled: true,
-              lastRunStatus: "completed",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
+              triggerType: "manual",
+              ejecucionActiva: false,
+              puedeEjecutar: true,
+              creadoEn: "",
+              modificadoEn: "not-a-date",
             },
           ],
         }),
@@ -534,40 +452,12 @@ describe("PaginaAutomatizaciones", () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
-    // state tiene prioridad sobre isEnabled y lastRunStatus
-    expect(document.body.textContent).toContain("Estado: Pausada");
+    // Fechas inválidas deben mostrar "—" en vez de "Invalid Date"
+    expect(document.body.textContent).not.toContain("Invalid Date");
+    expect(document.body.textContent).toContain("Fechas rotas");
   });
 
-  it("fallback a isEnabled cuando state es string vacío", async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () =>
-        Promise.resolve({
-          success: true,
-          data: [
-            {
-              id: "auto-empty-state",
-              name: "State vacío",
-              state: "   ",
-              isEnabled: false,
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-          ],
-        }),
-    } as unknown as Response);
-
-    renderWithProviders(<PaginaAutomatizaciones />);
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    expect(document.body.textContent).toContain("Estado: Inactiva");
-  });
-
-  it("muestra espacio, fechas y enlace a detalle en cada tarjeta", async () => {
+  it("no muestra spaceId como espacio cuando existe espacioNombre", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -577,12 +467,16 @@ describe("PaginaAutomatizaciones", () => {
           data: [
             {
               id: "auto-1",
-              name: "Sync diario",
-              spaceId: "space-abc",
-              owner: { id: "usr-1", name: "Juan Pérez" },
+              name: "Con espacio",
+              spaceId: "sp-12345",
+              espacioNombre: "Mi Espacio",
+              ownerNombre: "Test",
               isEnabled: true,
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-15T09:00:00Z",
+              triggerType: "manual",
+              ejecucionActiva: false,
+              puedeEjecutar: true,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-01T08:00:00Z",
             },
           ],
         }),
@@ -594,81 +488,7 @@ describe("PaginaAutomatizaciones", () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
-    expect(document.body.textContent).toContain("Espacio: space-abc");
-    expect(document.body.textContent).toContain("Juan Pérez");
-    expect(document.body.textContent).toContain("Creado:");
-    expect(document.body.textContent).toContain("Modificado:");
-
-    const enlaceDetalle = container.querySelector(
-      'a[href="/automatizaciones/auto-1"]',
-    );
-    expect(enlaceDetalle).not.toBeNull();
-  });
-
-  it("deshabilita el botón ejecutar cuando ejecucionActiva es true", async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () =>
-        Promise.resolve({
-          success: true,
-          data: [
-            {
-              id: "auto-1",
-              name: "Sync activo",
-              isEnabled: true,
-              ejecucionActiva: true,
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-          ],
-        }),
-    } as unknown as Response);
-
-    renderWithProviders(<PaginaAutomatizaciones />);
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    const botonEjecutar = container.querySelector(
-      'button[data-accion="ejecutar"]',
-    ) as HTMLButtonElement;
-    expect(botonEjecutar).not.toBeNull();
-    expect(botonEjecutar.disabled).toBe(true);
-    expect(botonEjecutar.textContent).toContain("En ejecución");
-  });
-
-  it("deshabilita el botón ejecutar cuando state indica ejecución en curso", async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () =>
-        Promise.resolve({
-          success: true,
-          data: [
-            {
-              id: "auto-1",
-              name: "Corriendo",
-              isEnabled: true,
-              state: "running",
-              createdDate: "2026-06-01T08:00:00Z",
-              modifiedDate: "2026-06-01T08:00:00Z",
-            },
-          ],
-        }),
-    } as unknown as Response);
-
-    renderWithProviders(<PaginaAutomatizaciones />);
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    const botonEjecutar = container.querySelector(
-      'button[data-accion="ejecutar"]',
-    ) as HTMLButtonElement;
-    expect(botonEjecutar).not.toBeNull();
-    expect(botonEjecutar.disabled).toBe(true);
+    expect(document.body.textContent).toContain("Espacio: Mi Espacio");
+    expect(document.body.textContent).not.toContain("sp-12345");
   });
 });

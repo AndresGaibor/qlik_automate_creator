@@ -8,12 +8,11 @@ import {
   CardTitle,
 } from "@/componentes/ui/card";
 import {
-  type Automatizacion,
-  type Ejecucion,
+  type DetalleAutomatizacion,
+  type EjecucionResumen,
   detenerEjecucion,
   ejecutarAutomatizacion,
   obtenerDetalleAutomatizacion,
-  obtenerEjecuciones,
 } from "@/modulos/automatizaciones/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -21,20 +20,15 @@ interface Props {
   id: string;
 }
 
-function estaEnEjecucion(auto: {
-  ejecucionActiva?: boolean;
-  state?: string;
-}): boolean {
-  if (auto.ejecucionActiva) return true;
-  if (auto.state?.trim()) {
-    const lower = auto.state.toLowerCase();
-    if (lower === "running" || lower === "en ejecución") return true;
+function formatearFechaSeguro(iso: string | undefined | null): string {
+  if (!iso) return "—";
+  try {
+    const fecha = new Date(iso);
+    if (Number.isNaN(fecha.getTime())) return "—";
+    return fecha.toLocaleString();
+  } catch {
+    return "—";
   }
-  return false;
-}
-
-function formatearFecha(iso: string): string {
-  return new Date(iso).toLocaleString();
 }
 
 export function PaginaDetalleAutomatizacion({ id }: Props) {
@@ -42,30 +36,23 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   const queryClient = useQueryClient();
 
   const {
-    data: auto,
-    isLoading: cargandoAuto,
-    isError: errorAuto,
-    error: errorAutoDetalle,
-  } = useQuery<Automatizacion>({
+    data: detalle,
+    isLoading: cargandoDetalle,
+    isError: errorDetalle,
+    error: errorDetalleMsg,
+  } = useQuery<DetalleAutomatizacion>({
     queryKey: ["automatizacion", id],
     queryFn: () => obtenerDetalleAutomatizacion(id),
     retry: false,
   });
 
-  const {
-    data: ejecuciones,
-    isLoading: cargandoEjecuciones,
-  } = useQuery<Ejecucion[]>({
-    queryKey: ["ejecuciones", id],
-    queryFn: () => obtenerEjecuciones(id),
-    retry: false,
-  });
+  const auto = detalle?.automatizacion;
+  const ejecuciones = detalle?.ejecuciones;
 
   const mutationEjecutar = useMutation({
     mutationFn: () => ejecutarAutomatizacion(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["automatizacion", id] });
-      queryClient.invalidateQueries({ queryKey: ["ejecuciones", id] });
     },
     onError: (err: Error) => {
       mostrarError(err.message);
@@ -76,19 +63,18 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     mutationFn: (runId: string) => detenerEjecucion(id, runId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["automatizacion", id] });
-      queryClient.invalidateQueries({ queryKey: ["ejecuciones", id] });
     },
     onError: (err: Error) => {
       mostrarError(err.message);
     },
   });
 
-  if (cargandoAuto) return <div>Cargando automatización...</div>;
+  if (cargandoDetalle) return <div>Cargando automatización...</div>;
 
-  if (errorAuto) {
+  if (errorDetalle) {
     return (
       <EstadoError
-        mensaje={errorAutoDetalle?.message ?? "Error al cargar"}
+        mensaje={errorDetalleMsg?.message ?? "Error al cargar"}
         onReintentar={() =>
           queryClient.invalidateQueries({ queryKey: ["automatizacion", id] })
         }
@@ -98,8 +84,9 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
 
   if (!auto) return null;
 
-  const ejecutando = estaEnEjecucion(auto);
-  const ejecucionActiva = ejecuciones?.find((e) => e.status === "running");
+  const ejecutandoActiva = ejecuciones?.find(
+    (e: EjecucionResumen) => e.status === "running",
+  );
 
   return (
     <div>
@@ -115,20 +102,22 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
           <dl className="grid grid-cols-1 gap-2 text-sm text-gray-600 sm:grid-cols-2">
             <div>
               <dt className="font-medium text-gray-900">Estado</dt>
-              <dd>{auto.state ?? (auto.isEnabled ? "Activa" : "Inactiva")}</dd>
+              <dd>
+                {auto.ejecucionActiva
+                  ? "En ejecución"
+                  : auto.isEnabled
+                    ? "Activa"
+                    : "Inactiva"}
+              </dd>
             </div>
-            {auto.spaceId && (
-              <div>
-                <dt className="font-medium text-gray-900">Espacio</dt>
-                <dd>{auto.spaceId}</dd>
-              </div>
-            )}
-            {auto.owner && (
-              <div>
-                <dt className="font-medium text-gray-900">Propietario</dt>
-                <dd>{auto.owner.name}</dd>
-              </div>
-            )}
+            <div>
+              <dt className="font-medium text-gray-900">Espacio</dt>
+              <dd>{auto.espacioNombre}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-gray-900">Propietario</dt>
+              <dd>{auto.ownerNombre}</dd>
+            </div>
             {auto.triggerType && (
               <div>
                 <dt className="font-medium text-gray-900">Disparador</dt>
@@ -137,27 +126,27 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
             )}
             <div>
               <dt className="font-medium text-gray-900">Creado</dt>
-              <dd>{formatearFecha(auto.createdDate)}</dd>
+              <dd>{formatearFechaSeguro(auto.creadoEn)}</dd>
             </div>
             <div>
               <dt className="font-medium text-gray-900">Modificado</dt>
-              <dd>{formatearFecha(auto.modifiedDate)}</dd>
+              <dd>{formatearFechaSeguro(auto.modificadoEn)}</dd>
             </div>
           </dl>
           <div className="mt-4 flex gap-2">
             <Button
               variant="outline"
               data-accion="ejecutar"
-              disabled={ejecutando}
+              disabled={!auto.puedeEjecutar}
               onClick={() => mutationEjecutar.mutate()}
             >
-              {ejecutando ? "En ejecución" : "Ejecutar"}
+              {auto.ejecucionActiva ? "En ejecución" : "Ejecutar"}
             </Button>
-            {ejecutando && ejecucionActiva && (
+            {auto.ejecucionActiva && ejecutandoActiva && (
               <Button
                 variant="outline"
                 data-accion="detener"
-                onClick={() => mutationDetener.mutate(ejecucionActiva.id)}
+                onClick={() => mutationDetener.mutate(ejecutandoActiva.id)}
               >
                 Detener
               </Button>
@@ -171,9 +160,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
           <CardTitle>Ejecuciones recientes</CardTitle>
         </CardHeader>
         <CardContent>
-          {cargandoEjecuciones ? (
-            <p className="text-sm text-gray-500">Cargando ejecuciones...</p>
-          ) : !ejecuciones || ejecuciones.length === 0 ? (
+          {!ejecuciones || ejecuciones.length === 0 ? (
             <p className="text-sm text-gray-500">
               No hay ejecuciones recientes
             </p>
@@ -188,16 +175,16 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {ejecuciones.map((ejecucion) => (
+                {ejecuciones.map((ejecucion: EjecucionResumen) => (
                   <tr key={ejecucion.id} className="border-b last:border-0">
                     <td className="py-2">{ejecucion.id}</td>
                     <td className="py-2">{ejecucion.status}</td>
                     <td className="py-2">
-                      {formatearFecha(ejecucion.startTime)}
+                      {formatearFechaSeguro(ejecucion.startTime)}
                     </td>
                     <td className="py-2">
                       {ejecucion.endTime
-                        ? formatearFecha(ejecucion.endTime)
+                        ? formatearFechaSeguro(ejecucion.endTime)
                         : "—"}
                     </td>
                   </tr>

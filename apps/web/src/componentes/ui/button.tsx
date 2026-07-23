@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { cloneElement, isValidElement } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost";
@@ -11,6 +12,7 @@ export function Button({
   variant = "default",
   size = "default",
   className = "",
+  asChild = false,
   children,
   ...props
 }: ButtonProps) {
@@ -29,10 +31,29 @@ export function Button({
     lg: "h-12 px-6",
   };
 
+  const composedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
+
+  // Si asChild es true, renderiza el hijo directamente con los estilos aplicados
+  // sin pasar asChild al DOM
+  if (asChild && isValidElement(children)) {
+    const child = children as React.ReactElement<{
+      className?: string;
+      [key: string]: unknown;
+    }>;
+    return cloneElement(child, {
+      className: `${child.props.className || ""} ${composedClassName}`.trim(),
+      ...Object.fromEntries(
+        Object.entries(props).filter(([key]) => key !== "asChild"),
+      ),
+    });
+  }
+
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
-      {...props}
+      className={composedClassName}
+      {...Object.fromEntries(
+        Object.entries(props).filter(([key]) => key !== "asChild"),
+      )}
     >
       {children}
     </button>

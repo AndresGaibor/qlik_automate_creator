@@ -7,52 +7,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/componentes/ui/card";
-import type { Automatizacion } from "@/modulos/automatizaciones/api";
+import type { ResumenAutomatizacion } from "@/modulos/automatizaciones/api";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
-function resolverEstado(auto: {
-  state?: string;
-  isEnabled?: boolean;
-  lastRunStatus?: string;
-}): string {
-  if (auto.state?.trim()) return auto.state;
-  if (auto.isEnabled !== undefined) return auto.isEnabled ? "Activa" : "Inactiva";
-  const statusMap: Record<string, string> = {
-    running: "En ejecución",
-    failed: "Error",
-    completed: "Activa",
-    success: "Activa",
-    pending: "En espera",
-    queued: "En espera",
-  };
-  if (auto.lastRunStatus && statusMap[auto.lastRunStatus]) {
-    return statusMap[auto.lastRunStatus];
+function formatearFechaSeguro(iso: string | undefined | null): string {
+  if (!iso) return "—";
+  try {
+    const fecha = new Date(iso);
+    if (Number.isNaN(fecha.getTime())) return "—";
+    return fecha.toLocaleDateString();
+  } catch {
+    return "—";
   }
-  return "Desconocido";
 }
 
-function resolverDisparador(auto: {
-  triggerType?: string;
-  runMode?: string;
-  trigger?: { type?: string };
-}): string {
-  if (auto.triggerType?.trim()) return auto.triggerType;
-  if (auto.trigger?.type?.trim()) return auto.trigger.type;
-  if (auto.runMode?.trim()) return auto.runMode;
-  return "Manual";
-}
-
-function estaEnEjecucion(auto: {
-  ejecucionActiva?: boolean;
-  state?: string;
-}): boolean {
-  if (auto.ejecucionActiva) return true;
-  if (auto.state?.trim()) {
-    const lower = auto.state.toLowerCase();
-    if (lower === "running" || lower === "en ejecución") return true;
-  }
-  return false;
+function estadoVisual(auto: ResumenAutomatizacion): string {
+  if (auto.ejecucionActiva) return "En ejecución";
+  return auto.isEnabled ? "Activa" : "Inactiva";
 }
 
 export function PaginaAutomatizaciones() {
@@ -63,11 +35,11 @@ export function PaginaAutomatizaciones() {
     isError,
     error,
     refetch,
-  } = useQuery<Automatizacion[]>({
+  } = useQuery<ResumenAutomatizacion[]>({
     queryKey: ["automatizaciones"],
     queryFn: async () => {
       const res = await fetch("/api/qlik/automatizaciones");
-      let json: { success?: boolean; error?: string; data?: Automatizacion[] };
+      let json: { success?: boolean; error?: string; data?: ResumenAutomatizacion[] };
       try {
         json = await res.json();
       } catch {
@@ -79,14 +51,13 @@ export function PaginaAutomatizaciones() {
         throw new Error("Error al cargar automatizaciones");
       if (!json.success)
         throw new Error(json?.error ?? "Error al cargar automatizaciones");
-      return (json.data as Automatizacion[]) ?? [];
+      return (json.data as ResumenAutomatizacion[]) ?? [];
     },
     retry: false,
   });
 
   const errorMsgRef = useRef<string | null>(null);
 
-  // Reset marker when refetch begins (before fetch runs)
   const handleRefetch = () => {
     errorMsgRef.current = null;
     refetch();
@@ -124,77 +95,54 @@ export function PaginaAutomatizaciones() {
             </p>
           </div>
         ) : (
-          lista.map((automatizacion) => {
-            const ejecutando = estaEnEjecucion(automatizacion);
-            return (
-              <Card key={automatizacion.id}>
-                <CardHeader>
-                  <CardTitle>
-                    <a
-                      href={`/automatizaciones/${automatizacion.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {automatizacion.name}
-                    </a>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        Estado: {resolverEstado(automatizacion)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Disparador: {resolverDisparador(automatizacion)}
-                      </p>
-                      {automatizacion.spaceId && (
-                        <p className="text-sm text-gray-500">
-                          Espacio: {automatizacion.spaceId}
-                        </p>
-                      )}
-                      {automatizacion.owner && (
-                        <p className="text-sm text-gray-500">
-                          Propietario: {automatizacion.owner.name}
-                        </p>
-                      )}
-                      <p className="text-sm text-gray-500">
-                        Creado:{" "}
-                        {new Date(
-                          automatizacion.createdDate,
-                        ).toLocaleDateString()}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Modificado:{" "}
-                        {new Date(
-                          automatizacion.modifiedDate,
-                        ).toLocaleDateString()}
-                      </p>
-                      {automatizacion.lastExecution && (
-                        <p className="text-sm text-gray-500">
-                          Última ejecución:{" "}
-                          {automatizacion.lastExecution.status}
-                          {" · "}
-                          {new Date(
-                            automatizacion.lastExecution.startTime,
-                          ).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        data-accion="ejecutar"
-                        disabled={ejecutando}
-                      >
-                        {ejecutando ? "En ejecución" : "Ejecutar"}
-                      </Button>
-                      <Button variant="outline">Editar</Button>
-                    </div>
+          lista.map((auto) => (
+            <Card key={auto.id}>
+              <CardHeader>
+                <CardTitle>
+                  <a
+                    href={`/automatizaciones/${auto.id}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {auto.name}
+                  </a>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Estado: {estadoVisual(auto)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Disparador: {auto.triggerType || "Manual"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Espacio: {auto.espacioNombre}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Propietario: {auto.ownerNombre}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Creado: {formatearFechaSeguro(auto.creadoEn)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Modificado: {formatearFechaSeguro(auto.modificadoEn)}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      data-accion="ejecutar"
+                      disabled={!auto.puedeEjecutar}
+                    >
+                      {auto.ejecucionActiva ? "En ejecución" : "Ejecutar"}
+                    </Button>
+                    <Button variant="outline">Editar</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
     </div>

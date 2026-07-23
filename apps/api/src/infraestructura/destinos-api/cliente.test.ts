@@ -18,6 +18,58 @@ function mockFetch(response: unknown, ok = true) {
 }
 
 describe("ClienteDestinos", () => {
+  describe("validación de configuración", () => {
+    it("lanza error cuando baseUrl está vacío", () => {
+      expect(() => new ClienteDestinos("", API_KEY)).toThrow(
+        "REMOTE_API_URL no puede estar vacío",
+      );
+    });
+
+    it("lanza error cuando baseUrl es solo espacios", () => {
+      expect(() => new ClienteDestinos("   ", API_KEY)).toThrow(
+        "REMOTE_API_URL no puede estar vacío",
+      );
+    });
+
+    it("lanza error cuando baseUrl no es una URL válida", () => {
+      expect(() => new ClienteDestinos("not-a-url", API_KEY)).toThrow(
+        "REMOTE_API_URL debe ser una URL válida",
+      );
+    });
+
+    it("lanza error cuando baseUrl es una ruta relativa", () => {
+      expect(() => new ClienteDestinos("/api/v1", API_KEY)).toThrow(
+        "REMOTE_API_URL debe ser una URL válida",
+      );
+    });
+
+    it("lanza error cuando apiKey está vacío", () => {
+      expect(() => new ClienteDestinos(BASE_URL, "")).toThrow(
+        "REMOTE_API_KEY no puede estar vacío",
+      );
+    });
+
+    it("lanza error cuando apiKey es solo espacios", () => {
+      expect(() => new ClienteDestinos(BASE_URL, "   ")).toThrow(
+        "REMOTE_API_KEY no puede estar vacío",
+      );
+    });
+
+    it("acepta URLs con http:// y https://", () => {
+      expect(() => new ClienteDestinos("http://localhost:3000", API_KEY)).not.toThrow();
+      expect(() => new ClienteDestinos("https://api.example.com", API_KEY)).not.toThrow();
+    });
+
+    it("recorta espacios en blanco de baseUrl y apiKey válidos", () => {
+      const client = new ClienteDestinos(
+        "  https://api.example.com  ",
+        "  mi-clave  ",
+      );
+      // No lanza error, la validación pasa con valores trimmed
+      expect(client).toBeInstanceOf(ClienteDestinos);
+    });
+  });
+
   let client: ClienteDestinos;
 
   beforeEach(() => {

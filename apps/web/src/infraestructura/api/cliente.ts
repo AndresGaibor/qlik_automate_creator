@@ -93,7 +93,12 @@ export class ClienteApi {
   }
 
   private async handleResponse<T>(res: Response): Promise<T> {
-    const json: ApiResponse<T> = await res.json();
+    let json: ApiResponse<T>;
+    try {
+      json = await res.json();
+    } catch {
+      throw new Error(`Error en respuesta del servidor (${res.status})`);
+    }
 
     if (!res.ok || !json.success) {
       throw new Error(json.error || `HTTP error ${res.status}`);

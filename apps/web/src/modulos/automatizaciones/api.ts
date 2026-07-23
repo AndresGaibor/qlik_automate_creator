@@ -1,32 +1,31 @@
 const BASE_URL = "/api/qlik/automatizaciones";
 
-export interface Automatizacion {
+export interface ResumenAutomatizacion {
   id: string;
   name: string;
   spaceId?: string;
-  owner?: { id: string; name: string };
+  espacioNombre: string;
+  ownerNombre: string;
   isEnabled: boolean;
-  state?: string;
-  lastRunStatus?: string;
-  ejecucionActiva?: boolean;
-  triggerType?: string;
-  runMode?: string;
-  trigger?: { type?: string };
-  lastExecution?: {
-    id: string;
-    status: string;
-    startTime: string;
-    endTime?: string;
-  };
-  createdDate: string;
-  modifiedDate: string;
+  triggerType: string;
+  ejecucionActiva: boolean;
+  puedeEjecutar: boolean;
+  creadoEn: string;
+  modificadoEn: string;
 }
 
-export interface Ejecucion {
+export interface EjecucionResumen {
   id: string;
+  automationId: string;
   status: string;
   startTime: string;
   endTime?: string;
+  error?: string;
+}
+
+export interface DetalleAutomatizacion {
+  automatizacion: ResumenAutomatizacion;
+  ejecuciones: EjecucionResumen[];
 }
 
 export interface RespuestaApi<T> {
@@ -52,20 +51,14 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (json.data as T) ?? ([] as unknown as T);
 }
 
-export async function obtenerAutomatizaciones(): Promise<Automatizacion[]> {
-  return fetchJson<Automatizacion[]>(BASE_URL);
+export async function obtenerAutomatizaciones(): Promise<ResumenAutomatizacion[]> {
+  return fetchJson<ResumenAutomatizacion[]>(BASE_URL);
 }
 
 export async function obtenerDetalleAutomatizacion(
   id: string,
-): Promise<Automatizacion> {
-  return fetchJson<Automatizacion>(`${BASE_URL}/${id}`);
-}
-
-export async function obtenerEjecuciones(
-  id: string,
-): Promise<Ejecucion[]> {
-  return fetchJson<Ejecucion[]>(`${BASE_URL}/${id}/runs`);
+): Promise<DetalleAutomatizacion> {
+  return fetchJson<DetalleAutomatizacion>(`${BASE_URL}/${id}`);
 }
 
 export async function ejecutarAutomatizacion(

@@ -75,26 +75,26 @@ function renderWithProviders(children: ReactNode) {
 // --- Tests ---
 
 describe("PaginaDetalleAutomatizacion", () => {
-  it("renderiza metadata de la automatización", async () => {
+  it("renderiza metadata de la automatización desde detalle.automatizacion", async () => {
     mockFetchPorUrl([
-      {
-        pattern: "/runs",
-        body: { success: true, data: [] },
-      },
       {
         pattern: "/auto-1",
         body: {
           success: true,
           data: {
-            id: "auto-1",
-            name: "Sync diario",
-            spaceId: "space-abc",
-            owner: { id: "usr-1", name: "Juan Pérez" },
-            isEnabled: true,
-            state: "Activa",
-            triggerType: "scheduled",
-            createdDate: "2026-06-01T08:00:00Z",
-            modifiedDate: "2026-06-15T09:00:00Z",
+            automatizacion: {
+              id: "auto-1",
+              name: "Sync diario",
+              espacioNombre: "Espacio Producción",
+              ownerNombre: "Juan Pérez",
+              isEnabled: true,
+              triggerType: "scheduled",
+              ejecucionActiva: false,
+              puedeEjecutar: true,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-15T09:00:00Z",
+            },
+            ejecuciones: [],
           },
         },
       },
@@ -109,40 +109,45 @@ describe("PaginaDetalleAutomatizacion", () => {
     expect(document.body.textContent).toContain("Sync diario");
     expect(document.body.textContent).toContain("Juan Pérez");
     expect(document.body.textContent).toContain("scheduled");
+    expect(document.body.textContent).toContain("Espacio Producción");
     expect(document.body.textContent).toContain("Activa");
   });
 
-  it("muestra lista de ejecuciones recientes", async () => {
+  it("muestra lista de ejecuciones desde detalle.ejecuciones", async () => {
     mockFetchPorUrl([
-      {
-        pattern: "/runs",
-        body: {
-          success: true,
-          data: [
-            {
-              id: "run-1",
-              status: "completed",
-              startTime: "2026-07-01T10:00:00Z",
-              endTime: "2026-07-01T10:05:00Z",
-            },
-            {
-              id: "run-2",
-              status: "failed",
-              startTime: "2026-07-02T10:00:00Z",
-            },
-          ],
-        },
-      },
       {
         pattern: "/auto-1",
         body: {
           success: true,
           data: {
-            id: "auto-1",
-            name: "Sync diario",
-            isEnabled: true,
-            createdDate: "2026-06-01T08:00:00Z",
-            modifiedDate: "2026-06-15T09:00:00Z",
+            automatizacion: {
+              id: "auto-1",
+              name: "Sync diario",
+              espacioNombre: "Espacio A",
+              ownerNombre: "Test",
+              isEnabled: true,
+              triggerType: "scheduled",
+              ejecucionActiva: false,
+              puedeEjecutar: true,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-15T09:00:00Z",
+            },
+            ejecuciones: [
+              {
+                id: "run-1",
+                automationId: "auto-1",
+                status: "completed",
+                startTime: "2026-07-01T10:00:00Z",
+                endTime: "2026-07-01T10:05:00Z",
+              },
+              {
+                id: "run-2",
+                automationId: "auto-1",
+                status: "failed",
+                startTime: "2026-07-02T10:00:00Z",
+                error: "Timeout",
+              },
+            ],
           },
         },
       },
@@ -163,19 +168,23 @@ describe("PaginaDetalleAutomatizacion", () => {
   it("muestra empty state cuando no hay ejecuciones", async () => {
     mockFetchPorUrl([
       {
-        pattern: "/runs",
-        body: { success: true, data: [] },
-      },
-      {
         pattern: "/auto-1",
         body: {
           success: true,
           data: {
-            id: "auto-1",
-            name: "Sync diario",
-            isEnabled: true,
-            createdDate: "2026-06-01T08:00:00Z",
-            modifiedDate: "2026-06-15T09:00:00Z",
+            automatizacion: {
+              id: "auto-1",
+              name: "Sync diario",
+              espacioNombre: "Espacio A",
+              ownerNombre: "Test",
+              isEnabled: true,
+              triggerType: "scheduled",
+              ejecucionActiva: false,
+              puedeEjecutar: true,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-15T09:00:00Z",
+            },
+            ejecuciones: [],
           },
         },
       },
@@ -190,23 +199,26 @@ describe("PaginaDetalleAutomatizacion", () => {
     expect(document.body.textContent).toContain("No hay ejecuciones recientes");
   });
 
-  it("botón ejecutar disponible cuando no hay ejecución activa", async () => {
+  it("botón ejecutar disponible cuando puedeEjecutar es true", async () => {
     mockFetchPorUrl([
-      {
-        pattern: "/runs",
-        body: { success: true, data: [] },
-      },
       {
         pattern: "/auto-1",
         body: {
           success: true,
           data: {
-            id: "auto-1",
-            name: "Sync diario",
-            isEnabled: true,
-            ejecucionActiva: false,
-            createdDate: "2026-06-01T08:00:00Z",
-            modifiedDate: "2026-06-15T09:00:00Z",
+            automatizacion: {
+              id: "auto-1",
+              name: "Sync diario",
+              espacioNombre: "Espacio A",
+              ownerNombre: "Test",
+              isEnabled: true,
+              triggerType: "scheduled",
+              ejecucionActiva: false,
+              puedeEjecutar: true,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-15T09:00:00Z",
+            },
+            ejecuciones: [],
           },
         },
       },
@@ -228,20 +240,23 @@ describe("PaginaDetalleAutomatizacion", () => {
   it("botón ejecutar deshabilitado cuando ejecucionActiva es true", async () => {
     mockFetchPorUrl([
       {
-        pattern: "/runs",
-        body: { success: true, data: [] },
-      },
-      {
         pattern: "/auto-1",
         body: {
           success: true,
           data: {
-            id: "auto-1",
-            name: "Sync diario",
-            isEnabled: true,
-            ejecucionActiva: true,
-            createdDate: "2026-06-01T08:00:00Z",
-            modifiedDate: "2026-06-15T09:00:00Z",
+            automatizacion: {
+              id: "auto-1",
+              name: "Sync diario",
+              espacioNombre: "Espacio A",
+              ownerNombre: "Test",
+              isEnabled: true,
+              triggerType: "scheduled",
+              ejecucionActiva: true,
+              puedeEjecutar: false,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-15T09:00:00Z",
+            },
+            ejecuciones: [],
           },
         },
       },
@@ -260,32 +275,33 @@ describe("PaginaDetalleAutomatizacion", () => {
     expect(botonEjecutar.disabled).toBe(true);
   });
 
-  it("botón detener disponible cuando hay ejecución activa", async () => {
+  it("botón detener disponible cuando hay ejecución running", async () => {
     mockFetchPorUrl([
-      {
-        pattern: "/runs",
-        body: {
-          success: true,
-          data: [
-            {
-              id: "run-1",
-              status: "running",
-              startTime: "2026-07-01T10:00:00Z",
-            },
-          ],
-        },
-      },
       {
         pattern: "/auto-1",
         body: {
           success: true,
           data: {
-            id: "auto-1",
-            name: "Sync diario",
-            isEnabled: true,
-            ejecucionActiva: true,
-            createdDate: "2026-06-01T08:00:00Z",
-            modifiedDate: "2026-06-15T09:00:00Z",
+            automatizacion: {
+              id: "auto-1",
+              name: "Sync diario",
+              espacioNombre: "Espacio A",
+              ownerNombre: "Test",
+              isEnabled: true,
+              triggerType: "scheduled",
+              ejecucionActiva: true,
+              puedeEjecutar: false,
+              creadoEn: "2026-06-01T08:00:00Z",
+              modificadoEn: "2026-06-15T09:00:00Z",
+            },
+            ejecuciones: [
+              {
+                id: "run-1",
+                automationId: "auto-1",
+                status: "running",
+                startTime: "2026-07-01T10:00:00Z",
+              },
+            ],
           },
         },
       },
@@ -302,5 +318,48 @@ describe("PaginaDetalleAutomatizacion", () => {
     ) as HTMLButtonElement;
     expect(botonDetener).not.toBeNull();
     expect(botonDetener.disabled).toBe(false);
+  });
+
+  it("muestra fallback seguro para fechas vacías o inválidas", async () => {
+    mockFetchPorUrl([
+      {
+        pattern: "/auto-1",
+        body: {
+          success: true,
+          data: {
+            automatizacion: {
+              id: "auto-1",
+              name: "Fechas rotas",
+              espacioNombre: "Espacio A",
+              ownerNombre: "Test",
+              isEnabled: true,
+              triggerType: "manual",
+              ejecucionActiva: false,
+              puedeEjecutar: true,
+              creadoEn: "",
+              modificadoEn: "not-a-date",
+            },
+            ejecuciones: [
+              {
+                id: "run-1",
+                automationId: "auto-1",
+                status: "completed",
+                startTime: "",
+                endTime: "invalid",
+              },
+            ],
+          },
+        },
+      },
+    ]);
+
+    renderWithProviders(<PaginaDetalleAutomatizacion id="auto-1" />);
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    });
+
+    expect(document.body.textContent).not.toContain("Invalid Date");
+    expect(document.body.textContent).toContain("Fechas rotas");
   });
 });

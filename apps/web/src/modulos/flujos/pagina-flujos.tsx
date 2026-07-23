@@ -1,3 +1,5 @@
+import { EstadoError } from "@/componentes/feedback/estado-error";
+import { useNotificaciones } from "@/componentes/feedback/notificaciones";
 import { Button } from "@/componentes/ui/button";
 import {
   Card,
@@ -5,8 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/componentes/ui/card";
-import { apiCliente } from "@/infraestructura/api/cliente";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
 interface Flujo {
   id: string;
@@ -21,17 +23,53 @@ interface Flujo {
 }
 
 export function PaginaFlujos() {
-  const { data: flujos, isLoading } = useQuery<Flujo[]>({
+  const { mostrarError } = useNotificaciones();
+  const {
+    data: flujos,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<Flujo[]>({
     queryKey: ["flujos"],
     queryFn: async () => {
       const res = await fetch("/api/flujos");
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error);
-      return json.data;
+      let json: { success?: boolean; error?: string; data?: Flujo[] };
+      try {
+        json = await res.json();
+      } catch {
+        throw new Error("Error al cargar flujos");
+      }
+      if (!res.ok) throw new Error(json?.error ?? "Error al cargar flujos");
+      if (typeof json !== "object" || json === null)
+        throw new Error("Error al cargar flujos");
+      if (!json.success)
+        throw new Error(json?.error ?? "Error al cargar flujos");
+      return (json.data as Flujo[]) ?? [];
     },
+    retry: false,
   });
 
+  const errorMsgRef = useRef<string | null>(null);
+
+  // Reset marker when refetch begins (before fetch runs)
+  const handleRefetch = () => {
+    errorMsgRef.current = null;
+    refetch();
+  };
+
+  useEffect(() => {
+    if (isError && error?.message !== errorMsgRef.current) {
+      errorMsgRef.current = error.message ?? null;
+      mostrarError(error.message);
+    }
+  }, [isError, error, mostrarError]);
+
   if (isLoading) return <div>Cargando flujos...</div>;
+
+  if (isError) {
+    return <EstadoError mensaje={error.message} onReintentar={handleRefetch} />;
+  }
 
   return (
     <div>

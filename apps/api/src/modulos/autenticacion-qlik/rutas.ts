@@ -8,6 +8,8 @@ import {
   credencialesQlik,
   identidadesQlik,
   intentosOauthQlik,
+  membresiasOrganizacion,
+  organizaciones,
   sesionesUsuario,
   tenantsQlik,
   usuarios,
@@ -39,6 +41,9 @@ const ESTADO_COOKIE = "oauth_estado";
 const VERIFIER_COOKIE = "oauth_verifier";
 
 autenticacionQlikRouter.get("/iniciar", async (c) => {
+  console.info(
+    "OAuth iniciar: { clientePresente: true, configPresente: true }",
+  );
   const oauth = getOAuthCliente();
   const estado = oauth.generarEstado();
   const verifier = oauth.generarCodeVerifier();
@@ -69,158 +74,229 @@ autenticacionQlikRouter.get("/callback", async (c) => {
   const estadoGuardado = getCookie(c, ESTADO_COOKIE);
   const verifier = getCookie(c, VERIFIER_COOKIE);
 
+  console.info(
+    `OAuth callback recibido: { hasCode: ${!!code}, hasState: ${!!state}, hasVerifier: ${!!verifier} }`,
+  );
+
   deleteCookie(c, ESTADO_COOKIE);
   deleteCookie(c, VERIFIER_COOKIE);
 
   if (!code || !state || state !== estadoGuardado || !verifier) {
+    console.warn("OAuth callback: estado inválido");
     return c.json({ success: false, error: "OAuth state inválido" }, 400);
   }
 
-  const oauth = getOAuthCliente();
-  const tokens = await oauth.intercambiaCodigoPorTokens(code, verifier);
-  const usuarioQlik = await oauth.obtenerUsuario(tokens.accessToken);
+  const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
 
-  const hostTenant = "l676lvg3emfvcq2.us.qlikcloud.com";
+  try {
+    const oauth = getOAuthCliente();
+    const tokens = await oauth.intercambiaCodigoPorTokens(code, verifier);
+    console.info(
+      `OAuth token exchange: { ok: true, scopes: "${tokens.scope}", expiry: ${tokens.expiresIn} }`,
+    );
+    const usuarioQlik = await oauth.obtenerUsuario(tokens.accessToken);
+    console.info(`OAuth identidad encontrada: { id: "${usuarioQlik.id}" }`);
 
-  let tenant = await db.query.tenantsQlik.findFirst({
-    where: eq(tenantsQlik.host, hostTenant),
-  });
+    const hostTenant = "l676lvg3emfvcq2.us.qlikcloud.com";
 
-  if (!tenant) {
-    const [nuevoTenant] = await db
-      .insert(tenantsQlik)
-      .values({
-        tenantIdQlik: "default",
-        host: hostTenant,
-        nombre: "Tenant Principal",
-      })
-      .returning();
-    tenant = nuevoTenant;
-  }
+    let tenant = await db.query.tenantsQlik.findFirst({
+      where: eq(tenantsQlik.host, hostTenant),
+    });
 
-  const expiresAt = new Date(Date.now() + tokens.expiresIn * 1000);
-  const tokenAccesoCifrado = servicioCifrado.cifrar(tokens.accessToken);
-  const tokenRefrescoCifrado = tokens.refreshToken
-    ? servicioCifrado.cifrar(tokens.refreshToken)
-    : null;
+    let organizacionId: string;
 
-  let usuario = await db.query.usuarios.findFirst({
-    where: eq(usuarios.correo, usuarioQlik.email ?? ""),
-  });
+    if (!tenant) {
+      const nombreOrganizacion = `Qlik - ${hostTenant}`;
+      const [organizacion] = await db
+        .insert(organizaciones)
+        .values({ nombre: nombreOrganizacion })
+        .returning();
 
-  if (!usuario) {
-    const [nuevoUsuario] = await db
-      .insert(usuarios)
-      .values({
-        nombre: usuarioQlik.name ?? usuarioQlik.email ?? "Usuario Qlik",
-        correo: usuarioQlik.email,
-        avatarUrl: usuarioQlik.avatar,
-        ultimoAccesoEn: new Date(),
-      })
-      .returning();
-    usuario = nuevoUsuario;
-  } else {
-    await db
-      .update(usuarios)
-      .set({
-        nombre: usuarioQlik.name ?? usuario.nombre,
-        avatarUrl: usuarioQlik.avatar ?? usuario.avatarUrl,
-        ultimoAccesoEn: new Date(),
-      })
-      .where(eq(usuarios.id, usuario.id));
-  }
+      const [nuevoTenant] = await db
+        .insert(tenantsQlik)
+        .values({
+          tenantIdQlik: hostTenant,
+          host: hostTenant,
+          nombre: "Tenant Principal",
+          organizacionId: organizacion.id,
+        })
+        .returning();
+      tenant = nuevoTenant;
+      organizacionId = organizacion.id;
+    } else {
+      organizacionId = tenant.organizacionId;
+    }
 
-  let identidad = await db.query.identidadesQlik.findFirst({
-    where: and(
-      eq(identidadesQlik.usuarioIdQlik, usuarioQlik.id),
-      eq(identidadesQlik.tenantQlikId, tenant.id),
-    ),
-  });
+    const expiresAt = new Date(Date.now() + tokens.expiresIn * 1000);
+    const tokenAccesoCifrado = servicioCifrado.cifrar(tokens.accessToken);
+    const tokenRefrescoCifrado = tokens.refreshToken
+      ? servicioCifrado.cifrar(tokens.refreshToken)
+      : null;
 
-  if (!identidad) {
-    const [nuevaIdentidad] = await db
-      .insert(identidadesQlik)
-      .values({
+    let usuario = await db.query.usuarios.findFirst({
+      where: eq(usuarios.correo, usuarioQlik.email ?? ""),
+    });
+
+    if (!usuario) {
+      const [nuevoUsuario] = await db
+        .insert(usuarios)
+        .values({
+          nombre: usuarioQlik.name ?? usuarioQlik.email ?? "Usuario Qlik",
+          correo: usuarioQlik.email,
+          avatarUrl: usuarioQlik.avatar,
+          ultimoAccesoEn: new Date(),
+        })
+        .returning();
+      usuario = nuevoUsuario;
+    } else {
+      await db
+        .update(usuarios)
+        .set({
+          nombre: usuarioQlik.name ?? usuario.nombre,
+          avatarUrl: usuarioQlik.avatar ?? usuario.avatarUrl,
+          ultimoAccesoEn: new Date(),
+        })
+        .where(eq(usuarios.id, usuario.id));
+    }
+
+    let identidad = await db.query.identidadesQlik.findFirst({
+      where: and(
+        eq(identidadesQlik.usuarioIdQlik, usuarioQlik.id),
+        eq(identidadesQlik.tenantQlikId, tenant.id),
+      ),
+    });
+
+    if (!identidad) {
+      const [nuevaIdentidad] = await db
+        .insert(identidadesQlik)
+        .values({
+          usuarioId: usuario.id,
+          tenantQlikId: tenant.id,
+          usuarioIdQlik: usuarioQlik.id,
+          sujetoQlik: usuarioQlik.name,
+          nombreQlik: usuarioQlik.name,
+          correoQlik: usuarioQlik.email,
+          avatarQlik: usuarioQlik.avatar,
+          estadoQlik: "activo",
+        })
+        .returning();
+      identidad = nuevaIdentidad;
+    } else {
+      await db
+        .update(identidadesQlik)
+        .set({
+          nombreQlik: usuarioQlik.name ?? identidad.nombreQlik,
+          correoQlik: usuarioQlik.email ?? identidad.correoQlik,
+          avatarQlik: usuarioQlik.avatar ?? identidad.avatarQlik,
+          sincronizadoEn: new Date(),
+        })
+        .where(eq(identidadesQlik.id, identidad.id));
+    }
+
+    // Asegurar membresía usuario-organización (sin duplicar)
+    const membresiaExistente = await db.query.membresiasOrganizacion.findFirst({
+      where: and(
+        eq(membresiasOrganizacion.organizacionId, organizacionId),
+        eq(membresiasOrganizacion.usuarioId, usuario.id),
+      ),
+    });
+
+    if (!membresiaExistente) {
+      await db.insert(membresiasOrganizacion).values({
+        organizacionId,
         usuarioId: usuario.id,
-        tenantQlikId: tenant.id,
-        usuarioIdQlik: usuarioQlik.id,
-        sujetoQlik: usuarioQlik.name,
-        nombreQlik: usuarioQlik.name,
-        correoQlik: usuarioQlik.email,
-        avatarQlik: usuarioQlik.avatar,
-        estadoQlik: "activo",
-      })
-      .returning();
-    identidad = nuevaIdentidad;
-  } else {
-    await db
-      .update(identidadesQlik)
-      .set({
-        nombreQlik: usuarioQlik.name ?? identidad.nombreQlik,
-        correoQlik: usuarioQlik.email ?? identidad.correoQlik,
-        avatarQlik: usuarioQlik.avatar ?? identidad.avatarQlik,
-        sincronizadoEn: new Date(),
-      })
-      .where(eq(identidadesQlik.id, identidad.id));
-  }
+        rol: "usuario",
+      });
+    }
 
-  const credencialExistente = await db.query.credencialesQlik.findFirst({
-    where: eq(credencialesQlik.identidadQlikId, identidad.id),
-  });
+    const credencialExistente = await db.query.credencialesQlik.findFirst({
+      where: eq(credencialesQlik.identidadQlikId, identidad.id),
+    });
 
-  if (credencialExistente) {
-    await db
-      .update(credencialesQlik)
-      .set({
+    if (credencialExistente) {
+      await db
+        .update(credencialesQlik)
+        .set({
+          tokenAccesoCifrado: JSON.stringify(tokenAccesoCifrado),
+          tokenRefrescoCifrado: tokenRefrescoCifrado
+            ? JSON.stringify(tokenRefrescoCifrado)
+            : null,
+          tokenExpiraEn: expiresAt,
+          version: credencialExistente.version + 1,
+          actualizadoEn: new Date(),
+        })
+        .where(eq(credencialesQlik.id, credencialExistente.id));
+    } else {
+      await db.insert(credencialesQlik).values({
+        identidadQlikId: identidad.id,
         tokenAccesoCifrado: JSON.stringify(tokenAccesoCifrado),
         tokenRefrescoCifrado: tokenRefrescoCifrado
           ? JSON.stringify(tokenRefrescoCifrado)
           : null,
+        scopes: tokens.scope.split(" "),
         tokenExpiraEn: expiresAt,
-        version: credencialExistente.version + 1,
-        actualizadoEn: new Date(),
-      })
-      .where(eq(credencialesQlik.id, credencialExistente.id));
-  } else {
-    await db.insert(credencialesQlik).values({
+      });
+    }
+
+    const sesionToken = crypto.randomBytes(32).toString("hex");
+    const sesionHash = crypto
+      .createHash("sha256")
+      .update(sesionToken)
+      .digest("hex");
+    const sesionExpiraEn = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await db.insert(sesionesUsuario).values({
+      usuarioId: usuario.id,
       identidadQlikId: identidad.id,
-      tokenAccesoCifrado: JSON.stringify(tokenAccesoCifrado),
-      tokenRefrescoCifrado: tokenRefrescoCifrado
-        ? JSON.stringify(tokenRefrescoCifrado)
-        : null,
-      scopes: tokens.scope.split(" "),
-      tokenExpiraEn: expiresAt,
+      tokenSesionHash: sesionHash,
+      ipCreacion:
+        c.req.header("x-forwarded-for") ??
+        c.req.header("cf-connecting-ip") ??
+        "unknown",
+      agenteUsuario: c.req.header("user-agent") ?? "unknown",
+      expiraEn: sesionExpiraEn,
     });
+
+    setCookie(c, SESION_COOKIE, sesionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
+    console.info("OAuth sesión creada");
+    return c.redirect(`${FRONTEND_URL}/`);
+  } catch (error) {
+    const err = error as Error;
+    let codigoError = "login_failed";
+    const etapa = "oauth_callback";
+
+    // Mapear errores de Qlik/identidad a código sobre scopes
+    if (
+      err.message.includes("401") ||
+      err.message.includes("/api/v1/users/me") ||
+      err.message.includes("identity")
+    ) {
+      codigoError = "identity_scope_error";
+    }
+
+    // Loguear error sanitizado: status, etapa, mensaje sin tokens/secret/html
+    const mensajeSanitizado = err.message
+      .replace(/[A-Za-z0-9-_]{20,}AccessToken[A-Za-z0-9-_]*/g, "[TOKEN]")
+      .replace(/code=[A-Za-z0-9-_]{10,}/g, "code=[CODIGO]")
+      .replace(/code_verifier=[A-Za-z0-9-_]{10,}/g, "code_verifier=[VERIFIER]")
+      .replace(/client_secret=[^&\s]+/g, "client_secret=[SECRET]")
+      .replace(/<[^>]+>/g, "")
+      .slice(0, 200);
+    console.error(
+      `OAuth error: { status: 500, etapa: "${etapa}", mensaje: "${mensajeSanitizado}" }`,
+    );
+
+    const url = new URL(`${FRONTEND_URL}/login`);
+    url.searchParams.set("oauth_error", codigoError);
+    return c.redirect(url.toString());
   }
-
-  const sesionToken = crypto.randomBytes(32).toString("hex");
-  const sesionHash = crypto
-    .createHash("sha256")
-    .update(sesionToken)
-    .digest("hex");
-  const sesionExpiraEn = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-  await db.insert(sesionesUsuario).values({
-    usuarioId: usuario.id,
-    identidadQlikId: identidad.id,
-    tokenSesionHash: sesionHash,
-    ipCreacion:
-      c.req.header("x-forwarded-for") ??
-      c.req.header("cf-connecting-ip") ??
-      "unknown",
-    agenteUsuario: c.req.header("user-agent") ?? "unknown",
-    expiraEn: sesionExpiraEn,
-  });
-
-  setCookie(c, SESION_COOKIE, sesionToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax",
-    maxAge: 60 * 60 * 24 * 7,
-    path: "/",
-  });
-
-  return c.redirect("/");
 });
 
 autenticacionQlikRouter.get("/sesion", async (c) => {

@@ -2,6 +2,8 @@ services:
   base_datos:
     image: postgres:17-alpine
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: qlik_automatizaciones
       POSTGRES_USER: qlik_app

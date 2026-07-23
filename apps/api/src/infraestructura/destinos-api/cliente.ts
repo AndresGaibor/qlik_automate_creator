@@ -16,13 +16,42 @@ const DataflowRecordSchema = z.object({
 
 export type DataflowRecord = z.infer<typeof DataflowRecordSchema>;
 
+function validarConfiguracionDestinos(
+  baseUrl: string,
+  apiKey: string,
+): { url: string; key: string } {
+  const url = baseUrl.trim();
+  const key = apiKey.trim();
+
+  if (!url) {
+    throw new Error(
+      "REMOTE_API_URL no puede estar vacío. Configura la URL base de la API de destinos.",
+    );
+  }
+
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    throw new Error(
+      `REMOTE_API_URL debe ser una URL válida que comience con http:// o https://. Valor recibido: "${url}"`,
+    );
+  }
+
+  if (!key) {
+    throw new Error(
+      "REMOTE_API_KEY no puede estar vacío. Configura la clave de API para la API de destinos.",
+    );
+  }
+
+  return { url, key };
+}
+
 export class ClienteDestinos {
-  private baseUrl: string;
-  private apiKey: string;
+  private readonly baseUrl: string;
+  private readonly apiKey: string;
 
   constructor(baseUrl: string, apiKey: string) {
-    this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
+    const config = validarConfiguracionDestinos(baseUrl, apiKey);
+    this.baseUrl = config.url;
+    this.apiKey = config.key;
   }
 
   private async request<T>(endpoint: string): Promise<T> {

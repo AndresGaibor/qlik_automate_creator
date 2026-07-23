@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
-import { ClienteQlik } from "./cliente.js";
+import { ClienteQlik, QlikApiError } from "./cliente.js";
 import type {
   AutomatizacionQlik,
   EjecucionQlik,
   EspacioQlik,
   FlujoQlik,
 } from "./tipos.js";
+import type { UsuarioQlik } from "./tipos.js";
 
 const MOCK_HOST = "test.qlik.com";
 const MOCK_TOKEN = "test-token";
@@ -48,16 +49,54 @@ describe("ClienteQlik", () => {
       );
     });
 
-    it("throws error when API fails", async () => {
+    it("throws QlikApiError with status code when API fails", async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 401,
         statusText: "Unauthorized",
       }) as unknown as typeof fetch;
 
-      await expect(cliente.listarEspacios()).rejects.toThrow(
-        "Qlik API error: 401 Unauthorized",
-      );
+      try {
+        await cliente.listarEspacios();
+        expect.unreachable("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(QlikApiError);
+        expect((error as QlikApiError).statusCode).toBe(401);
+        expect((error as QlikApiError).endpoint).toBe("/api/v1/spaces");
+        expect((error as QlikApiError).message).toContain("401");
+      }
+    });
+
+    it("throws QlikApiError for 404 responses", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+      }) as unknown as typeof fetch;
+
+      try {
+        await cliente.listarEspacios();
+        expect.unreachable("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(QlikApiError);
+        expect((error as QlikApiError).statusCode).toBe(404);
+      }
+    });
+
+    it("throws QlikApiError for 403 responses", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+      }) as unknown as typeof fetch;
+
+      try {
+        await cliente.listarEspacios();
+        expect.unreachable("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(QlikApiError);
+        expect((error as QlikApiError).statusCode).toBe(403);
+      }
     });
   });
 
@@ -84,7 +123,7 @@ describe("ClienteQlik", () => {
 
       expect(result).toEqual(mockFlujos);
       expect(fetch).toHaveBeenCalledWith(
-        `https://${MOCK_HOST}/api/v1/dataflows`,
+        `https://${MOCK_HOST}/api/v1/di-projects`,
         expect.any(Object),
       );
     });
@@ -98,7 +137,7 @@ describe("ClienteQlik", () => {
       await cliente.listarFlujos("esp-1");
 
       expect(fetch).toHaveBeenCalledWith(
-        `https://${MOCK_HOST}/api/v1/dataflows?spaceId=esp-1`,
+        `https://${MOCK_HOST}/api/v1/di-projects?spaceId=esp-1`,
         expect.any(Object),
       );
     });
@@ -127,6 +166,10 @@ describe("ClienteQlik", () => {
       const result = await cliente.listarAutomatizaciones();
 
       expect(result).toEqual(mockAutomatizaciones);
+      expect(fetch).toHaveBeenCalledWith(
+        `https://${MOCK_HOST}/api/workflows/automations`,
+        expect.any(Object),
+      );
     });
 
     it("passes filter params when provided", async () => {
@@ -145,6 +188,41 @@ describe("ClienteQlik", () => {
         `https://${MOCK_HOST}/api/workflows/automations?spaceId=esp-1&ownerId=usr-1&name=Test`,
         expect.any(Object),
       );
+    });
+
+    it("throws QlikApiError when Qlik returns 403", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+      }) as unknown as typeof fetch;
+
+      try {
+        await cliente.listarAutomatizaciones();
+        expect.unreachable("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(QlikApiError);
+        expect((error as QlikApiError).statusCode).toBe(403);
+        expect((error as QlikApiError).endpoint).toBe(
+          "/api/workflows/automations",
+        );
+      }
+    });
+
+    it("throws QlikApiError when Qlik returns 404", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+      }) as unknown as typeof fetch;
+
+      try {
+        await cliente.listarAutomatizaciones();
+        expect.unreachable("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(QlikApiError);
+        expect((error as QlikApiError).statusCode).toBe(404);
+      }
     });
   });
 
@@ -176,7 +254,7 @@ describe("ClienteQlik", () => {
   });
 
   describe("listarEjecuciones", () => {
-    it("returns executions for automation", async () => {
+    it("returns executions for automation with default desc sort (-startTime)", async () => {
       const mockEjecuciones: EjecucionQlik[] = [
         {
           id: "run-1",
@@ -195,22 +273,38 @@ describe("ClienteQlik", () => {
       const result = await cliente.listarEjecuciones("auto-1");
 
       expect(result).toEqual(mockEjecuciones);
+      // sort=desc se traduce a -startTime para el API real de Qlik
       expect(fetch).toHaveBeenCalledWith(
-        `https://${MOCK_HOST}/api/workflows/automations/auto-1/runs?limit=10`,
+        `https://${MOCK_HOST}/api/workflows/automations/auto-1/runs?limit=10&sort=-startTime`,
         expect.any(Object),
       );
     });
 
-    it("uses custom limit when provided", async () => {
+    it("uses custom limit and sort when provided (asc → startTime)", async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ data: [] }),
       }) as unknown as typeof fetch;
 
-      await cliente.listarEjecuciones("auto-1", { limit: 50 });
+      await cliente.listarEjecuciones("auto-1", { limit: 50, sort: "asc" });
+
+      // sort=asc se traduce a startTime para el API real de Qlik
+      expect(fetch).toHaveBeenCalledWith(
+        `https://${MOCK_HOST}/api/workflows/automations/auto-1/runs?limit=50&sort=startTime`,
+        expect.any(Object),
+      );
+    });
+
+    it("uses desc sort by default even with custom limit", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }),
+      }) as unknown as typeof fetch;
+
+      await cliente.listarEjecuciones("auto-1", { limit: 1 });
 
       expect(fetch).toHaveBeenCalledWith(
-        `https://${MOCK_HOST}/api/workflows/automations/auto-1/runs?limit=50`,
+        `https://${MOCK_HOST}/api/workflows/automations/auto-1/runs?limit=1&sort=-startTime`,
         expect.any(Object),
       );
     });
@@ -259,6 +353,130 @@ describe("ClienteQlik", () => {
         `https://${MOCK_HOST}/api/workflows/automations/auto-1/runs`,
         expect.objectContaining({ method: "POST" }),
       );
+    });
+  });
+
+  describe("detenerEjecucion", () => {
+    it("sends POST to /actions/stop to stop a running execution", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+      }) as unknown as typeof fetch;
+
+      await cliente.detenerEjecucion("auto-1", "run-456");
+
+      // El API real usa POST /runs/{runId}/actions/stop
+      expect(fetch).toHaveBeenCalledWith(
+        `https://${MOCK_HOST}/api/workflows/automations/auto-1/runs/run-456/actions/stop`,
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    it("does not throw on 204 No Content response", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+      }) as unknown as typeof fetch;
+
+      await expect(
+        cliente.detenerEjecucion("auto-1", "run-456"),
+      ).resolves.toBeUndefined();
+    });
+
+    it("throws QlikApiError when stop fails", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+      }) as unknown as typeof fetch;
+
+      try {
+        await cliente.detenerEjecucion("auto-1", "run-999");
+        expect.unreachable("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(QlikApiError);
+        expect((error as QlikApiError).statusCode).toBe(404);
+      }
+    });
+  });
+
+  describe("obtenerEspacio", () => {
+    it("returns space by id", async () => {
+      const mockEspacio: EspacioQlik = {
+        id: "esp-1",
+        name: "Espacio Compartido",
+        type: "shared",
+        owner: { id: "usr-1", name: "Juan Perez" },
+        createdDate: "2024-01-01T00:00:00Z",
+        modifiedDate: "2024-01-02T00:00:00Z",
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: mockEspacio }),
+      }) as unknown as typeof fetch;
+
+      const result = await cliente.obtenerEspacio("esp-1");
+
+      expect(result).toEqual(mockEspacio);
+      expect(fetch).toHaveBeenCalledWith(
+        `https://${MOCK_HOST}/api/v1/spaces/esp-1`,
+        expect.any(Object),
+      );
+    });
+
+    it("throws QlikApiError when space not found", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+      }) as unknown as typeof fetch;
+
+      try {
+        await cliente.obtenerEspacio("esp-999");
+        expect.unreachable("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(QlikApiError);
+        expect((error as QlikApiError).statusCode).toBe(404);
+      }
+    });
+  });
+
+  describe("obtenerUsuario", () => {
+    it("returns user by id", async () => {
+      const mockUsuario: UsuarioQlik = {
+        id: "usr-1",
+        name: "Juan Perez",
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: mockUsuario }),
+      }) as unknown as typeof fetch;
+
+      const result = await cliente.obtenerUsuario("usr-1");
+
+      expect(result).toEqual(mockUsuario);
+      expect(fetch).toHaveBeenCalledWith(
+        `https://${MOCK_HOST}/api/v1/users/usr-1`,
+        expect.any(Object),
+      );
+    });
+
+    it("throws QlikApiError when user not found", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+      }) as unknown as typeof fetch;
+
+      try {
+        await cliente.obtenerUsuario("usr-999");
+        expect.unreachable("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(QlikApiError);
+        expect((error as QlikApiError).statusCode).toBe(404);
+      }
     });
   });
 });

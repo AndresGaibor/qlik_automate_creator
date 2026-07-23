@@ -20,28 +20,66 @@ export interface FlujoQlik {
   };
 }
 
+/**
+ * Schema real de Qlik Automations API.
+ * Soporta ambos shapes: el real (state/runMode/ownerId/createdAt/updatedAt/lastRun)
+ * y el legacy (isEnabled/triggerType/owner.name/createdDate/modifiedDate/lastExecution).
+ */
 export interface AutomatizacionQlik {
   id: string;
   name: string;
   spaceId?: string;
-  owner: { id: string; name: string };
-  isEnabled: boolean;
-  triggerType: string;
+
+  // ── Schema real Qlik ──────────────────────────────────────────────
+  state?: "available" | "disabled" | string;
+  runMode?: string;
+  ownerId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  lastRun?: {
+    id: string;
+    status: string;
+    startTime: string;
+    endTime?: string;
+  };
+  lastRunStatus?: string;
+  lastRunAt?: string;
+
+  // ── Compatibilidad legacy (shape viejo) ───────────────────────────
+  owner?: { id: string; name: string };
+  isEnabled?: boolean;
+  triggerType?: string;
   lastExecution?: {
     id: string;
     status: string;
     startTime: string;
     endTime?: string;
   };
-  createdDate: string;
-  modifiedDate: string;
+  createdDate?: string;
+  modifiedDate?: string;
 }
+
+export interface UsuarioQlik {
+  id: string;
+  name: string;
+}
+
+export type EstadoEjecucion =
+  | "started"
+  | "running"
+  | "queued"
+  | "pending"
+  | "completed"
+  | "failed"
+  | "cancelled";
 
 export interface EjecucionQlik {
   id: string;
   automationId: string;
-  status: "started" | "completed" | "failed" | "cancelled";
+  status: EstadoEjecucion;
   startTime: string;
+  /** Fin de la ejecución — Qlik usa stopTime en runs */
   endTime?: string;
+  stopTime?: string;
   error?: string;
 }

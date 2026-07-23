@@ -4,18 +4,25 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@": resolve(__dirname, "./src"),
+    plugins: [react()],
+    resolve: {
+        alias: {
+            "@": resolve(__dirname, "./src"),
+        },
     },
-  },
-  server: {
-    proxy: {
-      "/api": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-      },
+    server: {
+        host: "localhost",
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: "localhost",
+            port: 5173,
+        },
+        proxy: {
+            "/api": {
+                target: "http://localhost:3000",
+                changeOrigin: true,
+            },
+        },
     },
-  },
 });

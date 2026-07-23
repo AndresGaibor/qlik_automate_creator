@@ -2,10 +2,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ClienteApi } from "./cliente";
 
-globalThis.window = {
-  location: { origin: "http://localhost" },
-} as unknown as Window;
-
 describe("ClienteApi", () => {
   const originalFetch = global.fetch;
 
@@ -98,6 +94,36 @@ describe("ClienteApi", () => {
         expect.stringContaining("/api/test/1"),
         expect.objectContaining({ method: "DELETE" }),
       );
+    });
+  });
+
+  describe("handleResponse", () => {
+    it("should throw safe error when JSON is invalid", async () => {
+      const mockResponse = {
+        ok: true,
+        status: 500,
+        json: () => Promise.reject(new SyntaxError("Unexpected token")),
+      };
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const api = new ClienteApi("/api");
+
+      await expect(api.get("/test")).rejects.toThrow(
+        "Error en respuesta del servidor",
+      );
+    });
+
+    it("should throw error when response has success:false", async () => {
+      const mockResponse = {
+        ok: true,
+        json: () =>
+          Promise.resolve({ success: false, error: "Recurso no encontrado" }),
+      };
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const api = new ClienteApi("/api");
+
+      await expect(api.get("/test")).rejects.toThrow("Recurso no encontrado");
     });
   });
 });

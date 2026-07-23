@@ -3,7 +3,23 @@ import type {
   EjecucionQlik,
   EspacioQlik,
   FlujoQlik,
+  UsuarioQlik,
 } from "./tipos.js";
+
+/**
+ * Error que preserva el status code HTTP de la respuesta de Qlik,
+ * para que las rutas puedan mapear a un status HTTP adecuado.
+ */
+export class QlikApiError extends Error {
+  constructor(
+    public readonly statusCode: number,
+    public readonly statusText: string,
+    public readonly endpoint: string,
+  ) {
+    super(`Qlik API error: ${statusCode} ${statusText} (${endpoint})`);
+    this.name = "QlikApiError";
+  }
+}
 
 export class ClienteQlik {
   private host: string;
@@ -29,9 +45,11 @@ export class ClienteQlik {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Qlik API error: ${response.status} ${response.statusText}`,
-      );
+      throw new QlikApiError(response.status, response.statusText, endpoint);
+    }
+
+    if (response.status === 204) {
+      return undefined as T;
     }
 
     return response.json();
@@ -45,7 +63,7 @@ export class ClienteQlik {
   async listarFlujos(espacioId?: string): Promise<FlujoQlik[]> {
     const params = espacioId ? `?spaceId=${espacioId}` : "";
     const data = await this.request<{ data: FlujoQlik[] }>(
-      `/api/v1/dataflows${params}`,
+      `/api/v1/di-projects${params}`,
     );
     return data.data;
   }
@@ -74,11 +92,14 @@ export class ClienteQlik {
 
   async listarEjecuciones(
     automatizacionId: string,
-    opciones: { limit?: number } = {},
+    opciones: { limit?: number; sort?: "asc" | "desc" } = {},
   ): Promise<EjecucionQlik[]> {
     const limit = opciones.limit ?? 10;
+    const sortDir = opciones.sort ?? "desc";
+    // El cliente Qlik real usa `-startTime` para descendente y `startTime` para ascendente.
+    const sortParam = sortDir === "desc" ? "-startTime" : "startTime";
     const data = await this.request<{ data: EjecucionQlik[] }>(
-      `/api/workflows/automations/${automatizacionId}/runs?limit=${limit}`,
+      `/api/workflows/automations/${automatizacionId}/runs?limit=${limit}&sort=${sortParam}`,
     );
     return data.data;
   }
@@ -107,6 +128,30 @@ export class ClienteQlik {
     const data = await this.request<{ data: { runId: string } }>(
       `/api/workflows/automations/${id}/runs`,
       { method: "POST" },
+    );
+    return data.data;
+  }
+
+  async detenerEjecucion(
+    automatizacionId: string,
+    runId: string,
+  ): Promise<void> {
+    await this.request<unknown>(
+      `/api/workflows/automations/${automatizacionId}/runs/${runId}/actions/stop`,
+      { method: "POST" },
+    );
+  }
+
+  async obtenerEspacio(id: string): Promise<EspacioQlik> {
+    const data = await this.request<{ data: EspacioQlik }>(
+      `/api/v1/spaces/${id}`,
+    );
+    return data.data;
+  }
+
+  async obtenerUsuario(id: string): Promise<UsuarioQlik> {
+    const data = await this.request<{ data: UsuarioQlik }>(
+      `/api/v1/users/${id}`,
     );
     return data.data;
   }

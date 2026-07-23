@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run --cwd src entrada-bun.ts",
+    "dev": "bun --env-file=../../.env run src/entrada-bun.ts",
     "build": "bun build src/entrada-node.ts --target=node --outdir=dist",
     "start": "node dist/entrada-node.js",
     "db:generate": "drizzle-kit generate",
