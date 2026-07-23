@@ -72,12 +72,13 @@ export function aResumen(
   mapaEsp: Map<string, string>,
   mapaUsr?: Map<string, string>,
 ): ResumenAutomatizacion {
-  // ── espacioNombre: nombre normalizado del mapa → spaceId → "Sin espacio" ──
+  // ── espacioNombre: normalizar spaceId → nombre mapa → spaceId normalizado → "Sin espacio" ──
+  const spaceIdNormalizado = normalizarNombre(auto.spaceId);
   const nombreEspacioRaw =
     auto.spaceId ? mapaEsp.get(auto.spaceId) : undefined;
   const espacioNombre =
-    auto.spaceId
-      ? normalizarNombre(nombreEspacioRaw) ?? auto.spaceId
+    spaceIdNormalizado !== undefined
+      ? normalizarNombre(nombreEspacioRaw) ?? spaceIdNormalizado
       : "Sin espacio";
 
   // ── isEnabled: schema real usa `state`, legacy usa `isEnabled` ─────
@@ -87,12 +88,14 @@ export function aResumen(
   // ── triggerType: schema real usa `runMode`, legacy usa `triggerType` ─
   const triggerType = auto.triggerType ?? auto.runMode ?? "unknown";
 
-  // ── ownerNombre: normalizado(owner.name) → normalizado(mapaUsr) → ownerId → owner.id (legacy) → fallback ──
+  // ── ownerNombre: normalizado(owner.name) → normalizado(mapaUsr) → ownerId normalizado → owner.id normalizado → fallback ──
+  const ownerIdNormalizado = normalizarNombre(auto.ownerId);
+  const ownerIdLegacyNormalizado = normalizarNombre(auto.owner?.id);
   const ownerNombreRaw =
     normalizarNombre(auto.owner?.name)
     ?? normalizarNombre(auto.ownerId ? mapaUsr?.get(auto.ownerId) : undefined)
-    ?? auto.ownerId
-    ?? auto.owner?.id;
+    ?? ownerIdNormalizado
+    ?? ownerIdLegacyNormalizado;
   const ownerNombre = ownerNombreRaw ?? "Sin propietario";
 
   // ── Fechas: schema real usa `createdAt`/`updatedAt`, legacy `createdDate`/`modifiedDate`

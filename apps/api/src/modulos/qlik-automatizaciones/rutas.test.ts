@@ -883,6 +883,106 @@ describe("GET /api/qlik/automatizaciones", () => {
     expect(body.success).toBe(true);
     expect(body.data[0].ownerNombre).toBe("usr-blank-legacy-ws");
   });
+
+  it("usa email cuando name es '   ' (whitespace) y email presente — no bloqueado por name", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-ws-name-email",
+          name: "Auto WS Name Email",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-ws-name",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockResolvedValue({
+        id: "usr-ws-name",
+        name: "  \t",
+        email: "juan@example.com",
+      }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // name whitespace → normalizado → undefined → cae a email
+    expect(body.data[0].ownerNombre).toBe("juan@example.com");
+  });
+
+  it("usa subject cuando name y email son whitespace y subject presente", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-ws-name-no-email",
+          name: "Auto WS Name No Email",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-ws-no-email",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockResolvedValue({
+        id: "usr-ws-no-email",
+        name: "  ",
+        email: "",
+        subject: "uid:usr-ws-no-email:subject",
+      }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data[0].ownerNombre).toBe("uid:usr-ws-no-email:subject");
+  });
+
+  it("cae a Sin propietario cuando owner.id es whitespace y no hay otro owner info", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-ws-owner-id",
+          name: "Auto WS Owner ID",
+          spaceId: "esp-1",
+          owner: { id: "  ", name: "" },
+          isEnabled: true,
+          triggerType: "manual",
+        },
+      ]),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // owner.name blank → undefined; owner.id whitespace → undefined → "Sin propietario"
+    expect(body.data[0].ownerNombre).toBe("Sin propietario");
+  });
+
+  it("devuelve Sin espacio cuando spaceId es whitespace y no hay otro espacio info", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-ws-spaceid",
+          name: "Auto WS SpaceId",
+          spaceId: "  \t",
+          state: "available",
+          ownerId: "usr-1",
+        },
+      ]),
+      listarEspacios: vi.fn().mockResolvedValue([]),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // spaceId whitespace → normalizado → "Sin espacio"
+    expect(body.data[0].espacioNombre).toBe("Sin espacio");
+  });
 });
 
 // ─── GET /:id ──────────────────────────────────────────────────────────────

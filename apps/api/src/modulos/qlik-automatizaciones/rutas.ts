@@ -138,12 +138,14 @@ async function resolverMapaEspacios(
 
   for (let i = 0; i < faltantes.length; i++) {
     const resultado = resultados[i];
+    const espacioId = normalizarNombre(faltantes[i]);
     if (
       resultado.status === "fulfilled"
+      && espacioId !== undefined
       && resultado.value?.name
       && resultado.value.name.trim()
     ) {
-      mapa.set(faltantes[i], resultado.value.name.trim());
+      mapa.set(espacioId, resultado.value.name.trim());
     }
   }
 

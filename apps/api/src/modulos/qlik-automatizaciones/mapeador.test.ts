@@ -337,6 +337,40 @@ describe("aResumen", () => {
       const resumen = aResumen(autoBlankUsrMap2, mapa, mapaUsrBlank);
       expect(resumen.ownerNombre).toBe("usr-blank");
     });
+
+    it("returns 'Sin espacio' when spaceId is whitespace-only", () => {
+      const autoWsSpaceId = {
+        id: "auto-ws-space",
+        name: "WS Space Auto",
+        spaceId: "  \t",
+        state: "available",
+      } satisfies AutomatizacionQlik;
+      const resumen = aResumen(autoWsSpaceId, mapa);
+      expect(resumen.espacioNombre).toBe("Sin espacio");
+    });
+
+    it("returns 'Sin propietario' when ownerId is whitespace-only", () => {
+      const autoWsOwnerId = {
+        id: "auto-ws-ownerid",
+        name: "WS OwnerId Auto",
+        state: "available",
+        ownerId: "  \n",
+      } satisfies AutomatizacionQlik;
+      const resumen = aResumen(autoWsOwnerId, mapa);
+      expect(resumen.ownerNombre).toBe("Sin propietario");
+    });
+
+    it("returns 'Sin propietario' when owner.id (legacy) is whitespace-only", () => {
+      const autoWsOwnerIdLegacy = {
+        id: "auto-ws-ownerid-legacy",
+        name: "WS OwnerId Legacy Auto",
+        owner: { id: "  \r", name: "" },
+        isEnabled: true,
+        triggerType: "manual",
+      } satisfies AutomatizacionQlik;
+      const resumen = aResumen(autoWsOwnerIdLegacy, mapa);
+      expect(resumen.ownerNombre).toBe("Sin propietario");
+    });
   });
 });
 
