@@ -143,15 +143,20 @@ export class ClienteQlik {
   }
 
   async obtenerEspacio(id: string): Promise<EspacioQlik> {
-    const data = await this.request<{ data: EspacioQlik }>(
+    const data = await this.request<{ data: EspacioQlik } | EspacioQlik>(
       `/api/v1/spaces/${id}`,
     );
-    return data.data;
+    // Qlik Spaces API puede devolver { data: espacio } o el espacio directo
+    if ("data" in data) {
+      return data.data;
+    }
+    return data;
   }
 
-  async obtenerUsuario(id: string): Promise<UsuarioQlik> {
+  async obtenerUsuario(id: string, campos?: string): Promise<UsuarioQlik> {
+    const query = campos ? `?fields=${campos}` : "";
     const data = await this.request<{ data: UsuarioQlik }>(
-      `/api/v1/users/${id}`,
+      `/api/v1/users/${id}${query}`,
     );
     return data.data;
   }

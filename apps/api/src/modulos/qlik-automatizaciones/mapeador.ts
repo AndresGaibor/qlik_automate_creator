@@ -13,23 +13,42 @@ import type {
 const ESTADOS_ACTIVOS = new Set(["running", "queued", "pending", "started"]);
 
 /**
+ * Normaliza un nombre visible: null, undefined, "" o solo whitespace → undefined.
+ * Cualquier otro string se trim() para eliminar bordes.
+ * Útil para que valores en blanco no se rendericen ni se guarden en mapas.
+ */
+export function normalizarNombre(valor: string | null | undefined): string | undefined {
+  if (valor == null) return undefined;
+  const trimmed = valor.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
+
+/**
  * Construye un mapa de spaceId → nombre de espacio.
+ * Ignora entradas cuyo name sea blank (null | undefined | "" | whitespace).
  */
 export function mapaEspacios(espacios: EspacioQlik[]): Map<string, string> {
   const mapa = new Map<string, string>();
   for (const esp of espacios) {
-    mapa.set(esp.id, esp.name);
+    const nombre = normalizarNombre(esp.name);
+    if (nombre !== undefined) {
+      mapa.set(esp.id, nombre);
+    }
   }
   return mapa;
 }
 
 /**
  * Construye un mapa de userId → nombre de usuario.
+ * Ignora entradas cuyo name sea blank (null | undefined | "" | whitespace).
  */
 export function mapaUsuarios(usuarios: UsuarioQlik[]): Map<string, string> {
   const mapa = new Map<string, string>();
   for (const usr of usuarios) {
-    mapa.set(usr.id, usr.name);
+    const nombre = normalizarNombre(usr.name);
+    if (nombre !== undefined) {
+      mapa.set(usr.id, nombre);
+    }
   }
   return mapa;
 }
@@ -53,9 +72,13 @@ export function aResumen(
   mapaEsp: Map<string, string>,
   mapaUsr?: Map<string, string>,
 ): ResumenAutomatizacion {
-  const espacioNombre = auto.spaceId
-    ? (mapaEsp.get(auto.spaceId) ?? auto.spaceId)
-    : "Sin espacio";
+  // ── espacioNombre: nombre normalizado del mapa → spaceId → "Sin espacio" ──
+  const nombreEspacioRaw =
+    auto.spaceId ? mapaEsp.get(auto.spaceId) : undefined;
+  const espacioNombre =
+    auto.spaceId
+      ? normalizarNombre(nombreEspacioRaw) ?? auto.spaceId
+      : "Sin espacio";
 
   // ── isEnabled: schema real usa `state`, legacy usa `isEnabled` ─────
   const isEnabled =
@@ -64,12 +87,13 @@ export function aResumen(
   // ── triggerType: schema real usa `runMode`, legacy usa `triggerType` ─
   const triggerType = auto.triggerType ?? auto.runMode ?? "unknown";
 
-  // ── ownerNombre: owner.name → nombre resuelto → ownerId → fallback ──
-  const ownerNombre =
-    auto.owner?.name
-    ?? (auto.ownerId && mapaUsr?.get(auto.ownerId))
+  // ── ownerNombre: normalizado(owner.name) → normalizado(mapaUsr) → ownerId → owner.id (legacy) → fallback ──
+  const ownerNombreRaw =
+    normalizarNombre(auto.owner?.name)
+    ?? normalizarNombre(auto.ownerId ? mapaUsr?.get(auto.ownerId) : undefined)
     ?? auto.ownerId
-    ?? "Sin propietario";
+    ?? auto.owner?.id;
+  const ownerNombre = ownerNombreRaw ?? "Sin propietario";
 
   // ── Fechas: schema real usa `createdAt`/`updatedAt`, legacy `createdDate`/`modifiedDate`
   const creadoEn = auto.createdAt ?? auto.createdDate ?? "";

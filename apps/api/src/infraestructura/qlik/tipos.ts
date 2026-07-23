@@ -62,6 +62,10 @@ export interface AutomatizacionQlik {
 export interface UsuarioQlik {
   id: string;
   name: string;
+  /** Email del usuario (opcional, disponible vía fields) */
+  email?: string;
+  /** Subject/token del usuario (opcional, fallback cuando name/email no están disponibles) */
+  subject?: string;
 }
 
 export type EstadoEjecucion =

@@ -259,6 +259,84 @@ describe("aResumen", () => {
       const resumen = aResumen(noOwner, mapa);
       expect(resumen.ownerNombre).toBe("Sin propietario");
     });
+
+    it("falls back to spaceId when space map contains name: \"\"", () => {
+      const mapaBlanco = new Map([["esp-blank", ""]]);
+      const autoBlankSpace = {
+        id: "auto-blank-space",
+        name: "Blank Space Auto",
+        spaceId: "esp-blank",
+        state: "available",
+      } satisfies AutomatizacionQlik;
+      const resumen = aResumen(autoBlankSpace, mapaBlanco);
+      expect(resumen.espacioNombre).toBe("esp-blank");
+    });
+
+    it("falls back to spaceId when space map contains name: \"   \" (whitespace)", () => {
+      const mapaBlanco = new Map([["esp-blank", "  \t  "]]);
+      const autoBlankSpace = {
+        id: "auto-blank-space-2",
+        name: "Blank Space Auto 2",
+        spaceId: "esp-blank",
+        state: "available",
+      } satisfies AutomatizacionQlik;
+      const resumen = aResumen(autoBlankSpace, mapaBlanco);
+      expect(resumen.espacioNombre).toBe("esp-blank");
+    });
+
+    it("falls back to ownerId when owner.name is \"\"", () => {
+      const autoBlankOwner = {
+        id: "auto-blank-owner",
+        name: "Blank Owner Auto",
+        spaceId: "esp-1",
+        owner: { id: "usr-blank", name: "" },
+        state: "available",
+      } satisfies AutomatizacionQlik;
+      const resumen = aResumen(autoBlankOwner, mapa);
+      expect(resumen.ownerNombre).toBe("usr-blank");
+    });
+
+    it("falls back to ownerId when owner.name is \"   \" (whitespace)", () => {
+      const autoBlankOwner = {
+        id: "auto-blank-owner-2",
+        name: "Blank Owner Auto 2",
+        spaceId: "esp-1",
+        owner: { id: "usr-blank-2", name: "  \n" },
+        state: "available",
+      } satisfies AutomatizacionQlik;
+      const resumen = aResumen(autoBlankOwner, mapa);
+      expect(resumen.ownerNombre).toBe("usr-blank-2");
+    });
+
+    it("falls back to ownerId when user map contains name: \"\"", () => {
+      // mapaUsuarios now ignores blank names, so mapaUsrBlank.size === 0
+      const mapaUsrBlank = new Map([["usr-blank", ""]]);
+      const autoBlankUsrMap = {
+        id: "auto-blank-usrmap",
+        name: "Blank User Map Auto",
+        spaceId: "esp-1",
+        ownerId: "usr-blank",
+        state: "available",
+      } satisfies AutomatizacionQlik;
+      // mapaUsrBlank.get("usr-blank") returns "" (blank), normalizarNombre("") → undefined → falls to ownerId
+      const resumen = aResumen(autoBlankUsrMap, mapa, mapaUsrBlank);
+      expect(resumen.ownerNombre).toBe("usr-blank");
+    });
+
+    it("falls back to ownerId when user map contains name: \"   \" (whitespace)", () => {
+      // mapaUsuarios now ignores blank names, so this simulates a properly-normalized map
+      const mapaUsrBlank = new Map(); // blank names are not stored
+      const autoBlankUsrMap2 = {
+        id: "auto-blank-usrmap-2",
+        name: "Blank User Map Auto 2",
+        spaceId: "esp-1",
+        ownerId: "usr-blank",
+        state: "available",
+      } satisfies AutomatizacionQlik;
+      // mapaUsrBlank.get("usr-blank") returns undefined → falls to ownerId
+      const resumen = aResumen(autoBlankUsrMap2, mapa, mapaUsrBlank);
+      expect(resumen.ownerNombre).toBe("usr-blank");
+    });
   });
 });
 
@@ -348,6 +426,66 @@ describe("mapaUsuarios", () => {
 
   it("returns empty map for empty input", () => {
     expect(mapaUsuarios([]).size).toBe(0);
+  });
+
+  it("ignores users with name: \"\"", () => {
+    const usuarios = [
+      { id: "usr-1", name: "" },
+      { id: "usr-2", name: "Maria" },
+    ];
+    const mapaResult = mapaUsuarios(usuarios);
+    expect(mapaResult.size).toBe(1);
+    expect(mapaResult.get("usr-1")).toBeUndefined();
+    expect(mapaResult.get("usr-2")).toBe("Maria");
+  });
+
+  it("ignores users with name: \"   \" (whitespace only)", () => {
+    const usuarios = [
+      { id: "usr-1", name: "   " },
+      { id: "usr-2", name: "Carlos" },
+    ];
+    const mapaResult = mapaUsuarios(usuarios);
+    expect(mapaResult.size).toBe(1);
+    expect(mapaResult.get("usr-1")).toBeUndefined();
+    expect(mapaResult.get("usr-2")).toBe("Carlos");
+  });
+});
+
+describe("mapaEspacios", () => {
+  it("builds spaceId → name map from space list", () => {
+    const espacios = [
+      { id: "esp-1", name: "Espacio A", type: "shared" as const, owner: { id: "o1", name: "Owner A" }, createdDate: "2024-01-01", modifiedDate: "2024-01-01" },
+      { id: "esp-2", name: "Espacio B", type: "personal" as const, owner: { id: "o2", name: "Owner B" }, createdDate: "2024-01-01", modifiedDate: "2024-01-01" },
+    ];
+    const mapaResult = mapaEspacios(espacios);
+    expect(mapaResult.get("esp-1")).toBe("Espacio A");
+    expect(mapaResult.get("esp-2")).toBe("Espacio B");
+  });
+
+  it("returns empty map for empty input", () => {
+    expect(mapaEspacios([]).size).toBe(0);
+  });
+
+  it("ignores spaces with name: \"\"", () => {
+    const espacios = [
+      { id: "esp-1", name: "", type: "shared" as const, owner: { id: "o1", name: "Owner A" }, createdDate: "2024-01-01", modifiedDate: "2024-01-01" },
+      { id: "esp-2", name: "Espacio Valido", type: "shared" as const, owner: { id: "o2", name: "Owner B" }, createdDate: "2024-01-01", modifiedDate: "2024-01-01" },
+    ];
+    const mapaResult = mapaEspacios(espacios);
+    expect(mapaResult.size).toBe(1);
+    expect(mapaResult.get("esp-1")).toBeUndefined();
+    expect(mapaResult.get("esp-2")).toBe("Espacio Valido");
+  });
+
+  it("ignores spaces with name: \"   \" (whitespace only)", () => {
+    const espacios = [
+      { id: "esp-1", name: "  \t\n  ", type: "shared" as const, owner: { id: "o1", name: "Owner A" }, createdDate: "2024-01-01", modifiedDate: "2024-01-01" },
+      { id: "esp-2", name: "Espacio Real", type: "personal" as const, owner: { id: "o2", name: "Owner B" }, createdDate: "2024-01-01", modifiedDate: "2024-01-01" },
+    ];
+    const mapaResult = mapaEspacios(espacios);
+    expect(mapaResult.size).toBe(1);
+    expect(mapaResult.get("esp-1")).toBeUndefined();
+    expect(mapaResult.get("esp-2")).toBe("Espacio Real");
   });
 });
 

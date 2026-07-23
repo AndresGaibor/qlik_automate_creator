@@ -401,7 +401,7 @@ describe("ClienteQlik", () => {
   });
 
   describe("obtenerEspacio", () => {
-    it("returns space by id", async () => {
+    it("returns space by id from wrapped { data: espacio } response", async () => {
       const mockEspacio: EspacioQlik = {
         id: "esp-1",
         name: "Espacio Compartido",
@@ -421,6 +421,30 @@ describe("ClienteQlik", () => {
       expect(result).toEqual(mockEspacio);
       expect(fetch).toHaveBeenCalledWith(
         `https://${MOCK_HOST}/api/v1/spaces/esp-1`,
+        expect.any(Object),
+      );
+    });
+
+    it("returns space by id from direct espacio response (no wrapping)", async () => {
+      const mockEspacio: EspacioQlik = {
+        id: "esp-2",
+        name: "Espacio Personal",
+        type: "personal",
+        owner: { id: "usr-2", name: "Maria Garcia" },
+        createdDate: "2024-02-01T00:00:00Z",
+        modifiedDate: "2024-02-02T00:00:00Z",
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockEspacio),
+      }) as unknown as typeof fetch;
+
+      const result = await cliente.obtenerEspacio("esp-2");
+
+      expect(result).toEqual(mockEspacio);
+      expect(fetch).toHaveBeenCalledWith(
+        `https://${MOCK_HOST}/api/v1/spaces/esp-2`,
         expect.any(Object),
       );
     });
@@ -459,6 +483,30 @@ describe("ClienteQlik", () => {
       expect(result).toEqual(mockUsuario);
       expect(fetch).toHaveBeenCalledWith(
         `https://${MOCK_HOST}/api/v1/users/usr-1`,
+        expect.any(Object),
+      );
+    });
+
+    it("sends fields query param when campos is provided", async () => {
+      const mockUsuario: UsuarioQlik = {
+        id: "usr-2",
+        name: "Maria Garcia",
+        email: "maria@example.com",
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: mockUsuario }),
+      }) as unknown as typeof fetch;
+
+      const result = await cliente.obtenerUsuario(
+        "usr-2",
+        "name,email,subject",
+      );
+
+      expect(result).toEqual(mockUsuario);
+      expect(fetch).toHaveBeenCalledWith(
+        `https://${MOCK_HOST}/api/v1/users/usr-2?fields=name,email,subject`,
         expect.any(Object),
       );
     });

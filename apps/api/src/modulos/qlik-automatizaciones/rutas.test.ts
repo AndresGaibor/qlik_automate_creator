@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import { Hono } from "hono";
 import { QlikApiError } from "../../infraestructura/qlik/cliente.js";
 
@@ -279,7 +279,7 @@ describe("GET /api/qlik/automatizaciones", () => {
     expect(body.data[0].ejecucionActiva).toBe(true);
   });
 
-  it("devuelve espacioNombre con el spaceId cuando el espacio no está en el mapa de espacios", async () => {
+  it("resuelve espacioNombre vía obtenerEspacio cuando el espacio no está en listarEspacios", async () => {
     configurarSesion();
     crearClienteMock({
       listarAutomatizaciones: vi.fn().mockResolvedValue([
@@ -292,7 +292,8 @@ describe("GET /api/qlik/automatizaciones", () => {
 
     const res = await app.request("/api/qlik/automatizaciones");
     const body = await res.json();
-    expect(body.data[0].espacioNombre).toBe("esp-inexistente");
+    // obtenerEspacio mock returns { id, name: "Espacio ${id}" }
+    expect(body.data[0].espacioNombre).toBe("Espacio esp-inexistente");
   });
 
   it("resuelve ownerNombre desde la API cuando la automatización tiene ownerId (schema real Qlik)", async () => {
@@ -353,6 +354,27 @@ describe("GET /api/qlik/automatizaciones", () => {
     expect(body.data[0].ownerNombre).toBe("usr-fail");
   });
 
+  it("no rompe cuando obtenerUsuario resuelve sin name", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-empty-user",
+          name: "Auto Empty User",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-empty",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockResolvedValue({ id: "usr-empty" }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data[0].ownerNombre).toBe("usr-empty");
+  });
+
   it("deduplica ownerId al resolver usuarios (no llama obtenerUsuario dos veces para el mismo ID)", async () => {
     configurarSesion();
     const obtenerUsuarioMock = vi.fn().mockImplementation((id: string) =>
@@ -380,14 +402,185 @@ describe("GET /api/qlik/automatizaciones", () => {
     expect(res.status).toBe(200);
     // Solo debe llamar una vez para usr-shared (deduplicado)
     expect(obtenerUsuarioMock).toHaveBeenCalledTimes(1);
-    expect(obtenerUsuarioMock).toHaveBeenCalledWith("usr-shared");
+    // Debe solicitar fields=name,email,subject
+    expect(obtenerUsuarioMock).toHaveBeenCalledWith("usr-shared", "name,email,subject");
   });
 
-  it("devuelve 404 cuando Qlik devuelve 404", async () => {
+  it("resuelve espacioNombre con obtenerEspacio cuando listarEspacios no incluye el spaceId", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-orf",
+          name: "Auto ORF",
+          spaceId: "esp-orf",
+          state: "available",
+        },
+      ]),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    const body = await res.json();
+    expect(body.data[0].espacioNombre).toBe("Espacio esp-orf");
+  });
+
+  it("no rompe cuando obtenerEspacio falla para un espacio faltante", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-fail-space",
+          name: "Auto Fail Space",
+          spaceId: "esp-fail",
+          state: "available",
+        },
+      ]),
+      listarEspacios: vi.fn().mockResolvedValue([]),
+      obtenerEspacio: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/v1/spaces/esp-fail"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // Fallback al spaceId cuando tanto bulk como individual fallan
+    expect(body.data[0].espacioNombre).toBe("esp-fail");
+  });
+
+  it("resuelve espacios con obtenerEspacio cuando listarEspacios falla", async () => {
     configurarSesion();
     crearClienteMock({
       listarEspacios: vi.fn().mockRejectedValue(
-        new QlikApiErrorCls(404, "Not Found", "/api/v1/spaces"),
+        new QlikApiErrorCls(500, "Internal Server Error", "/api/v1/spaces"),
+      ),
+      obtenerEspacio: vi.fn().mockResolvedValue({
+        id: "esp-orf2",
+        name: "Espacio Individual",
+      }),
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-orf2",
+          name: "Auto ORF2",
+          spaceId: "esp-orf2",
+          state: "available",
+        },
+      ]),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data[0].espacioNombre).toBe("Espacio Individual");
+  });
+
+  it("deduplica spaceId al resolver espacios (no llama obtenerEspacio dos veces para el mismo ID)", async () => {
+    configurarSesion();
+    const obtenerEspacioMock = vi.fn().mockImplementation((id: string) =>
+      Promise.resolve({ id, name: `Espacio ${id}` }),
+    );
+    crearClienteMock({
+      listarEspacios: vi.fn().mockResolvedValue([]),
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-a",
+          name: "Auto A",
+          spaceId: "esp-shared",
+          state: "available",
+        },
+        {
+          id: "auto-b",
+          name: "Auto B",
+          spaceId: "esp-shared",
+          state: "available",
+        },
+      ]),
+      obtenerEspacio: obtenerEspacioMock,
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    // Solo debe llamar una vez para esp-shared (deduplicado)
+    expect(obtenerEspacioMock).toHaveBeenCalledTimes(1);
+    expect(obtenerEspacioMock).toHaveBeenCalledWith("esp-shared");
+  });
+
+  it("resuelve ownerNombre desde email cuando name no está disponible", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-email",
+          name: "Auto Email",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-email",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockResolvedValue({
+        id: "usr-email",
+        email: "juan@example.com",
+      }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    const body = await res.json();
+    expect(body.data[0].ownerNombre).toBe("juan@example.com");
+  });
+
+  it("resuelve ownerNombre desde subject cuando name y email no están disponibles", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-subject",
+          name: "Auto Subject",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-subject",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockResolvedValue({
+        id: "usr-subject",
+        subject: "uid:usr-subject:subject",
+      }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    const body = await res.json();
+    expect(body.data[0].ownerNombre).toBe("uid:usr-subject:subject");
+  });
+
+  it("prioriza name sobre email y subject en la resolución de usuario", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-priority",
+          name: "Auto Priority",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-priority",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockResolvedValue({
+        id: "usr-priority",
+        name: "Nombre Real",
+        email: "nombre@example.com",
+        subject: "uid:usr-priority:subject",
+      }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    const body = await res.json();
+    expect(body.data[0].ownerNombre).toBe("Nombre Real");
+  });
+
+  it("devuelve 404 cuando listarAutomatizaciones devuelve 404", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(404, "Not Found", "/api/workflows/automations"),
       ),
     });
 
@@ -398,11 +591,11 @@ describe("GET /api/qlik/automatizaciones", () => {
     expect(body.qlikStatus).toBe(404);
   });
 
-  it("devuelve 403 cuando Qlik devuelve 403", async () => {
+  it("devuelve 403 cuando listarAutomatizaciones devuelve 403", async () => {
     configurarSesion();
     crearClienteMock({
-      listarEspacios: vi.fn().mockRejectedValue(
-        new QlikApiErrorCls(403, "Forbidden", "/api/v1/spaces"),
+      listarAutomatizaciones: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/workflows/automations"),
       ),
     });
 
@@ -413,11 +606,11 @@ describe("GET /api/qlik/automatizaciones", () => {
     expect(body.qlikStatus).toBe(403);
   });
 
-  it("devuelve 502 cuando Qlik devuelve error de servidor", async () => {
+  it("devuelve 502 cuando listarAutomatizaciones devuelve error de servidor", async () => {
     configurarSesion();
     crearClienteMock({
-      listarEspacios: vi.fn().mockRejectedValue(
-        new QlikApiErrorCls(500, "Internal Server Error", "/api/v1/spaces"),
+      listarAutomatizaciones: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(500, "Internal Server Error", "/api/workflows/automations"),
       ),
     });
 
@@ -426,6 +619,269 @@ describe("GET /api/qlik/automatizaciones", () => {
     const body = await res.json();
     expect(body.success).toBe(false);
     expect(body.qlikStatus).toBe(500);
+  });
+
+  it("devuelve 200 con datos degradados cuando listarEspacios falla pero listarAutomatizaciones funciona", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarEspacios: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/v1/spaces"),
+      ),
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          ...MockAutomatizaciones[0],
+          spaceId: "esp-1",
+        },
+      ]),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data).toHaveLength(1);
+    // Intenta resolver espacio individualmente
+    expect(body.data[0].espacioNombre).toBe("Espacio esp-1");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerUsuario devuelve 403 en list", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-403-u",
+          name: "Auto 403 User",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-403",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/v1/users/usr-403"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // Fallback al ownerId cuando la resolución falla por 403
+    expect(body.data[0].ownerNombre).toBe("usr-403");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerUsuario devuelve 404 en list", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-404-u",
+          name: "Auto 404 User",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-404",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(404, "Not Found", "/api/v1/users/usr-404"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // Fallback al ownerId cuando la resolución falla por 404
+    expect(body.data[0].ownerNombre).toBe("usr-404");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerEspacio devuelve 403 en list", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarEspacios: vi.fn().mockResolvedValue([]),
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-403-s",
+          name: "Auto 403 Space",
+          spaceId: "esp-403",
+          state: "available",
+        },
+      ]),
+      obtenerEspacio: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/v1/spaces/esp-403"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // Fallback al spaceId cuando la resolución falla por 403
+    expect(body.data[0].espacioNombre).toBe("esp-403");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerEspacio devuelve 404 en list", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarEspacios: vi.fn().mockResolvedValue([]),
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-404-s",
+          name: "Auto 404 Space",
+          spaceId: "esp-404",
+          state: "available",
+        },
+      ]),
+      obtenerEspacio: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(404, "Not Found", "/api/v1/spaces/esp-404"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // Fallback al spaceId cuando la resolución falla por 404
+    expect(body.data[0].espacioNombre).toBe("esp-404");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerUsuario resuelve con nombre vacio en list", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-empty-name",
+          name: "Auto Empty Name",
+          spaceId: "esp-1",
+          state: "available",
+          ownerId: "usr-empty-name",
+        },
+      ]),
+      obtenerUsuario: vi.fn().mockResolvedValue({ id: "usr-empty-name", name: "" }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // Fallback al ownerId cuando name esta vacio
+    expect(body.data[0].ownerNombre).toBe("usr-empty-name");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerEspacio resuelve con nombre vacio en list", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarEspacios: vi.fn().mockResolvedValue([]),
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-empty-space-name",
+          name: "Auto Empty Space Name",
+          spaceId: "esp-empty",
+          state: "available",
+        },
+      ]),
+      obtenerEspacio: vi.fn().mockResolvedValue({ id: "esp-empty", name: "" }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // Fallback al spaceId cuando name esta vacio
+    expect(body.data[0].espacioNombre).toBe("esp-empty");
+  });
+
+  it("devuelve 200 con ID fallback cuando listarEspacios devuelve espacios con name: \"\"", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarEspacios: vi.fn().mockResolvedValue([
+        { id: "esp-blank", name: "", type: "shared" as const, owner: { id: "o1", name: "Owner" }, createdDate: "2024-01-01", modifiedDate: "2024-01-01" },
+      ]),
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-blank-list-space",
+          name: "Auto Blank List Space",
+          spaceId: "esp-blank",
+          state: "available",
+        },
+      ]),
+      obtenerEspacio: vi.fn().mockResolvedValue({ id: "esp-blank", name: "" }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // Espacio con name "" no se almacena en mapa (ni bulk ni individual) → fallback a spaceId
+    expect(body.data[0].espacioNombre).toBe("esp-blank");
+  });
+
+  it("devuelve 200 con ID fallback cuando listarEspacios devuelve espacios con name: \"   \" (whitespace)", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarEspacios: vi.fn().mockResolvedValue([
+        { id: "esp-blank-ws", name: "  \t\n  ", type: "shared" as const, owner: { id: "o1", name: "Owner" }, createdDate: "2024-01-01", modifiedDate: "2024-01-01" },
+      ]),
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-blank-list-space-ws",
+          name: "Auto Blank List Space WS",
+          spaceId: "esp-blank-ws",
+          state: "available",
+        },
+      ]),
+      obtenerEspacio: vi.fn().mockResolvedValue({ id: "esp-blank-ws", name: "   " }),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data[0].espacioNombre).toBe("esp-blank-ws");
+  });
+
+  it("devuelve 200 con ID fallback cuando owner.name legacy es \"\" en list", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-blank-owner-legacy",
+          name: "Auto Blank Owner Legacy",
+          spaceId: "esp-1",
+          owner: { id: "usr-blank-legacy", name: "" },
+          isEnabled: true,
+          triggerType: "scheduled",
+        },
+      ]),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    // owner.name "" → normalizado → undefined → fallback a ownerId
+    expect(body.data[0].ownerNombre).toBe("usr-blank-legacy");
+  });
+
+  it("devuelve 200 con ID fallback cuando owner.name legacy es \"   \" (whitespace) en list", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockResolvedValue([
+        {
+          id: "auto-blank-owner-legacy-ws",
+          name: "Auto Blank Owner Legacy WS",
+          spaceId: "esp-1",
+          owner: { id: "usr-blank-legacy-ws", name: "  \n" },
+          isEnabled: true,
+          triggerType: "scheduled",
+        },
+      ]),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data[0].ownerNombre).toBe("usr-blank-legacy-ws");
   });
 });
 
@@ -561,6 +1017,108 @@ describe("GET /api/qlik/automatizaciones/:id", () => {
     const body = await res.json();
     // Fallback al ownerId cuando la resolución falla
     expect(body.data.automatizacion.ownerNombre).toBe("usr-fail");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerUsuario devuelve 403 en detalle", async () => {
+    configurarSesion();
+    const mockDetalle = {
+      id: "auto-403-detail",
+      name: "Auto 403 Detail",
+      spaceId: "esp-1",
+      state: "available",
+      ownerId: "usr-403-detail",
+    };
+
+    crearClienteMock({
+      obtenerAutomatizacion: vi.fn().mockResolvedValue(mockDetalle),
+      listarEjecuciones: vi.fn().mockResolvedValue([]),
+      listarEspacios: vi.fn().mockResolvedValue(MockEspacios),
+      obtenerUsuario: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/v1/users/usr-403-detail"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones/auto-403-detail");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.automatizacion.ownerNombre).toBe("usr-403-detail");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerUsuario devuelve 404 en detalle", async () => {
+    configurarSesion();
+    const mockDetalle = {
+      id: "auto-404-detail",
+      name: "Auto 404 Detail",
+      spaceId: "esp-1",
+      state: "available",
+      ownerId: "usr-404-detail",
+    };
+
+    crearClienteMock({
+      obtenerAutomatizacion: vi.fn().mockResolvedValue(mockDetalle),
+      listarEjecuciones: vi.fn().mockResolvedValue([]),
+      listarEspacios: vi.fn().mockResolvedValue(MockEspacios),
+      obtenerUsuario: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(404, "Not Found", "/api/v1/users/usr-404-detail"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones/auto-404-detail");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.automatizacion.ownerNombre).toBe("usr-404-detail");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerEspacio devuelve 403 en detalle", async () => {
+    configurarSesion();
+    const mockDetalle = {
+      id: "auto-403-s-detail",
+      name: "Auto 403 Space Detail",
+      spaceId: "esp-403-detail",
+      state: "available",
+    };
+
+    crearClienteMock({
+      obtenerAutomatizacion: vi.fn().mockResolvedValue(mockDetalle),
+      listarEjecuciones: vi.fn().mockResolvedValue([]),
+      listarEspacios: vi.fn().mockResolvedValue([]),
+      obtenerEspacio: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/v1/spaces/esp-403-detail"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones/auto-403-s-detail");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.automatizacion.espacioNombre).toBe("esp-403-detail");
+  });
+
+  it("devuelve 200 con ID fallback cuando obtenerEspacio devuelve 404 en detalle", async () => {
+    configurarSesion();
+    const mockDetalle = {
+      id: "auto-404-s-detail",
+      name: "Auto 404 Space Detail",
+      spaceId: "esp-404-detail",
+      state: "available",
+    };
+
+    crearClienteMock({
+      obtenerAutomatizacion: vi.fn().mockResolvedValue(mockDetalle),
+      listarEjecuciones: vi.fn().mockResolvedValue([]),
+      listarEspacios: vi.fn().mockResolvedValue([]),
+      obtenerEspacio: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(404, "Not Found", "/api/v1/spaces/esp-404-detail"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones/auto-404-s-detail");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.automatizacion.espacioNombre).toBe("esp-404-detail");
   });
 });
 
@@ -1005,5 +1563,120 @@ describe("POST /api/qlik/automatizaciones/:id/runs/:runId/stop", () => {
     const body = await res.json();
     expect(body.success).toBe(false);
     expect(body.qlikStatus).toBe(404);
+  });
+});
+
+// ─── Logging contextual ────────────────────────────────────────────────────
+
+describe("Logging contextual en errores", () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  const JSON_PARSE_RE = /\{.*\}/;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("registra error de Qlik con ruta, metodo, qlikStatus y endpoint", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/workflows/automations"),
+      ),
+    });
+
+    await app.request("/api/qlik/automatizaciones");
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const primerArg = consoleErrorSpy.mock.calls[0][0];
+    expect(primerArg).toBe("Qlik API error:");
+
+    const segundoArg = JSON.parse(consoleErrorSpy.mock.calls[0][1] as string);
+    expect(segundoArg.ruta).toBe("/api/qlik/automatizaciones");
+    expect(segundoArg.metodo).toBe("GET");
+    expect(segundoArg.qlikStatus).toBe(403);
+    expect(segundoArg.endpoint).toBe("/api/workflows/automations");
+  });
+
+  it("registra contexto adicional (automationId) en GET /:id", async () => {
+    configurarSesion();
+    crearClienteMock({
+      obtenerAutomatizacion: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(404, "Not Found", "/api/workflows/automations/auto-X"),
+      ),
+      listarEspacios: vi.fn().mockResolvedValue(MockEspacios),
+    });
+
+    await app.request("/api/qlik/automatizaciones/auto-X");
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const segundoArg = JSON.parse(consoleErrorSpy.mock.calls[0][1] as string);
+    expect(segundoArg.seccion).toBe("detalle");
+    expect(segundoArg.automationId).toBe("auto-X");
+    expect(segundoArg.qlikStatus).toBe(404);
+  });
+
+  it("registra error no-Qlik con stack trace sin exponerlo al cliente", async () => {
+    configurarSesion();
+    crearClienteMock({
+      listarAutomatizaciones: vi.fn().mockRejectedValue(
+        new Error("TypeError: cannot read property of undefined"),
+      ),
+    });
+
+    const res = await app.request("/api/qlik/automatizaciones");
+
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toBe("Error interno del servidor");
+    expect(body.error).not.toContain("TypeError");
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const primerArg = consoleErrorSpy.mock.calls[0][0];
+    expect(primerArg).toBe("Error inesperado en rutas Qlik:");
+    const segundoArg = JSON.parse(consoleErrorSpy.mock.calls[0][1] as string);
+    expect(segundoArg.mensaje).toContain("TypeError");
+    expect(segundoArg.stack).toBeDefined();
+    expect(segundoArg.ruta).toBe("/api/qlik/automatizaciones");
+  });
+
+  it("registra seccion=ejecutar y automationId en POST /:id/run", async () => {
+    configurarSesion();
+    mockTransaccionLockAdquirido();
+    crearClienteMock({
+      listarEjecuciones: vi.fn().mockResolvedValue([]),
+      ejecutarAutomatizacion: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(403, "Forbidden", "/api/workflows/automations/auto-R/runs"),
+      ),
+    });
+
+    await app.request("/api/qlik/automatizaciones/auto-R/run", { method: "POST" });
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const segundoArg = JSON.parse(consoleErrorSpy.mock.calls[0][1] as string);
+    expect(segundoArg.seccion).toBe("ejecutar");
+    expect(segundoArg.automationId).toBe("auto-R");
+  });
+
+  it("registra seccion=detener con automationId y runId en POST /:id/runs/:runId/stop", async () => {
+    configurarSesion();
+    crearClienteMock({
+      detenerEjecucion: vi.fn().mockRejectedValue(
+        new QlikApiErrorCls(500, "Internal Server Error", "/api/workflows/automations/auto-S/runs/run-1/actions/stop"),
+      ),
+    });
+
+    await app.request("/api/qlik/automatizaciones/auto-S/runs/run-1/stop", { method: "POST" });
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const segundoArg = JSON.parse(consoleErrorSpy.mock.calls[0][1] as string);
+    expect(segundoArg.seccion).toBe("detener");
+    expect(segundoArg.automationId).toBe("auto-S");
+    expect(segundoArg.runId).toBe("run-1");
+    expect(segundoArg.qlikStatus).toBe(500);
   });
 });
