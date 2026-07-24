@@ -59,6 +59,14 @@ export class ServicioAutenticacionQlik {
     return this.repositorio.consultarSesion(tokenSesion);
   }
 
+  listarTenants(tokenSesion: string) {
+    return this.repositorio.listarTenantsDisponibles(tokenSesion);
+  }
+
+  cambiarTenant(tokenSesion: string, tenantQlikId: string) {
+    return this.repositorio.cambiarTenantActivo(tokenSesion, tenantQlikId);
+  }
+
   cerrarSesion(tokenSesion: string) {
     return this.repositorio.revocarSesion(tokenSesion);
   }

@@ -37,6 +37,10 @@ import type { PuertoAuditoria } from "./nucleo/auditoria/puerto-auditoria.js";
 import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "./nucleo/idempotencia/puerto-idempotencia.js";
 import type { ConfiguracionAplicacion } from "./plataforma/configuracion/entorno.js";
+import {
+  type ContextoSolicitudAutenticado,
+  construirContextoSolicitud,
+} from "./plataforma/contexto/contexto-solicitud.js";
 import { ErrorNoAutorizado } from "./plataforma/errores/error-aplicacion.js";
 import { crearManejadorErrores } from "./plataforma/errores/manejador-http.js";
 import { crearMiddlewareCors } from "./plataforma/http/middlewares/cors.js";
@@ -83,12 +87,35 @@ export function crearAplicacion(
   const servicioAutenticacion =
     dependencias.servicioAutenticacion ??
     crearServicioAutenticacionDiferido(repositorioAutenticacion, configuracion);
+  const resolverContextoSolicitud = crearResolverContextoSolicitud(
+    repositorioAutenticacion,
+  );
   const resolverSesion =
     dependencias.resolverSesion ??
-    crearResolverSesionPredeterminado(repositorioAutenticacion);
+    (async (c) => {
+      const contexto = await resolverContextoSolicitud(c);
+      return {
+        tenantId: contexto.tenantQlikId,
+        usuarioId: contexto.usuarioId,
+        organizacionId: contexto.organizacionId,
+      };
+    });
   const resolverQlik =
     dependencias.resolverQlik ??
-    crearResolverQlikPredeterminado(repositorioAutenticacion);
+    (async (c) => {
+      const contexto = await resolverContextoSolicitud(c);
+      const credenciales = await repositorioAutenticacion.obtenerCredenciales({
+        sesionId: contexto.sesionId,
+        usuarioId: contexto.usuarioId,
+        identidadQlikId: contexto.identidadQlikId,
+        tenantId: contexto.tenantQlikId,
+        tenantHost: contexto.tenantHost,
+        organizacionId: contexto.organizacionId,
+      });
+      if (!credenciales)
+        throw new ErrorNoAutorizado("El tenant activo requiere conexión Qlik");
+      return new ClienteHttpQlik(credenciales.host, credenciales.token);
+    });
   const catalogoDestinos =
     dependencias.catalogoDestinos ?? crearCatalogoDestinosDiferido();
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
@@ -99,7 +126,17 @@ export function crearAplicacion(
     new RepositorioAdministracionPostgres();
   const resolverContextoAdmin =
     dependencias.resolverContextoAdmin ??
-    crearResolverContextoAdminPredeterminado(repositorioAutenticacion);
+    (async (c) => {
+      const contexto = await resolverContextoSolicitud(c);
+      const sesion = await repositorioAutenticacion.consultarSesion(
+        getCookie(c, "sesion_usuario") ?? "",
+      );
+      if (!sesion) throw new Error("Sesión inválida");
+      return {
+        esSuperadmin: contexto.esSuperadmin ?? false,
+        membresias: sesion.membresias,
+      };
+    });
 
   const aplicacion = new Hono();
   const frontendUrl =
@@ -200,51 +237,26 @@ function crearServicioAutenticacionDiferido(
   );
 }
 
-function crearResolverContextoAdminPredeterminado(
-  repositorio: RepositorioAutenticacion,
-): ResolverContextoAdmin {
-  return async (c: Context): Promise<ContextoSesion> => {
+function crearResolverContextoSolicitud(repositorio: RepositorioAutenticacion) {
+  const clave = "contextoSolicitud";
+  return async (c: Context): Promise<ContextoSolicitudAutenticado> => {
+    const existente = c.get(clave) as ContextoSolicitudAutenticado | undefined;
+    if (existente) return existente;
     const token = getCookie(c, "sesion_usuario");
-    if (!token) throw new Error("No hay sesión");
-    const sesion = await repositorio.consultarSesion(token);
-    if (!sesion) throw new Error("Sesión inválida");
-    const sesionParseada = esquemaSesionPublica.parse(sesion);
-    return {
-      esSuperadmin: sesionParseada.esSuperadmin,
-      membresias: sesionParseada.membresias,
-    };
-  };
-}
-
-function crearResolverSesionPredeterminado(
-  repositorio: RepositorioAutenticacion,
-) {
-  return async (c: Context) => {
-    const token = getCookie(c, "sesion_usuario");
-    const sesion = token ? await repositorio.obtenerInfoSesion(token) : null;
-    if (!sesion) throw new ErrorNoAutorizado();
-    return {
-      tenantId: sesion.tenantId,
-      usuarioId: sesion.usuarioId,
-      organizacionId: sesion.organizacionId,
-    };
-  };
-}
-
-function crearResolverQlikPredeterminado(
-  repositorio: RepositorioAutenticacion,
-) {
-  return async (c: Context): Promise<ServicioQlik> => {
-    const token = getCookie(c, "sesion_usuario");
-    const sesion = token ? await repositorio.obtenerInfoSesion(token) : null;
-    if (!sesion) throw new ErrorNoAutorizado();
-    const credenciales = await repositorio.obtenerCredenciales(sesion);
-    if (!credenciales) {
-      throw new ErrorNoAutorizado(
-        "Credenciales Qlik no disponibles o expiradas",
-      );
-    }
-    return new ClienteHttpQlik(credenciales.host, credenciales.token);
+    if (!token) throw new ErrorNoAutorizado();
+    const [info, publica] = await Promise.all([
+      repositorio.obtenerInfoSesion(token),
+      repositorio.consultarSesion(token),
+    ]);
+    if (!info || !publica)
+      throw new ErrorNoAutorizado("Sesión inválida o expirada");
+    const contexto = construirContextoSolicitud({
+      solicitudId: (c.get("solicitudId") as string) ?? crypto.randomUUID(),
+      sesion: info,
+      sesionPublica: publica,
+    });
+    c.set(clave, contexto);
+    return contexto;
   };
 }
 

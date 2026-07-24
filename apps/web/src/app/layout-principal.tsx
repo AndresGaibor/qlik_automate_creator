@@ -1,13 +1,18 @@
 import { ErrorClienteApi } from "@/compartido/api/cliente";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
-import { cerrarSesion, obtenerSesion } from "@/modulos/autenticacion/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  cambiarTenantActivo,
+  cerrarSesion,
+  obtenerSesion,
+} from "@/modulos/autenticacion/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 export function LayoutPrincipal() {
   const navegar = useNavigate();
+  const queryClient = useQueryClient();
   const ubicacion = useLocation();
   const { mostrarError } = useNotificaciones();
   const esLogin = ubicacion.pathname === "/login";
@@ -28,6 +33,14 @@ export function LayoutPrincipal() {
       }
     }
   }, [consulta.error, esLogin, mostrarError, navegar]);
+
+  const cambiarTenant = useMutation({
+    mutationFn: cambiarTenantActivo,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => mostrarError(error.message),
+  });
 
   const cerrar = useMutation({
     mutationFn: cerrarSesion,
@@ -54,7 +67,28 @@ export function LayoutPrincipal() {
       <header className="border-b bg-white">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <h1 className="text-xl font-bold">Qlik Automatizaciones</h1>
-          <nav className="flex gap-4" aria-label="Navegación principal">
+          <nav
+            className="flex items-center gap-4"
+            aria-label="Navegación principal"
+          >
+            {sesion.tenantsDisponibles.length > 1 && (
+              <label className="text-sm">
+                <span className="sr-only">Tenant Qlik activo</span>
+                <select
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2"
+                  value={sesion.tenantActivoId}
+                  disabled={cambiarTenant.isPending}
+                  onChange={(event) => cambiarTenant.mutate(event.target.value)}
+                >
+                  {sesion.tenantsDisponibles.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.nombre ?? tenant.host} ·{" "}
+                      {tenant.organizacionNombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             {esSuperadmin && (
               <Button
                 variant="ghost"

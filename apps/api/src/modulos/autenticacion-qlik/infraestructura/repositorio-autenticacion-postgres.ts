@@ -200,6 +200,7 @@ export class RepositorioAutenticacionPostgres
       await tx.insert(sesionesUsuario).values({
         usuarioId: usuario.id,
         identidadQlikId: identidad.id,
+        tenantQlikActivoId: tenant.id,
         tokenSesionHash,
         ipCreacion: datos.ip,
         agenteUsuario: datos.agenteUsuario,
@@ -216,7 +217,10 @@ export class RepositorioAutenticacionPostgres
     const [usuario, identidad] = await Promise.all([
       db.query.usuarios.findFirst({ where: eq(usuarios.id, sesion.usuarioId) }),
       db.query.identidadesQlik.findFirst({
-        where: eq(identidadesQlik.id, sesion.identidadQlikId),
+        where: and(
+          eq(identidadesQlik.usuarioId, sesion.usuarioId),
+          eq(identidadesQlik.tenantQlikId, sesion.tenantQlikActivoId),
+        ),
       }),
     ]);
     if (!identidad) return null;
@@ -263,8 +267,11 @@ export class RepositorioAutenticacionPostgres
       }
     }
 
+    const tenantsDisponibles = await this.listarTenantsDisponibles(tokenSesion);
     return {
       tenantHost: tenant.host,
+      tenantActivoId: tenant.id,
+      tenantsDisponibles,
       usuario: usuario
         ? {
             id: usuario.id,
@@ -289,7 +296,10 @@ export class RepositorioAutenticacionPostgres
     const sesion = await this.buscarSesionValida(tokenSesion);
     if (!sesion) return null;
     const identidad = await db.query.identidadesQlik.findFirst({
-      where: eq(identidadesQlik.id, sesion.identidadQlikId),
+      where: and(
+        eq(identidadesQlik.usuarioId, sesion.usuarioId),
+        eq(identidadesQlik.tenantQlikId, sesion.tenantQlikActivoId),
+      ),
     });
     if (!identidad) return null;
     const tenant = await db.query.tenantsQlik.findFirst({
@@ -332,6 +342,67 @@ export class RepositorioAutenticacionPostgres
     } catch {
       return null;
     }
+  }
+
+  async listarTenantsDisponibles(tokenSesion: string) {
+    const sesion = await this.buscarSesionValida(tokenSesion);
+    if (!sesion) return [];
+    const identidades = await db.query.identidadesQlik.findMany({
+      where: eq(identidadesQlik.usuarioId, sesion.usuarioId),
+    });
+    const resultado = [];
+    for (const identidad of identidades) {
+      const tenant = await db.query.tenantsQlik.findFirst({
+        where: and(
+          eq(tenantsQlik.id, identidad.tenantQlikId),
+          eq(tenantsQlik.estado, "activo"),
+        ),
+      });
+      if (!tenant) continue;
+      const organizacion = await db.query.organizaciones.findFirst({
+        where: eq(organizaciones.id, tenant.organizacionId),
+      });
+      if (!organizacion || organizacion.estado !== "activa") continue;
+      resultado.push({
+        id: tenant.id,
+        host: tenant.host,
+        nombre: tenant.nombre,
+        organizacionId: organizacion.id,
+        organizacionNombre: organizacion.nombre,
+        esPrincipal: tenant.esPrincipal,
+      });
+    }
+    return resultado;
+  }
+
+  async cambiarTenantActivo(tokenSesion: string, tenantQlikId: string) {
+    const sesion = await this.buscarSesionValida(tokenSesion);
+    if (!sesion) return false;
+    const identidad = await db.query.identidadesQlik.findFirst({
+      where: and(
+        eq(identidadesQlik.usuarioId, sesion.usuarioId),
+        eq(identidadesQlik.tenantQlikId, tenantQlikId),
+      ),
+    });
+    const tenant = await db.query.tenantsQlik.findFirst({
+      where: and(
+        eq(tenantsQlik.id, tenantQlikId),
+        eq(tenantsQlik.estado, "activo"),
+      ),
+    });
+    if (!identidad || !tenant) return false;
+    const credencial = await db.query.credencialesQlik.findFirst({
+      where: eq(credencialesQlik.identidadQlikId, identidad.id),
+    });
+    if (!credencial || credencial.estado !== "activa") return false;
+    await db
+      .update(sesionesUsuario)
+      .set({
+        tenantQlikActivoId: tenant.id,
+        identidadQlikId: identidad.id,
+      })
+      .where(eq(sesionesUsuario.id, sesion.id));
+    return true;
   }
 
   async revocarSesion(tokenSesion: string): Promise<void> {

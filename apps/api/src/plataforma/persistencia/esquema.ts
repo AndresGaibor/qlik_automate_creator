@@ -163,6 +163,9 @@ export const sesionesUsuario = pgTable(
     identidadQlikId: uuid("identidad_qlik_id")
       .notNull()
       .references(() => identidadesQlik.id, { onDelete: "cascade" }),
+    tenantQlikActivoId: uuid("tenant_qlik_activo_id")
+      .notNull()
+      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
     tokenSesionHash: text("token_sesion_hash").notNull().unique(),
     ipCreacion: text("ip_creacion"),
     agenteUsuario: text("agente_usuario"),

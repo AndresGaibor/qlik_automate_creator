@@ -21,8 +21,19 @@ export interface InfoSesion {
   organizacionId: string;
 }
 
+export interface TenantSesionDisponible {
+  id: string;
+  host: string;
+  nombre: string | null;
+  organizacionId: string;
+  organizacionNombre: string;
+  esPrincipal: boolean;
+}
+
 export interface SesionPublica {
   tenantHost: string;
+  tenantActivoId: string;
+  tenantsDisponibles: TenantSesionDisponible[];
   usuario: {
     id: string;
     nombre: string;

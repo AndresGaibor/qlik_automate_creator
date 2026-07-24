@@ -28,5 +28,12 @@ export interface RepositorioAutenticacion {
   consultarSesion(tokenSesion: string): Promise<SesionPublica | null>;
   obtenerInfoSesion(tokenSesion: string): Promise<InfoSesion | null>;
   obtenerCredenciales(infoSesion: InfoSesion): Promise<CredencialesQlik | null>;
+  listarTenantsDisponibles(
+    tokenSesion: string,
+  ): Promise<import("../../dominio/modelos.js").TenantSesionDisponible[]>;
+  cambiarTenantActivo(
+    tokenSesion: string,
+    tenantQlikId: string,
+  ): Promise<boolean>;
   revocarSesion(tokenSesion: string): Promise<void>;
 }

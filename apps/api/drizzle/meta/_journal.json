@@ -29,6 +29,20 @@
       "when": 1784651808463,
       "tag": "0003_fechas_organizacion",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784651808464,
+      "tag": "0004_tenant_activo_sesion",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784651808465,
+      "tag": "0005_reparar_tenants_principales",
+      "breakpoints": true
     }
   ]
 }

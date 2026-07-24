@@ -123,6 +123,36 @@ export function crearRutasAutenticacionQlik(
     return responderExito(c, sesion);
   });
 
+  rutas.get("/sesion/tenants", async (c) => {
+    const token = getCookie(c, COOKIE_SESION);
+    if (!token)
+      return responderError(c, "Sesión requerida", 401, {
+        codigo: "SESION_REQUERIDA",
+      });
+    return responderExito(c, await servicio.listarTenants(token));
+  });
+
+  rutas.put("/sesion/tenant-activo", async (c) => {
+    const token = getCookie(c, COOKIE_SESION);
+    if (!token)
+      return responderError(c, "Sesión requerida", 401, {
+        codigo: "SESION_REQUERIDA",
+      });
+    const cuerpo = (await c.req.json().catch(() => ({}))) as {
+      tenantQlikId?: string;
+    };
+    if (!cuerpo.tenantQlikId)
+      return responderError(c, "Tenant requerido", 400, {
+        codigo: "TENANT_REQUERIDO",
+      });
+    const cambiado = await servicio.cambiarTenant(token, cuerpo.tenantQlikId);
+    if (!cambiado)
+      return responderError(c, "Tenant no permitido o requiere conexión", 403, {
+        codigo: "TENANT_NO_PERMITIDO",
+      });
+    return responderExito(c, { cambiado: true });
+  });
+
   rutas.post("/cerrar-sesion", async (c) => {
     const token = getCookie(c, COOKIE_SESION);
     if (token) await servicio.cerrarSesion(token);
