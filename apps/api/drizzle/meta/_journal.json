@@ -8,6 +8,27 @@
       "when": 1784651808460,
       "tag": "0000_worthless_warbird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784651808461,
+      "tag": "0001_arquitectura_modular",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784651808462,
+      "tag": "0002_tenant_principal",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784651808463,
+      "tag": "0003_fechas_organizacion",
+      "breakpoints": true
     }
   ]
 }

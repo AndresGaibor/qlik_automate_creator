@@ -9,8 +9,10 @@
     "start": "node dist/node.js",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:migrate": "bun --env-file=../../.env run drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:check": "bun --env-file=../../.env run src/plataforma/bootstrap/check.ts",
+    "db:seed": "bun --env-file=../../.env run src/plataforma/bootstrap/seed.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",

@@ -9,7 +9,10 @@
     "test": "bun test",
     "typecheck": "bun run --cwd packages/contratos typecheck && bun run --cwd apps/api typecheck && bun run --cwd apps/web typecheck",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write .",
+    "db:migrate": "bun run --cwd apps/api db:migrate",
+    "db:check": "bun run --cwd apps/api db:check",
+    "db:seed": "bun run --cwd apps/api db:seed"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
