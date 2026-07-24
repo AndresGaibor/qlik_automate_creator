@@ -1,4 +1,5 @@
 import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
+import { eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import {
@@ -21,6 +22,7 @@ import {
 } from "./modulos/automatizaciones/publico.js";
 import {
   ClienteDestinos,
+  ClienteImpalaDirecto,
   type PuertoCatalogoDestinos,
   crearRutasDestinos,
 } from "./modulos/destinos/publico.js";
@@ -41,7 +43,7 @@ import {
   type ContextoSolicitudAutenticado,
   construirContextoSolicitud,
 } from "./plataforma/contexto/contexto-solicitud.js";
-import { ErrorNoAutorizado } from "./plataforma/errores/error-aplicacion.js";
+import { ErrorNoAutorizado } from "./nucleo/errores/error-aplicacion.js";
 import { crearManejadorErrores } from "./plataforma/errores/manejador-http.js";
 import { crearMiddlewareCors } from "./plataforma/http/middlewares/cors.js";
 import { crearMiddlewareObservabilidad } from "./plataforma/http/middlewares/observabilidad.js";
@@ -54,6 +56,8 @@ import {
   registradorConsola,
 } from "./plataforma/observabilidad/registrador.js";
 import { AuditoriaPostgres } from "./plataforma/persistencia/auditoria-postgres.js";
+import { db } from "./plataforma/persistencia/conexion.js";
+import { tenantsQlik } from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
 import { OutboxPostgres } from "./plataforma/persistencia/outbox-postgres.js";
 
@@ -116,8 +120,37 @@ export function crearAplicacion(
         throw new ErrorNoAutorizado("El tenant activo requiere conexión Qlik");
       return new ClienteHttpQlik(credenciales.host, credenciales.token);
     });
-  const catalogoDestinos =
-    dependencias.catalogoDestinos ?? crearCatalogoDestinosDiferido();
+
+  const resolverCatalogoDestinos = async (
+    c: Context,
+  ): Promise<PuertoCatalogoDestinos> => {
+    if (dependencias.catalogoDestinos) return dependencias.catalogoDestinos;
+    try {
+      const contexto = await resolverContextoSolicitud(c);
+      const tenant = await db.query.tenantsQlik.findFirst({
+        where: eq(tenantsQlik.id, contexto.tenantQlikId),
+      });
+
+      if (tenant?.impalaHost) {
+        return new ClienteImpalaDirecto({
+          host: tenant.impalaHost,
+          port: tenant.impalaPort ?? 21050,
+          authMechanism: tenant.impalaAuthMechanism ?? "NOSASL",
+          user: tenant.impalaUser ?? undefined,
+          password: tenant.impalaPassword ?? undefined,
+          database: tenant.impalaDatabase ?? "default",
+        });
+      }
+
+      if (tenant?.destinoApiUrl && tenant?.destinoApiKey) {
+        return new ClienteDestinos(tenant.destinoApiUrl, tenant.destinoApiKey);
+      }
+    } catch {
+      // fallback
+    }
+    return new ClienteImpalaDirecto({ host: process.env.IMPALA_HOST ?? "localhost" });
+  };
+
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
   const outbox = dependencias.outbox ?? new OutboxPostgres();
   const auditoria = dependencias.auditoria ?? new AuditoriaPostgres();
@@ -182,7 +215,10 @@ export function crearAplicacion(
       auditoria,
     }),
   );
-  aplicacion.route("/api/destinos", crearRutasDestinos(catalogoDestinos));
+  aplicacion.route(
+    "/api/destinos",
+    crearRutasDestinos(resolverCatalogoDestinos),
+  );
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));
   aplicacion.route(
     "/api/admin",

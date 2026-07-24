@@ -15,7 +15,19 @@ const esquemaEntorno = z.object({
   CIFRADO_CLAVE_PRINCIPAL: z.string().min(1),
   REMOTE_API_URL: z.string().url().optional(),
   REMOTE_API_KEY: z.string().optional(),
-  SUPERADMINMAIL: z.string().email().optional(),
+  SUPERADMINMAIL: z
+    .string()
+    .refine(
+      (val) =>
+        val
+          .split(",")
+          .every((email) => z.string().email().safeParse(email.trim()).success),
+      {
+        message:
+          "SUPERADMINMAIL debe contener uno o varios correos válidos separados por coma",
+      },
+    )
+    .optional(),
 });
 
 export type ConfiguracionAplicacion = z.infer<typeof esquemaEntorno>;

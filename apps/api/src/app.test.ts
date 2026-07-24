@@ -53,4 +53,61 @@ describe("API", () => {
     expect(cuerpo.error.mensaje).toBe("Error interno del servidor");
     expect(JSON.stringify(cuerpo)).not.toContain("secreto interno");
   });
+
+  it("permite invocar las rutas PUT de automatización base en admin", async () => {
+    const app = crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverContextoAdmin: async () => ({
+        esSuperadmin: true,
+        membresias: [],
+      }),
+      repositorioAdministracion: {
+        listarOrganizaciones: async () => [],
+        obtenerOrganizacion: async () => null,
+        crearOrganizacion: async () => ({ id: "1", nombre: "t", estado: "activa", creadoEn: new Date() }),
+        actualizarOrganizacion: async () => null,
+        eliminarOrganizacion: async () => true,
+        listarUsuarios: async () => [],
+        agregarUsuario: async () => null,
+        actualizarRolUsuario: async () => null,
+        eliminarUsuario: async () => true,
+        listarTenantsQlik: async () => [],
+        crearTenantQlik: async () => null,
+        marcarTenantQlikPrincipal: async () => null,
+        configurarAutomatizacionBase: async () => ({
+          id: "t1",
+          organizacionId: "org1",
+          tenantIdQlik: "q1",
+          host: "test.qlikcloud.com",
+          nombre: "test",
+          estado: "activo",
+          esPrincipal: true,
+          automatizacionBaseIdQlik: "auto1",
+          automatizacionBaseNombre: "Base Auto",
+          creadoEn: new Date(),
+        }),
+        eliminarTenantQlik: async () => "ELIMINADO",
+      },
+    });
+
+    const res1 = await app.request(
+      "/api/admin/tenants/org1/qlik/t1/automatizacion-base",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ automatizacionBaseIdQlik: "auto1", automatizacionBaseNombre: "Base Auto" }),
+      },
+    );
+    expect(res1.status).toBe(200);
+
+    const res2 = await app.request(
+      "/api/admin/organizaciones/org1/tenants-qlik/t1/automatizacion-base",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ automatizacionBaseIdQlik: "auto1", automatizacionBaseNombre: "Base Auto" }),
+      },
+    );
+    expect(res2.status).toBe(200);
+  });
 });

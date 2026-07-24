@@ -26,6 +26,18 @@ export class ServicioAutenticacionQlik {
     };
   }
 
+  async iniciarPorCorreo(correo: string) {
+    const tenant = await this.repositorio.obtenerTenantPorCorreoUsuario(
+      correo,
+    );
+    if (!tenant || tenant.estado !== "activo") {
+      throw new Error(
+        "El correo ingresado no está registrado en ningún tenant de Qlik activo",
+      );
+    }
+    return this.iniciar(tenant.host);
+  }
+
   async completar(entrada: {
     tenantQlikId: string;
     codigo: string;

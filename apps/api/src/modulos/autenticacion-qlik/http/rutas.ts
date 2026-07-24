@@ -3,7 +3,7 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import {
   responderError,
   responderExito,
-} from "../../../plataforma/http/respuestas.js";
+} from "../../../nucleo/http/respuestas.js";
 import type { ServicioAutenticacionQlik } from "../aplicacion/servicio-autenticacion.js";
 
 const COOKIE_SESION = "sesion_usuario";
@@ -34,12 +34,18 @@ export function crearRutasAutenticacionQlik(
     try {
       inicio = await servicio.iniciar(host);
     } catch (error) {
-      return responderError(
-        c,
-        error instanceof Error ? error.message : "Tenant Qlik inválido",
-        400,
-        { codigo: "TENANT_QLIK_INVALIDO" },
-      );
+      const acceptHeader = c.req.header("accept") ?? "";
+      if (acceptHeader.includes("application/json")) {
+        return responderError(
+          c,
+          error instanceof Error ? error.message : "Tenant Qlik inválido",
+          400,
+          { codigo: "TENANT_QLIK_INVALIDO" },
+        );
+      }
+      const url = new URL("/login", opciones.frontendUrl);
+      url.searchParams.set("oauth_error", "tenant_not_found");
+      return c.redirect(url.toString());
     }
     setCookie(c, COOKIE_ESTADO, inicio.estado, {
       ...cookieSegura,
@@ -53,6 +59,61 @@ export function crearRutasAutenticacionQlik(
       ...cookieSegura,
       maxAge: 600,
     });
+    const acceptHeader = c.req.header("accept") ?? "";
+    if (
+      acceptHeader.includes("application/json") ||
+      c.req.query("format") === "json"
+    ) {
+      return responderExito(c, { url: inicio.url });
+    }
+    return c.redirect(inicio.url);
+  });
+
+  rutas.get("/iniciar-por-correo", async (c) => {
+    const correo = c.req.query("correo")?.trim();
+    if (!correo) {
+      return responderError(c, "Debes ingresar tu correo electrónico", 400, {
+        codigo: "CORREO_REQUERIDO",
+      });
+    }
+    let inicio: Awaited<
+      ReturnType<ServicioAutenticacionQlik["iniciarPorCorreo"]>
+    >;
+    try {
+      inicio = await servicio.iniciarPorCorreo(correo);
+    } catch (error) {
+      const acceptHeader = c.req.header("accept") ?? "";
+      if (acceptHeader.includes("application/json")) {
+        return responderError(
+          c,
+          error instanceof Error ? error.message : "Usuario o tenant no encontrado",
+          400,
+          { codigo: "USUARIO_TENANT_NO_ENCONTRADO" },
+        );
+      }
+      const url = new URL("/login", opciones.frontendUrl);
+      url.searchParams.set("oauth_error", "user_not_found");
+      return c.redirect(url.toString());
+    }
+    setCookie(c, COOKIE_ESTADO, inicio.estado, {
+      ...cookieSegura,
+      maxAge: 600,
+    });
+    setCookie(c, COOKIE_VERIFICADOR, inicio.verificador, {
+      ...cookieSegura,
+      maxAge: 600,
+    });
+    setCookie(c, COOKIE_TENANT_QLIK, inicio.tenantQlikId, {
+      ...cookieSegura,
+      maxAge: 600,
+    });
+    const acceptHeader = c.req.header("accept") ?? "";
+    if (
+      acceptHeader.includes("application/json") ||
+      c.req.query("format") === "json"
+    ) {
+      return responderExito(c, { url: inicio.url });
+    }
     return c.redirect(inicio.url);
   });
 
@@ -115,7 +176,7 @@ export function crearRutasAutenticacionQlik(
     }
     const sesion = await servicio.consultarSesion(token);
     if (!sesion) {
-      deleteCookie(c, COOKIE_SESION, { path: "/" });
+      deleteCookie(c, COOKIE_SESION, cookieSegura);
       return responderError(c, "Sesión inválida o expirada", 401, {
         codigo: "SESION_INVALIDA",
       });
@@ -156,7 +217,7 @@ export function crearRutasAutenticacionQlik(
   rutas.post("/cerrar-sesion", async (c) => {
     const token = getCookie(c, COOKIE_SESION);
     if (token) await servicio.cerrarSesion(token);
-    deleteCookie(c, COOKIE_SESION, { path: "/" });
+    deleteCookie(c, COOKIE_SESION, cookieSegura);
     return responderExito(c, { cerrada: true });
   });
 

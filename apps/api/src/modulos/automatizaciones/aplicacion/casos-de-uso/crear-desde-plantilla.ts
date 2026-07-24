@@ -8,8 +8,8 @@ import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-
 import {
   ErrorAplicacion,
   ErrorConflicto,
-} from "../../../../plataforma/errores/error-aplicacion.js";
-import type { ServicioQlik } from "../../../qlik/publico.js";
+} from "../../../../nucleo/errores/error-aplicacion.js";
+import type { PuertoQlik } from "../../../qlik/publico.js";
 
 export interface ContextoCreacionAutomatizacion {
   tenantId: string;
@@ -22,7 +22,7 @@ export interface ContextoCreacionAutomatizacion {
 
 export class CrearAutomatizacionDesdePlantilla {
   constructor(
-    private readonly qlik: ServicioQlik,
+    private readonly qlik: PuertoQlik,
     private readonly idempotencia: PuertoIdempotencia,
     private readonly outbox: PuertoOutbox,
     private readonly auditoria: PuertoAuditoria,

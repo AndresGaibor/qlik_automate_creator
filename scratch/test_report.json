@@ -1,0 +1,2272 @@
+{
+  "user": {
+    "id": "6a5434b3c00f988d0ff453aa",
+    "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+    "status": "active",
+    "subject": "auth0|fd6c187d6fd23775e69c0dbc1e49aeed215411f6a2b282d152a5cb35c7634fa0",
+    "name": "Andrés Gaibor Apunte",
+    "email": "andres.gaibor@aliwareint.com",
+    "picture": "https://s.gravatar.com/avatar/0809ed0208b2e0db1592736186f9b4c0?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fag.png",
+    "roles": [
+      "AnalyticsAdmin"
+    ],
+    "assignedRoles": [
+      {
+        "id": "605a1c1e0ee6c84bd5a543ae",
+        "name": "AnalyticsAdmin",
+        "type": "default",
+        "level": "admin"
+      }
+    ],
+    "assignedGroups": [
+      {
+        "id": "000000000000000000000001",
+        "name": "com.qlik.Everyone",
+        "assignedRoles": [
+          {
+            "id": "64de70bfd592eef98128540a",
+            "name": "AutomlDeploymentContributor",
+            "type": "default",
+            "level": "user"
+          },
+          {
+            "id": "65a579189eca9606dc0b8225",
+            "name": "UserDefault",
+            "type": "default",
+            "level": "user"
+          },
+          {
+            "id": "64de70bfd592eef98128539b",
+            "name": "AutomlExperimentContributor",
+            "type": "default",
+            "level": "user"
+          }
+        ]
+      }
+    ],
+    "groups": [],
+    "createdAt": "2026-07-13T00:43:31.299Z",
+    "lastUpdatedAt": "2026-07-13T15:00:35.131Z",
+    "created": "2026-07-13T00:43:31.299Z",
+    "lastUpdated": "2026-07-13T15:00:35.131Z",
+    "links": {
+      "self": {
+        "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/users/6a5434b3c00f988d0ff453aa"
+      }
+    }
+  },
+  "space": {
+    "id": "6a57a14cf89e2c4d4b4d83af",
+    "type": "shared",
+    "ownerId": "6a5434b2c00f988d0ff453a6",
+    "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+    "name": "Bancolombia prueba",
+    "description": "Espacio para prueba para el proyecto bancolombia",
+    "meta": {
+      "actions": [
+        "change_owner",
+        "create",
+        "delete",
+        "read",
+        "update"
+      ],
+      "roles": [
+        "codeveloper",
+        "consumer",
+        "dataconsumer",
+        "facilitator",
+        "producer"
+      ],
+      "assignableRoles": [
+        "codeveloper",
+        "consumer",
+        "dataconsumer",
+        "facilitator",
+        "owner",
+        "producer"
+      ]
+    },
+    "links": {
+      "self": {
+        "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/spaces/6a57a14cf89e2c4d4b4d83af"
+      },
+      "assignments": {
+        "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/spaces/6a57a14cf89e2c4d4b4d83af/assignments"
+      }
+    },
+    "createdAt": "2026-07-15T15:03:40.138Z",
+    "createdBy": "6a5434b2c00f988d0ff453a6",
+    "updatedAt": "2026-07-15T15:40:52.528Z"
+  },
+  "items": [
+    {
+      "name": "BanColombia_Prueba_1",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "BanColombia Prueba 1",
+      "resourceAttributes": {
+        "_resourcetype": "app",
+        "_updates": [],
+        "createdDate": "2026-07-15T15:41:57.497Z",
+        "description": "BanColombia Prueba 1",
+        "dynamicColor": "",
+        "hasSectionAccess": false,
+        "id": "f16387d7-63af-484f-b267-f3856540dbe6",
+        "isDirectQueryMode": false,
+        "lastReloadTime": "2026-07-20T16:02:47.598Z",
+        "modifiedDate": "2026-07-20T16:02:47.863Z",
+        "name": "BanColombia_Prueba_1",
+        "originAppId": "",
+        "owner": "auth0|27d7942069efac5b15f4563f7968ed299f3cea076ea434645014c4b61a01349f",
+        "ownerId": "6a5434b2c00f988d0ff453a6",
+        "publishTime": "",
+        "published": false,
+        "resourceType": "app",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "thumbnail": "",
+        "usage": "DATAFLOW_PREP"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-20T16:02:47Z",
+      "resourceType": "app",
+      "resourceSubType": "dataflow-prep",
+      "resourceId": "f16387d7-63af-484f-b267-f3856540dbe6",
+      "resourceCreatedAt": "2026-07-15T15:41:57Z",
+      "id": "6a57aa45fea38eb260143904",
+      "createdAt": "2026-07-15T15:41:57Z",
+      "updatedAt": "2026-07-20T16:02:47Z",
+      "creatorId": "6a5434b2c00f988d0ff453a6",
+      "updaterId": "6a5434b1c00f988d0ff453a5",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a57aa45fea38eb260143904"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a57aa45fea38eb260143904/collections"
+        },
+        "open": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/dataflow/f16387d7-63af-484f-b267-f3856540dbe6/overview"
+        }
+      },
+      "actions": [
+        "change_owner",
+        "change_space",
+        "create",
+        "delete",
+        "delete_share",
+        "duplicate",
+        "evaluate",
+        "export",
+        "export_reduced",
+        "exportappdata",
+        "import",
+        "manage",
+        "publish_source",
+        "read",
+        "reload",
+        "source",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_owner",
+          "change_space",
+          "create",
+          "delete",
+          "delete_share",
+          "duplicate",
+          "evaluate",
+          "export",
+          "export_reduced",
+          "exportappdata",
+          "import",
+          "manage",
+          "publish_source",
+          "read",
+          "reload",
+          "source",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b2c00f988d0ff453a6",
+      "resourceReloadEndTime": "2026-07-20T16:02:47Z",
+      "resourceReloadStatus": "ok",
+      "resourceSize": {
+        "appFile": 94,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 266,
+        "trend": 0.9,
+        "unique": 3
+      }
+    },
+    {
+      "name": "Prueba S3",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Prueba para validar la conexion a S3",
+      "resourceAttributes": {
+        "containsBillable": false,
+        "createdAt": "2026-07-15T16:16:53.000000Z",
+        "lastRunAt": "2026-07-16T19:44:20.000000Z",
+        "lastRunStatus": "finished",
+        "runMode": "manual",
+        "state": "available",
+        "updatedAt": "2026-07-16T19:44:20.000000Z"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-16T19:44:20Z",
+      "resourceType": "automation",
+      "resourceId": "17b889aa-0426-44d5-bca8-9b8baa104a41",
+      "resourceCreatedAt": "0001-01-01T00:00:00Z",
+      "id": "6a57b275a78828418824133c",
+      "createdAt": "2026-07-15T16:16:53Z",
+      "updatedAt": "2026-07-16T19:44:20Z",
+      "creatorId": "6a5434b3c00f988d0ff453aa",
+      "updaterId": "6a5434b3c00f988d0ff453aa",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a57b275a78828418824133c"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a57b275a78828418824133c/collections"
+        }
+      },
+      "actions": [
+        "change_space",
+        "claim",
+        "create",
+        "delete",
+        "disable",
+        "duplicate",
+        "enable",
+        "list",
+        "list_all",
+        "list_public",
+        "read",
+        "run",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_space",
+          "claim",
+          "create",
+          "delete",
+          "disable",
+          "duplicate",
+          "enable",
+          "list",
+          "list_all",
+          "list_public",
+          "read",
+          "run",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b3c00f988d0ff453aa",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 0,
+        "appMemory": 0
+      },
+      "itemViews": {}
+    },
+    {
+      "name": "Prueba de conexion S3",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Flujo para validar la conexion a S3",
+      "thumbnailId": "",
+      "resourceAttributes": {
+        "_resourcetype": "app",
+        "createdDate": "2026-07-15T16:18:03.732Z",
+        "description": "Flujo para validar la conexion a S3",
+        "hasSectionAccess": false,
+        "id": "7f4100b9-90d3-4ca3-b1d5-e249da1cf7de",
+        "isDirectQueryMode": false,
+        "modifiedDate": "2026-07-15T16:18:04.069Z",
+        "name": "Prueba de conexion S3",
+        "owner": "auth0|fd6c187d6fd23775e69c0dbc1e49aeed215411f6a2b282d152a5cb35c7634fa0",
+        "ownerId": "6a5434b3c00f988d0ff453aa",
+        "published": false,
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "usage": "DATAFLOW_PREP"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-15T16:18:04Z",
+      "resourceType": "app",
+      "resourceSubType": "dataflow-prep",
+      "resourceId": "7f4100b9-90d3-4ca3-b1d5-e249da1cf7de",
+      "resourceCreatedAt": "2026-07-15T16:18:03Z",
+      "id": "6a57b2bca7882841882414d9",
+      "createdAt": "2026-07-15T16:18:04Z",
+      "updatedAt": "2026-07-15T16:18:04Z",
+      "creatorId": "6a5434b3c00f988d0ff453aa",
+      "updaterId": "6a5434b3c00f988d0ff453aa",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a57b2bca7882841882414d9"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a57b2bca7882841882414d9/collections"
+        },
+        "open": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/dataflow/7f4100b9-90d3-4ca3-b1d5-e249da1cf7de/overview"
+        }
+      },
+      "actions": [
+        "change_owner",
+        "change_space",
+        "create",
+        "delete",
+        "delete_share",
+        "duplicate",
+        "evaluate",
+        "export",
+        "export_reduced",
+        "exportappdata",
+        "import",
+        "manage",
+        "publish_source",
+        "read",
+        "reload",
+        "source",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_owner",
+          "change_space",
+          "create",
+          "delete",
+          "delete_share",
+          "duplicate",
+          "evaluate",
+          "export",
+          "export_reduced",
+          "exportappdata",
+          "import",
+          "manage",
+          "publish_source",
+          "read",
+          "reload",
+          "source",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b3c00f988d0ff453aa",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 94,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 19,
+        "trend": 0.4,
+        "unique": 1
+      }
+    },
+    {
+      "name": "Test_BanCol",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Test_BanCol",
+      "resourceAttributes": {
+        "containsBillable": true,
+        "createdAt": "2026-07-15T16:20:08.000000Z",
+        "lastRunAt": "2026-07-23T16:55:22.000000Z",
+        "lastRunStatus": "failed",
+        "runMode": "manual",
+        "state": "available",
+        "updatedAt": "2026-07-24T13:33:46.000000Z"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-24T13:33:46Z",
+      "resourceType": "automation",
+      "resourceId": "ee742da2-7b33-474a-8b2f-85c69ba0b8f0",
+      "resourceCreatedAt": "0001-01-01T00:00:00Z",
+      "id": "6a57b338a788284188241776",
+      "createdAt": "2026-07-15T16:20:08Z",
+      "updatedAt": "2026-07-24T13:33:46Z",
+      "creatorId": "6a5434b1c00f988d0ff453a5",
+      "updaterId": "6a5434b1c00f988d0ff453a5",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a57b338a788284188241776"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a57b338a788284188241776/collections"
+        }
+      },
+      "actions": [
+        "change_space",
+        "claim",
+        "create",
+        "delete",
+        "disable",
+        "duplicate",
+        "enable",
+        "list",
+        "list_all",
+        "list_public",
+        "read",
+        "run"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_space",
+          "claim",
+          "create",
+          "delete",
+          "disable",
+          "duplicate",
+          "enable",
+          "list",
+          "list_all",
+          "list_public",
+          "read",
+          "run"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b1c00f988d0ff453a5",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 0,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 1,
+        "trend": 0.1,
+        "unique": 1
+      }
+    },
+    {
+      "name": "BanCol_Test_API",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "BanCol_Test_API",
+      "resourceAttributes": {
+        "_resourcetype": "app",
+        "_updates": [],
+        "createdDate": "2026-07-17T15:20:59.751Z",
+        "description": "BanCol_Test_API",
+        "dynamicColor": "",
+        "hasSectionAccess": false,
+        "id": "d7bbc53c-3087-4c21-a449-e2ca2c62d151",
+        "isDirectQueryMode": false,
+        "lastReloadTime": "2026-07-17T21:12:22.760Z",
+        "modifiedDate": "2026-07-17T21:12:23.006Z",
+        "name": "BanCol_Test_API",
+        "originAppId": "",
+        "owner": "auth0|0e3f558c24b8745a004acc1a5f8be6fb54bd6cae113cef20576df00e753729b0",
+        "ownerId": "6a5434b1c00f988d0ff453a5",
+        "publishTime": "",
+        "published": false,
+        "resourceType": "app",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "thumbnail": "",
+        "usage": "DATAFLOW_PREP"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-17T21:12:23Z",
+      "resourceType": "app",
+      "resourceSubType": "dataflow-prep",
+      "resourceId": "d7bbc53c-3087-4c21-a449-e2ca2c62d151",
+      "resourceCreatedAt": "2026-07-17T15:20:59Z",
+      "id": "6a5a485cfd8cfda686c104b4",
+      "createdAt": "2026-07-17T15:21:00Z",
+      "updatedAt": "2026-07-17T21:12:23Z",
+      "creatorId": "6a5434b1c00f988d0ff453a5",
+      "updaterId": "6a5434b1c00f988d0ff453a5",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5a485cfd8cfda686c104b4"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5a485cfd8cfda686c104b4/collections"
+        },
+        "open": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/dataflow/d7bbc53c-3087-4c21-a449-e2ca2c62d151/overview"
+        }
+      },
+      "actions": [
+        "change_owner",
+        "change_space",
+        "create",
+        "delete",
+        "delete_share",
+        "duplicate",
+        "evaluate",
+        "export",
+        "export_reduced",
+        "exportappdata",
+        "import",
+        "manage",
+        "publish_source",
+        "read",
+        "reload",
+        "source",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_owner",
+          "change_space",
+          "create",
+          "delete",
+          "delete_share",
+          "duplicate",
+          "evaluate",
+          "export",
+          "export_reduced",
+          "exportappdata",
+          "import",
+          "manage",
+          "publish_source",
+          "read",
+          "reload",
+          "source",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b1c00f988d0ff453a5",
+      "resourceReloadEndTime": "2026-07-17T21:12:22Z",
+      "resourceReloadStatus": "ok",
+      "resourceSize": {
+        "appFile": 94,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 28,
+        "trend": 0.6,
+        "unique": 2
+      }
+    },
+    {
+      "name": "Trigger_DataFlow_BanCol",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Prueba para jecucion de un data flow",
+      "resourceAttributes": {
+        "_resourcetype": "app",
+        "_updates": [],
+        "createdDate": "2026-07-17T17:38:52.297Z",
+        "description": "Prueba para jecucion de un data flow",
+        "dynamicColor": "",
+        "hasSectionAccess": false,
+        "id": "7d8f6385-fd8b-4fae-b32e-cdd32e3df7b9",
+        "isDirectQueryMode": false,
+        "lastReloadTime": "2026-07-17T17:59:50.533Z",
+        "modifiedDate": "2026-07-17T17:59:50.762Z",
+        "name": "Trigger_DataFlow_BanCol",
+        "originAppId": "",
+        "owner": "auth0|0e3f558c24b8745a004acc1a5f8be6fb54bd6cae113cef20576df00e753729b0",
+        "ownerId": "6a5434b1c00f988d0ff453a5",
+        "publishTime": "",
+        "published": false,
+        "resourceType": "app",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "thumbnail": "",
+        "usage": "ANALYTICS"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-17T17:59:50Z",
+      "resourceType": "app",
+      "resourceId": "7d8f6385-fd8b-4fae-b32e-cdd32e3df7b9",
+      "resourceCreatedAt": "2026-07-17T17:38:52Z",
+      "id": "6a5a68acb5e79716de5b819b",
+      "createdAt": "2026-07-17T17:38:52Z",
+      "updatedAt": "2026-07-17T17:59:50Z",
+      "creatorId": "6a5434b1c00f988d0ff453a5",
+      "updaterId": "6a5434b1c00f988d0ff453a5",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5a68acb5e79716de5b819b"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5a68acb5e79716de5b819b/collections"
+        },
+        "open": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/sense/app/7d8f6385-fd8b-4fae-b32e-cdd32e3df7b9"
+        }
+      },
+      "actions": [
+        "change_owner",
+        "change_space",
+        "create",
+        "delete",
+        "delete_share",
+        "duplicate",
+        "evaluate",
+        "export",
+        "export_reduced",
+        "exportappdata",
+        "import",
+        "manage",
+        "publish_source",
+        "read",
+        "reload",
+        "share",
+        "source",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_owner",
+          "change_space",
+          "create",
+          "delete",
+          "delete_share",
+          "duplicate",
+          "evaluate",
+          "export",
+          "export_reduced",
+          "exportappdata",
+          "import",
+          "manage",
+          "publish_source",
+          "read",
+          "reload",
+          "share",
+          "source",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b1c00f988d0ff453a5",
+      "resourceReloadEndTime": "2026-07-17T17:59:50Z",
+      "resourceReloadStatus": "ok",
+      "resourceSize": {
+        "appFile": 94,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 4,
+        "trend": 0.3,
+        "unique": 1
+      }
+    },
+    {
+      "name": "prueba_demo",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "resourceAttributes": {
+        "containsBillable": false,
+        "createdAt": "2026-07-17T21:41:32.000000Z",
+        "lastRunAt": "2026-07-17T21:44:02.000000Z",
+        "lastRunStatus": "failed",
+        "runMode": "manual",
+        "state": "available",
+        "updatedAt": "2026-07-17T21:44:02.000000Z"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-17T21:44:02Z",
+      "resourceType": "automation",
+      "resourceId": "1aa567fa-91ae-4048-ab91-c2d43a8c86f4",
+      "resourceCreatedAt": "0001-01-01T00:00:00Z",
+      "id": "6a5aa18cd598f84d91b7d467",
+      "createdAt": "2026-07-17T21:41:32Z",
+      "updatedAt": "2026-07-17T21:44:02Z",
+      "creatorId": "6a5434b2c00f988d0ff453a6",
+      "updaterId": "6a5434b2c00f988d0ff453a6",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5aa18cd598f84d91b7d467"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5aa18cd598f84d91b7d467/collections"
+        }
+      },
+      "actions": [
+        "change_space",
+        "claim",
+        "create",
+        "delete",
+        "disable",
+        "duplicate",
+        "enable",
+        "list",
+        "list_all",
+        "list_public",
+        "read",
+        "run"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_space",
+          "claim",
+          "create",
+          "delete",
+          "disable",
+          "duplicate",
+          "enable",
+          "list",
+          "list_all",
+          "list_public",
+          "read",
+          "run"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b2c00f988d0ff453a6",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 0,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 1,
+        "trend": 0.3,
+        "unique": 1
+      }
+    },
+    {
+      "name": "Prueba de Talend",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "",
+      "resourceAttributes": {
+        "containsBillable": false,
+        "createdAt": "2026-07-17T21:43:09.000000Z",
+        "lastRunAt": "",
+        "lastRunStatus": "",
+        "runMode": "manual",
+        "state": "available",
+        "updatedAt": "2026-07-17T21:43:09.000000Z"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "0001-01-01T00:00:00Z",
+      "resourceType": "automation",
+      "resourceId": "bf7f4e28-32d7-4b61-a747-07cba706bf3c",
+      "resourceCreatedAt": "0001-01-01T00:00:00Z",
+      "id": "6a5aa1edd598f84d91b7d504",
+      "createdAt": "2026-07-17T21:43:09Z",
+      "updatedAt": "2026-07-17T21:43:09Z",
+      "creatorId": "6a5434b3c00f988d0ff453aa",
+      "updaterId": "6a5434b3c00f988d0ff453aa",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5aa1edd598f84d91b7d504"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5aa1edd598f84d91b7d504/collections"
+        }
+      },
+      "actions": [
+        "change_space",
+        "claim",
+        "create",
+        "delete",
+        "disable",
+        "duplicate",
+        "enable",
+        "list",
+        "list_all",
+        "list_public",
+        "read",
+        "run",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_space",
+          "claim",
+          "create",
+          "delete",
+          "disable",
+          "duplicate",
+          "enable",
+          "list",
+          "list_all",
+          "list_public",
+          "read",
+          "run",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b3c00f988d0ff453aa",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 0,
+        "appMemory": 0
+      },
+      "itemViews": {}
+    },
+    {
+      "name": "ELT - Impala - Dataflow - CSV - Talend - Imapala",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Test_BanCol",
+      "resourceAttributes": {
+        "containsBillable": true,
+        "createdAt": "2026-07-17T23:00:04.000000Z",
+        "lastRunAt": "2026-07-20T15:01:06.000000Z",
+        "lastRunStatus": "failed",
+        "runMode": "manual",
+        "state": "disabled",
+        "updatedAt": "2026-07-20T15:15:46.000000Z"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-20T15:15:46Z",
+      "resourceType": "automation",
+      "resourceId": "0b2789ce-24a2-4063-96dc-a4ef35278ebd",
+      "resourceCreatedAt": "0001-01-01T00:00:00Z",
+      "id": "6a5ab3f4f938da8406e01daa",
+      "createdAt": "2026-07-17T23:00:04Z",
+      "updatedAt": "2026-07-20T15:15:46Z",
+      "creatorId": "6a5434b3c00f988d0ff453aa",
+      "updaterId": "6a5434b3c00f988d0ff453aa",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5ab3f4f938da8406e01daa"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5ab3f4f938da8406e01daa/collections"
+        }
+      },
+      "actions": [
+        "change_space",
+        "claim",
+        "create",
+        "delete",
+        "disable",
+        "duplicate",
+        "enable",
+        "list",
+        "list_all",
+        "list_public",
+        "read",
+        "run",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_space",
+          "claim",
+          "create",
+          "delete",
+          "disable",
+          "duplicate",
+          "enable",
+          "list",
+          "list_all",
+          "list_public",
+          "read",
+          "run",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b3c00f988d0ff453aa",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 0,
+        "appMemory": 0
+      },
+      "itemViews": {}
+    },
+    {
+      "name": "Programar Automatización",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Programar automatización",
+      "resourceAttributes": {
+        "containsBillable": true,
+        "createdAt": "2026-07-17T23:54:06.000000Z",
+        "lastRunAt": "2026-07-18T00:06:40.000000Z",
+        "lastRunStatus": "finished",
+        "runMode": "scheduled",
+        "state": "available",
+        "updatedAt": "2026-07-18T00:06:40.000000Z"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-18T00:06:40Z",
+      "resourceType": "automation",
+      "resourceId": "fe3dccb7-29ff-44b2-a385-9e708ec08d99",
+      "resourceCreatedAt": "0001-01-01T00:00:00Z",
+      "id": "6a5ac09edb1f283c23d860ee",
+      "createdAt": "2026-07-17T23:54:06Z",
+      "updatedAt": "2026-07-18T00:06:40Z",
+      "creatorId": "6a5434b3c00f988d0ff453aa",
+      "updaterId": "6a5434b3c00f988d0ff453aa",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5ac09edb1f283c23d860ee"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5ac09edb1f283c23d860ee/collections"
+        }
+      },
+      "actions": [
+        "change_space",
+        "claim",
+        "create",
+        "delete",
+        "disable",
+        "duplicate",
+        "enable",
+        "list",
+        "list_all",
+        "list_public",
+        "read",
+        "run",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_space",
+          "claim",
+          "create",
+          "delete",
+          "disable",
+          "duplicate",
+          "enable",
+          "list",
+          "list_all",
+          "list_public",
+          "read",
+          "run",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b3c00f988d0ff453aa",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 0,
+        "appMemory": 0
+      },
+      "itemViews": {}
+    },
+    {
+      "name": "Programador de automatizaciones",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Interfaz para programar ejecuciones de Dataflows",
+      "resourceAttributes": {
+        "_resourcetype": "app",
+        "_updates": [],
+        "createdDate": "2026-07-18T00:23:26.080Z",
+        "description": "Interfaz para programar ejecuciones de Dataflows",
+        "dynamicColor": "",
+        "hasSectionAccess": false,
+        "id": "1a9b3a57-de64-433c-b4b2-bac3ed53509e",
+        "isDirectQueryMode": false,
+        "lastReloadTime": "2026-07-18T00:37:19.599Z",
+        "modifiedDate": "2026-07-18T00:38:05.541Z",
+        "name": "Programador de automatizaciones",
+        "originAppId": "",
+        "owner": "auth0|fd6c187d6fd23775e69c0dbc1e49aeed215411f6a2b282d152a5cb35c7634fa0",
+        "ownerId": "6a5434b3c00f988d0ff453aa",
+        "publishTime": "",
+        "published": false,
+        "resourceType": "app",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "thumbnail": "",
+        "usage": "ANALYTICS"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-18T00:38:05Z",
+      "resourceType": "app",
+      "resourceId": "1a9b3a57-de64-433c-b4b2-bac3ed53509e",
+      "resourceCreatedAt": "2026-07-18T00:23:26Z",
+      "id": "6a5ac77e31da753121646396",
+      "createdAt": "2026-07-18T00:23:26Z",
+      "updatedAt": "2026-07-18T00:38:05Z",
+      "creatorId": "6a5434b3c00f988d0ff453aa",
+      "updaterId": "6a5434b3c00f988d0ff453aa",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5ac77e31da753121646396"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5ac77e31da753121646396/collections"
+        },
+        "open": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/sense/app/1a9b3a57-de64-433c-b4b2-bac3ed53509e"
+        }
+      },
+      "actions": [
+        "change_owner",
+        "change_space",
+        "create",
+        "delete",
+        "delete_share",
+        "duplicate",
+        "evaluate",
+        "export",
+        "export_reduced",
+        "exportappdata",
+        "import",
+        "manage",
+        "publish_source",
+        "read",
+        "reload",
+        "share",
+        "source",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_owner",
+          "change_space",
+          "create",
+          "delete",
+          "delete_share",
+          "duplicate",
+          "evaluate",
+          "export",
+          "export_reduced",
+          "exportappdata",
+          "import",
+          "manage",
+          "publish_source",
+          "read",
+          "reload",
+          "share",
+          "source",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b3c00f988d0ff453aa",
+      "resourceReloadEndTime": "2026-07-18T00:37:19Z",
+      "resourceReloadStatus": "ok",
+      "resourceSize": {
+        "appFile": 3775,
+        "appMemory": 905
+      },
+      "itemViews": {
+        "total": 5,
+        "trend": 0.3,
+        "unique": 1
+      }
+    },
+    {
+      "name": "Flujo_nuevo",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "",
+      "thumbnailId": "",
+      "resourceAttributes": {
+        "_resourcetype": "app",
+        "createdDate": "2026-07-18T04:43:57.036Z",
+        "hasSectionAccess": false,
+        "id": "a83bf2c9-620a-49b1-bb49-71d9c7680a1f",
+        "isDirectQueryMode": false,
+        "modifiedDate": "2026-07-18T04:43:57.322Z",
+        "name": "Flujo_nuevo",
+        "owner": "auth0|fd6c187d6fd23775e69c0dbc1e49aeed215411f6a2b282d152a5cb35c7634fa0",
+        "ownerId": "6a5434b3c00f988d0ff453aa",
+        "published": false,
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "usage": "DATAFLOW_PREP"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-18T04:43:57Z",
+      "resourceType": "app",
+      "resourceSubType": "dataflow-prep",
+      "resourceId": "a83bf2c9-620a-49b1-bb49-71d9c7680a1f",
+      "resourceCreatedAt": "2026-07-18T04:43:57Z",
+      "id": "6a5b048d80b80af6be5e2b56",
+      "createdAt": "2026-07-18T04:43:57Z",
+      "updatedAt": "2026-07-18T04:43:57Z",
+      "creatorId": "6a5434b3c00f988d0ff453aa",
+      "updaterId": "6a5434b3c00f988d0ff453aa",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5b048d80b80af6be5e2b56"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5b048d80b80af6be5e2b56/collections"
+        },
+        "open": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/dataflow/a83bf2c9-620a-49b1-bb49-71d9c7680a1f/overview"
+        }
+      },
+      "actions": [
+        "change_owner",
+        "change_space",
+        "create",
+        "delete",
+        "delete_share",
+        "duplicate",
+        "evaluate",
+        "export",
+        "export_reduced",
+        "exportappdata",
+        "import",
+        "manage",
+        "publish_source",
+        "read",
+        "reload",
+        "source",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_owner",
+          "change_space",
+          "create",
+          "delete",
+          "delete_share",
+          "duplicate",
+          "evaluate",
+          "export",
+          "export_reduced",
+          "exportappdata",
+          "import",
+          "manage",
+          "publish_source",
+          "read",
+          "reload",
+          "source",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b3c00f988d0ff453aa",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 94,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 2,
+        "trend": 0.3,
+        "unique": 1
+      }
+    },
+    {
+      "name": "ELT - Test",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Test_BanCol",
+      "resourceAttributes": {
+        "containsBillable": true,
+        "createdAt": "2026-07-20T15:39:18.000000Z",
+        "lastRunAt": "2026-07-20T16:02:35.000000Z",
+        "lastRunStatus": "finished",
+        "runMode": "manual",
+        "state": "available",
+        "updatedAt": "2026-07-20T16:02:35.000000Z"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-20T16:02:35Z",
+      "resourceType": "automation",
+      "resourceId": "7c2f9b27-3ba3-435f-9059-b875adfc1d9a",
+      "resourceCreatedAt": "0001-01-01T00:00:00Z",
+      "id": "6a5e4126b49ca14267081647",
+      "createdAt": "2026-07-20T15:39:18Z",
+      "updatedAt": "2026-07-20T16:02:35Z",
+      "creatorId": "6a5434b1c00f988d0ff453a5",
+      "updaterId": "6a5434b1c00f988d0ff453a5",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5e4126b49ca14267081647"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a5e4126b49ca14267081647/collections"
+        }
+      },
+      "actions": [
+        "change_space",
+        "claim",
+        "create",
+        "delete",
+        "disable",
+        "duplicate",
+        "enable",
+        "list",
+        "list_all",
+        "list_public",
+        "read",
+        "run"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_space",
+          "claim",
+          "create",
+          "delete",
+          "disable",
+          "duplicate",
+          "enable",
+          "list",
+          "list_all",
+          "list_public",
+          "read",
+          "run"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b1c00f988d0ff453a5",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 0,
+        "appMemory": 0
+      },
+      "itemViews": {}
+    },
+    {
+      "name": "BanColombia_CargaIncremental",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "Prueba para carga incremental",
+      "resourceAttributes": {
+        "_resourcetype": "app",
+        "_updates": [],
+        "createdDate": "2026-07-23T16:21:04.046Z",
+        "description": "Prueba para carga incremental",
+        "dynamicColor": "",
+        "hasSectionAccess": false,
+        "id": "c354be8c-9ed9-4467-ba2f-bfb00f19b4a5",
+        "isDirectQueryMode": false,
+        "lastReloadTime": "2026-07-24T14:52:06.928Z",
+        "modifiedDate": "2026-07-24T14:52:07.322Z",
+        "name": "BanColombia_CargaIncremental",
+        "originAppId": "",
+        "owner": "auth0|0e3f558c24b8745a004acc1a5f8be6fb54bd6cae113cef20576df00e753729b0",
+        "ownerId": "6a5434b1c00f988d0ff453a5",
+        "publishTime": "",
+        "published": false,
+        "resourceType": "app",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "thumbnail": "",
+        "usage": "DATAFLOW_PREP"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-24T14:52:07Z",
+      "resourceType": "app",
+      "resourceSubType": "dataflow-prep",
+      "resourceId": "c354be8c-9ed9-4467-ba2f-bfb00f19b4a5",
+      "resourceCreatedAt": "2026-07-23T16:21:04Z",
+      "id": "6a623f700a670d32d6058196",
+      "createdAt": "2026-07-23T16:21:04Z",
+      "updatedAt": "2026-07-24T14:52:07Z",
+      "creatorId": "6a5434b1c00f988d0ff453a5",
+      "updaterId": "6a5434b1c00f988d0ff453a5",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a623f700a670d32d6058196"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a623f700a670d32d6058196/collections"
+        },
+        "open": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/dataflow/c354be8c-9ed9-4467-ba2f-bfb00f19b4a5/overview"
+        }
+      },
+      "actions": [
+        "change_owner",
+        "change_space",
+        "create",
+        "delete",
+        "delete_share",
+        "duplicate",
+        "evaluate",
+        "export",
+        "export_reduced",
+        "exportappdata",
+        "import",
+        "manage",
+        "publish_source",
+        "read",
+        "reload",
+        "source",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_owner",
+          "change_space",
+          "create",
+          "delete",
+          "delete_share",
+          "duplicate",
+          "evaluate",
+          "export",
+          "export_reduced",
+          "exportappdata",
+          "import",
+          "manage",
+          "publish_source",
+          "read",
+          "reload",
+          "source",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b1c00f988d0ff453a5",
+      "resourceReloadEndTime": "2026-07-24T14:52:06Z",
+      "resourceReloadStatus": "ok",
+      "resourceSize": {
+        "appFile": 2301874,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 8,
+        "trend": 0.3,
+        "unique": 1
+      }
+    },
+    {
+      "name": "Test_BanCol_Incremental",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "resourceAttributes": {
+        "containsBillable": false,
+        "createdAt": "2026-07-24T13:36:15.000000Z",
+        "lastRunAt": "2026-07-24T15:34:36.000000Z",
+        "lastRunStatus": "finished",
+        "runMode": "manual",
+        "state": "available",
+        "updatedAt": "2026-07-24T15:34:36.000000Z"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-24T15:34:36Z",
+      "resourceType": "automation",
+      "resourceId": "38ff8636-85f9-4ed6-baa2-cd0eedfc438d",
+      "resourceCreatedAt": "0001-01-01T00:00:00Z",
+      "id": "6a636a4f421cfad112d94c75",
+      "createdAt": "2026-07-24T13:36:15Z",
+      "updatedAt": "2026-07-24T15:34:36Z",
+      "creatorId": "6a5434b1c00f988d0ff453a5",
+      "updaterId": "6a5434b1c00f988d0ff453a5",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a636a4f421cfad112d94c75"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a636a4f421cfad112d94c75/collections"
+        }
+      },
+      "actions": [
+        "change_space",
+        "claim",
+        "create",
+        "delete",
+        "disable",
+        "duplicate",
+        "enable",
+        "list",
+        "list_all",
+        "list_public",
+        "read",
+        "run"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_space",
+          "claim",
+          "create",
+          "delete",
+          "disable",
+          "duplicate",
+          "enable",
+          "list",
+          "list_all",
+          "list_public",
+          "read",
+          "run"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b1c00f988d0ff453a5",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 0,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 1,
+        "unique": 1
+      }
+    },
+    {
+      "name": "Prueba resultados",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "description": "",
+      "thumbnailId": "",
+      "resourceAttributes": {
+        "_resourcetype": "app",
+        "createdDate": "2026-07-24T14:55:24.548Z",
+        "hasSectionAccess": false,
+        "id": "2ccfc6b8-bcaf-42f7-8d5f-c05fa4ac7644",
+        "isDirectQueryMode": false,
+        "modifiedDate": "2026-07-24T14:55:24.807Z",
+        "name": "Prueba resultados",
+        "owner": "auth0|0e3f558c24b8745a004acc1a5f8be6fb54bd6cae113cef20576df00e753729b0",
+        "ownerId": "6a5434b1c00f988d0ff453a5",
+        "published": false,
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "usage": "DATAFLOW_PREP"
+      },
+      "resourceCustomAttributes": null,
+      "resourceUpdatedAt": "2026-07-24T14:55:24Z",
+      "resourceType": "app",
+      "resourceSubType": "dataflow-prep",
+      "resourceId": "2ccfc6b8-bcaf-42f7-8d5f-c05fa4ac7644",
+      "resourceCreatedAt": "2026-07-24T14:55:24Z",
+      "id": "6a637cdcd427fd01fd909bc0",
+      "createdAt": "2026-07-24T14:55:24Z",
+      "updatedAt": "2026-07-24T14:55:24Z",
+      "creatorId": "6a5434b1c00f988d0ff453a5",
+      "updaterId": "6a5434b1c00f988d0ff453a5",
+      "tenantId": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "isFavorited": false,
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a637cdcd427fd01fd909bc0"
+        },
+        "collections": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/items/6a637cdcd427fd01fd909bc0/collections"
+        },
+        "open": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/dataflow/2ccfc6b8-bcaf-42f7-8d5f-c05fa4ac7644/overview"
+        }
+      },
+      "actions": [
+        "change_owner",
+        "change_space",
+        "create",
+        "delete",
+        "delete_share",
+        "duplicate",
+        "evaluate",
+        "export",
+        "export_reduced",
+        "exportappdata",
+        "import",
+        "manage",
+        "publish_source",
+        "read",
+        "reload",
+        "source",
+        "update"
+      ],
+      "collectionIds": [],
+      "meta": {
+        "isFavorited": false,
+        "actions": [
+          "change_owner",
+          "change_space",
+          "create",
+          "delete",
+          "delete_share",
+          "duplicate",
+          "evaluate",
+          "export",
+          "export_reduced",
+          "exportappdata",
+          "import",
+          "manage",
+          "publish_source",
+          "read",
+          "reload",
+          "source",
+          "update"
+        ],
+        "tags": [],
+        "collections": []
+      },
+      "ownerId": "6a5434b1c00f988d0ff453a5",
+      "resourceReloadEndTime": "",
+      "resourceReloadStatus": "",
+      "resourceSize": {
+        "appFile": 94,
+        "appMemory": 0
+      },
+      "itemViews": {
+        "total": 1,
+        "unique": 1
+      }
+    }
+  ],
+  "automations": {
+    "total": 9,
+    "spaceAutomations": [
+      {
+        "id": "17b889aa-0426-44d5-bca8-9b8baa104a41",
+        "ownerId": "6a5434b3c00f988d0ff453aa",
+        "name": "Prueba S3",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "state": "available",
+        "duration": 6,
+        "description": "Prueba para validar la conexion a S3",
+        "snippetIds": [
+          "b5dbb7a0-e715-11ea-b2bf-43bb35adee19"
+        ],
+        "endpointIds": [
+          "10e86460-894b-11ee-9901-2b5fbccf1850",
+          "0be997b0-887f-11ee-b001-fd990daaf59a",
+          "8cc63340-107b-11ec-ab5d-f9b221ed2dc5"
+        ],
+        "connectorIds": [
+          "f60a3e10-8846-11ee-8cdc-5bfcb95b42e5",
+          "f60a3e10-8846-11ee-8cdc-5bfcb95b42e5",
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c"
+        ],
+        "workspace": null,
+        "lastRun": {
+          "id": "06bac58f-8d6b-4ed3-9a14-57e0b1328b96",
+          "spaceId": "6a57a14cf89e2c4d4b4d83af",
+          "ownerId": "6a5434b3c00f988d0ff453aa",
+          "executedById": "6a5434b3c00f988d0ff453aa",
+          "context": "editor",
+          "status": "finished",
+          "title": null,
+          "testRun": false,
+          "isTestRun": false,
+          "archived": true,
+          "isArchived": true,
+          "error": null,
+          "startTime": "2026-07-16T19:44:14.000000Z",
+          "stopTime": "2026-07-16T19:44:20.000000Z",
+          "scheduledStartTime": null,
+          "createdAt": "2026-07-16T19:44:13.000000Z",
+          "updatedAt": "2026-07-16T19:44:20.000000Z",
+          "expectedInputs": null,
+          "inputs": {
+            "Flujo de datos": "Prueba de conexion S3"
+          },
+          "metrics": {
+            "blocks": [
+              {
+                "type": "endpointBlock",
+                "rxBytes": 1431,
+                "txBytes": 1809,
+                "duration": 139,
+                "connectorId": "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+                "endpointId": "8cc63340-107b-11ec-ab5d-f9b221ed2dc5",
+                "apiCalls": 1
+              }
+            ],
+            "network": {
+              "rxBytes": 36934,
+              "txBytes": 39295
+            },
+            "totalApiCalls": 1
+          },
+          "billable": false
+        },
+        "lastRunStatus": "finished",
+        "runMode": "manual",
+        "createdAt": "2026-07-15T16:16:53.000000Z",
+        "updatedAt": "2026-07-16T19:44:20.000000Z",
+        "lastRunAt": "2026-07-16T19:44:20.000000Z",
+        "containsBillable": false,
+        "executionToken": "RxlR55UN7xzrH3qpRsIBImycQEmTfptogiQl0XHD4ZqYlIhwKQhrdtc1tUQvGa1N",
+        "maxConcurrentRuns": 1,
+        "timeout": null
+      },
+      {
+        "id": "ee742da2-7b33-474a-8b2f-85c69ba0b8f0",
+        "ownerId": "6a5434b1c00f988d0ff453a5",
+        "name": "Test_BanCol",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "state": "available",
+        "duration": 0,
+        "description": "Test_BanCol",
+        "snippetIds": [
+          "b5dbb7a0-e715-11ea-b2bf-43bb35adee19"
+        ],
+        "endpointIds": [
+          "7ab54980-09fc-11ee-918b-8379f23581ac"
+        ],
+        "connectorIds": [
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+          "c0374370-c190-11ed-b1c6-ad8f32552428"
+        ],
+        "workspace": null,
+        "lastRun": {
+          "id": "d15dfeae-aece-4c1a-b612-beb0f9eef99a",
+          "spaceId": "6a57a14cf89e2c4d4b4d83af",
+          "ownerId": "6a5434b1c00f988d0ff453a5",
+          "executedById": "6a5434b2c00f988d0ff453a6",
+          "context": "api",
+          "status": "failed",
+          "title": null,
+          "testRun": false,
+          "isTestRun": false,
+          "archived": true,
+          "isArchived": true,
+          "error": [
+            {
+              "error": "The automation did not receive the required inputs."
+            }
+          ],
+          "startTime": "2026-07-23T16:55:22.000000Z",
+          "stopTime": "2026-07-23T16:55:22.000000Z",
+          "scheduledStartTime": null,
+          "createdAt": "2026-07-23T16:55:21.000000Z",
+          "updatedAt": "2026-07-23T16:55:22.000000Z",
+          "expectedInputs": null,
+          "inputs": null,
+          "metrics": {
+            "blocks": [
+              {
+                "type": "baseBlock",
+                "rxBytes": 0,
+                "txBytes": 0,
+                "duration": 172,
+                "blockName": "CallURLBlock",
+                "params": []
+              }
+            ],
+            "network": {
+              "rxBytes": 18033,
+              "txBytes": 12702
+            },
+            "totalApiCalls": 0
+          },
+          "billable": true
+        },
+        "lastRunStatus": "failed",
+        "runMode": "manual",
+        "createdAt": "2026-07-15T16:20:08.000000Z",
+        "updatedAt": "2026-07-24T13:33:46.000000Z",
+        "lastRunAt": "2026-07-23T16:55:22.000000Z",
+        "containsBillable": true,
+        "maxConcurrentRuns": 1,
+        "timeout": null
+      },
+      {
+        "id": "1aa567fa-91ae-4048-ab91-c2d43a8c86f4",
+        "ownerId": "6a5434b2c00f988d0ff453a6",
+        "name": "prueba_demo",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "state": "available",
+        "duration": 0,
+        "description": null,
+        "snippetIds": [],
+        "endpointIds": [
+          "7ab54980-09fc-11ee-918b-8379f23581ac"
+        ],
+        "connectorIds": [
+          "c0374370-c190-11ed-b1c6-ad8f32552428"
+        ],
+        "workspace": null,
+        "lastRun": {
+          "id": "80443433-8d89-4e52-be94-714b31c404f3",
+          "spaceId": "6a57a14cf89e2c4d4b4d83af",
+          "ownerId": "6a5434b2c00f988d0ff453a6",
+          "executedById": "6a5434b2c00f988d0ff453a6",
+          "context": "editor",
+          "status": "failed",
+          "title": null,
+          "testRun": false,
+          "isTestRun": false,
+          "archived": true,
+          "isArchived": true,
+          "error": [
+            {
+              "error": "Error calling endpoint \"Talend Cloud - Execute Task\"",
+              "endpoint": {
+                "name": "Execute Task",
+                "datasource": "Talend Cloud"
+              },
+              "request": {
+                "url": "https://api.us.cloud.talend.com/processing/executions",
+                "method": "POST"
+              },
+              "response": {
+                "status": 401,
+                "body": {
+                  "status": 401,
+                  "detail": "Invalid token"
+                }
+              },
+              "external error": true
+            }
+          ],
+          "startTime": "2026-07-17T21:44:02.000000Z",
+          "stopTime": "2026-07-17T21:44:02.000000Z",
+          "scheduledStartTime": null,
+          "createdAt": "2026-07-17T21:44:01.000000Z",
+          "updatedAt": "2026-07-17T21:44:02.000000Z",
+          "expectedInputs": null,
+          "inputs": null,
+          "metrics": {
+            "blocks": [
+              {
+                "type": "endpointBlock",
+                "rxBytes": 1285,
+                "txBytes": 1866,
+                "duration": 184,
+                "connectorId": "c0374370-c190-11ed-b1c6-ad8f32552428",
+                "endpointId": "7ab54980-09fc-11ee-918b-8379f23581ac",
+                "apiCalls": 1
+              }
+            ],
+            "network": {
+              "rxBytes": 10065,
+              "txBytes": 10625
+            },
+            "totalApiCalls": 1
+          },
+          "billable": false
+        },
+        "lastRunStatus": "failed",
+        "runMode": "manual",
+        "createdAt": "2026-07-17T21:41:32.000000Z",
+        "updatedAt": "2026-07-17T21:44:02.000000Z",
+        "lastRunAt": "2026-07-17T21:44:02.000000Z",
+        "containsBillable": false,
+        "maxConcurrentRuns": 1,
+        "timeout": null
+      },
+      {
+        "id": "bf7f4e28-32d7-4b61-a747-07cba706bf3c",
+        "ownerId": "6a5434b3c00f988d0ff453aa",
+        "name": "Prueba de Talend",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "state": "available",
+        "duration": null,
+        "description": null,
+        "snippetIds": [],
+        "endpointIds": [],
+        "connectorIds": [],
+        "workspace": null,
+        "lastRun": null,
+        "lastRunStatus": null,
+        "runMode": "manual",
+        "createdAt": "2026-07-17T21:43:09.000000Z",
+        "updatedAt": "2026-07-17T21:43:09.000000Z",
+        "lastRunAt": null,
+        "containsBillable": false,
+        "executionToken": "qV1St1BRc5dOyX4RBzy6brXorlELPCmejRD5r7BraFZZ6elbXMmZIVxAT5AqovQW",
+        "maxConcurrentRuns": 1,
+        "timeout": null
+      },
+      {
+        "id": "0b2789ce-24a2-4063-96dc-a4ef35278ebd",
+        "ownerId": "6a5434b3c00f988d0ff453aa",
+        "name": "ELT - Impala - Dataflow - CSV - Talend - Imapala",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "state": "disabled",
+        "duration": 650,
+        "description": "Test_BanCol",
+        "snippetIds": [
+          "b5dbb7a0-e715-11ea-b2bf-43bb35adee19"
+        ],
+        "endpointIds": [
+          "7ab54980-09fc-11ee-918b-8379f23581ac",
+          "8cc63340-107b-11ec-ab5d-f9b221ed2dc5"
+        ],
+        "connectorIds": [
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+          "c0374370-c190-11ed-b1c6-ad8f32552428",
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c"
+        ],
+        "workspace": null,
+        "lastRun": {
+          "id": "5c3f7217-1088-4250-badb-8292aa4341ec",
+          "spaceId": "6a57a14cf89e2c4d4b4d83af",
+          "ownerId": "6a5434b3c00f988d0ff453aa",
+          "executedById": "6a5434b3c00f988d0ff453aa",
+          "context": "editor",
+          "status": "failed",
+          "title": null,
+          "testRun": false,
+          "isTestRun": false,
+          "archived": true,
+          "isArchived": true,
+          "error": [
+            {
+              "error": "The required inputs were not received."
+            }
+          ],
+          "startTime": "2026-07-20T14:50:16.000000Z",
+          "stopTime": "2026-07-20T15:01:06.000000Z",
+          "scheduledStartTime": null,
+          "createdAt": "2026-07-20T14:50:15.000000Z",
+          "updatedAt": "2026-07-20T15:15:17.000000Z",
+          "expectedInputs": null,
+          "inputs": {
+            "Flujo de datos": "Flujo_nuevo",
+            "Destino": "ventas_filtro"
+          },
+          "metrics": {
+            "blocks": [
+              {
+                "type": "baseBlock",
+                "rxBytes": 0,
+                "txBytes": 0,
+                "duration": 611,
+                "blockName": "CallURLBlock",
+                "params": []
+              },
+              {
+                "type": "endpointBlock",
+                "rxBytes": 1880,
+                "txBytes": 1809,
+                "duration": 213,
+                "connectorId": "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+                "endpointId": "8cc63340-107b-11ec-ab5d-f9b221ed2dc5",
+                "apiCalls": 1
+              }
+            ],
+            "network": {
+              "rxBytes": 1760810,
+              "txBytes": 1246356
+            },
+            "totalApiCalls": 1
+          },
+          "billable": true
+        },
+        "lastRunStatus": "failed",
+        "runMode": "manual",
+        "createdAt": "2026-07-17T23:00:04.000000Z",
+        "updatedAt": "2026-07-20T15:15:46.000000Z",
+        "lastRunAt": "2026-07-20T15:01:06.000000Z",
+        "containsBillable": true,
+        "executionToken": "qI55ReQWIPCtPcdEYhG5IsDSfkywozcLBgF8wgOdl0D1euszEaL3PpHHd9j2F7kf",
+        "maxConcurrentRuns": 1,
+        "timeout": null
+      },
+      {
+        "id": "fe3dccb7-29ff-44b2-a385-9e708ec08d99",
+        "ownerId": "6a5434b3c00f988d0ff453aa",
+        "name": "Programar Automatización",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "state": "available",
+        "duration": 1,
+        "description": "Programar automatización",
+        "snippetIds": [],
+        "endpointIds": [],
+        "connectorIds": [],
+        "workspace": null,
+        "lastRun": {
+          "id": "b12844b5-9669-4bf8-9866-bc08f190bd1b",
+          "spaceId": "6a57a14cf89e2c4d4b4d83af",
+          "ownerId": "6a5434b3c00f988d0ff453aa",
+          "executedById": "6a5434b3c00f988d0ff453aa",
+          "context": "test_run",
+          "status": "finished",
+          "title": null,
+          "testRun": true,
+          "isTestRun": true,
+          "archived": true,
+          "isArchived": true,
+          "error": null,
+          "startTime": "2026-07-18T00:06:39.000000Z",
+          "stopTime": "2026-07-18T00:06:40.000000Z",
+          "scheduledStartTime": null,
+          "createdAt": "2026-07-18T00:06:39.000000Z",
+          "updatedAt": "2026-07-18T00:06:40.000000Z",
+          "expectedInputs": null,
+          "inputs": null,
+          "metrics": {
+            "blocks": [
+              {
+                "type": "baseBlock",
+                "rxBytes": 0,
+                "txBytes": 0,
+                "duration": 65,
+                "blockName": "CallURLBlock",
+                "params": []
+              }
+            ],
+            "network": {
+              "rxBytes": 13011,
+              "txBytes": 10060
+            },
+            "totalApiCalls": 0
+          },
+          "billable": true
+        },
+        "lastRunStatus": "finished",
+        "runMode": "scheduled",
+        "createdAt": "2026-07-17T23:54:06.000000Z",
+        "updatedAt": "2026-07-18T00:06:40.000000Z",
+        "lastRunAt": "2026-07-18T00:06:40.000000Z",
+        "containsBillable": true,
+        "executionToken": "OdztZlDZG4KweECE064oXzRaucv3QZ4kPIBee6MuJjWVcC9PTb31Dtrh22RF8H5h",
+        "maxConcurrentRuns": 1,
+        "timeout": null
+      },
+      {
+        "id": "7c2f9b27-3ba3-435f-9059-b875adfc1d9a",
+        "ownerId": "6a5434b1c00f988d0ff453a5",
+        "name": "ELT - Test",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "state": "available",
+        "duration": 18,
+        "description": "Test_BanCol",
+        "snippetIds": [
+          "b5dbb7a0-e715-11ea-b2bf-43bb35adee19"
+        ],
+        "endpointIds": [
+          "7ab54980-09fc-11ee-918b-8379f23581ac",
+          "8cc63340-107b-11ec-ab5d-f9b221ed2dc5"
+        ],
+        "connectorIds": [
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+          "c0374370-c190-11ed-b1c6-ad8f32552428",
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c"
+        ],
+        "workspace": null,
+        "lastRun": {
+          "id": "f1758b82-5341-41fb-a461-5f9e5ba4cd2a",
+          "spaceId": "6a57a14cf89e2c4d4b4d83af",
+          "ownerId": "6a5434b1c00f988d0ff453a5",
+          "executedById": "6a5434b1c00f988d0ff453a5",
+          "context": "editor",
+          "status": "finished",
+          "title": null,
+          "testRun": false,
+          "isTestRun": false,
+          "archived": true,
+          "isArchived": true,
+          "error": null,
+          "startTime": "2026-07-20T16:02:17.000000Z",
+          "stopTime": "2026-07-20T16:02:35.000000Z",
+          "scheduledStartTime": null,
+          "createdAt": "2026-07-20T16:02:16.000000Z",
+          "updatedAt": "2026-07-20T16:02:35.000000Z",
+          "expectedInputs": null,
+          "inputs": {
+            "Flujo de datos": "BanColombia_Prueba_1",
+            "Destino": "ventas_filtro"
+          },
+          "metrics": {
+            "blocks": [
+              {
+                "type": "baseBlock",
+                "rxBytes": 0,
+                "txBytes": 0,
+                "duration": 126,
+                "blockName": "CallURLBlock",
+                "params": []
+              },
+              {
+                "type": "snippetBlock",
+                "rxBytes": 1277,
+                "txBytes": 1570,
+                "duration": 195,
+                "connectorId": "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+                "snippetId": "b5dbb7a0-e715-11ea-b2bf-43bb35adee19"
+              },
+              {
+                "type": "endpointBlock",
+                "rxBytes": 1880,
+                "txBytes": 1809,
+                "duration": 341,
+                "connectorId": "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+                "endpointId": "8cc63340-107b-11ec-ab5d-f9b221ed2dc5",
+                "apiCalls": 1
+              },
+              {
+                "type": "endpointBlock",
+                "rxBytes": 805,
+                "txBytes": 1985,
+                "duration": 544,
+                "connectorId": "c0374370-c190-11ed-b1c6-ad8f32552428",
+                "endpointId": "7ab54980-09fc-11ee-918b-8379f23581ac",
+                "apiCalls": 1
+              },
+              {
+                "type": "endpointBlock",
+                "rxBytes": 1277,
+                "txBytes": 1570,
+                "duration": 194,
+                "connectorId": "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+                "endpointId": "5803a7c0-e713-11ea-8e3c-8fa0d845db42",
+                "apiCalls": 1
+              }
+            ],
+            "network": {
+              "rxBytes": 87174,
+              "txBytes": 92837
+            },
+            "totalApiCalls": 3
+          },
+          "billable": true
+        },
+        "lastRunStatus": "finished",
+        "runMode": "manual",
+        "createdAt": "2026-07-20T15:39:18.000000Z",
+        "updatedAt": "2026-07-20T16:02:35.000000Z",
+        "lastRunAt": "2026-07-20T16:02:35.000000Z",
+        "containsBillable": true,
+        "maxConcurrentRuns": 1,
+        "timeout": null
+      },
+      {
+        "id": "38ff8636-85f9-4ed6-baa2-cd0eedfc438d",
+        "ownerId": "6a5434b1c00f988d0ff453a5",
+        "name": "Test_BanCol_Incremental",
+        "spaceId": "6a57a14cf89e2c4d4b4d83af",
+        "state": "available",
+        "duration": 1,
+        "description": null,
+        "snippetIds": [
+          "b5dbb7a0-e715-11ea-b2bf-43bb35adee19"
+        ],
+        "endpointIds": [
+          "72d48530-bbb0-11f0-875a-b322bf237aeb",
+          "72d48530-bbb0-11f0-875a-b322bf237aeb"
+        ],
+        "connectorIds": [
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+          "61a87510-c7a3-11ea-95da-0fb0c241e75c"
+        ],
+        "workspace": null,
+        "lastRun": {
+          "id": "02e60670-bf36-4deb-8a27-7d79e3260696",
+          "spaceId": "6a57a14cf89e2c4d4b4d83af",
+          "ownerId": "6a5434b1c00f988d0ff453a5",
+          "executedById": "6a5434b1c00f988d0ff453a5",
+          "context": "test_run",
+          "status": "finished",
+          "title": null,
+          "testRun": true,
+          "isTestRun": true,
+          "archived": true,
+          "isArchived": true,
+          "error": null,
+          "startTime": "2026-07-24T15:34:35.000000Z",
+          "stopTime": "2026-07-24T15:34:36.000000Z",
+          "scheduledStartTime": null,
+          "createdAt": "2026-07-24T15:34:34.000000Z",
+          "updatedAt": "2026-07-24T15:34:36.000000Z",
+          "expectedInputs": null,
+          "inputs": null,
+          "metrics": {
+            "blocks": [
+              {
+                "type": "endpointBlock",
+                "rxBytes": 1599,
+                "txBytes": 1843,
+                "duration": 213,
+                "connectorId": "61a87510-c7a3-11ea-95da-0fb0c241e75c",
+                "endpointId": "72d48530-bbb0-11f0-875a-b322bf237aeb",
+                "apiCalls": 1
+              }
+            ],
+            "network": {
+              "rxBytes": 9380,
+              "txBytes": 9887
+            },
+            "totalApiCalls": 1
+          },
+          "billable": false
+        },
+        "lastRunStatus": "finished",
+        "runMode": "manual",
+        "createdAt": "2026-07-24T13:36:15.000000Z",
+        "updatedAt": "2026-07-24T15:34:36.000000Z",
+        "lastRunAt": "2026-07-24T15:34:36.000000Z",
+        "containsBillable": false,
+        "maxConcurrentRuns": 1,
+        "timeout": null
+      }
+    ]
+  },
+  "connections": [
+    {
+      "created": "2026-07-15T16:13:43.013Z",
+      "datasourceID": "postgres",
+      "id": "e96c1f8e-0262-4f2a-8c35-8dba762a46a1",
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/data-connections/e96c1f8e-0262-4f2a-8c35-8dba762a46a1"
+        }
+      },
+      "privileges": [
+        "change_owner",
+        "change_space",
+        "delete",
+        "list",
+        "read"
+      ],
+      "qArchitecture": 0,
+      "qConnectStatement": "CUSTOM CONNECT TO \"provider=QvOdbcConnectorPackage.exe;driver=postgres;host=ep-blue-dust-atd8xd5k-pooler.c-9.us-east-1.aws.neon.tech;port=5432;db=neondb;separateCredentials=false;SSLMode=require;ByteaAsLongVarBinary=0;TextAsLongVarchar=false;UseUnicode=1;FetchTSWTZasTimestamp=1;MaxVarchar=262144;UseDeclareFetch=1;Fetch=200;EnableTableTypes=1;MoneyAsDecimal=1;TimetzAsVarchar=1;allowNonSelectQueries=false;QueryTimeout=30;useBulkReader=true;bulkFetchSize=50;rowBatchSize=1;bulkFetchColumnMode=true;maxStringLength=4096;logSQLStatements=false;\"",
+      "qCredentialsID": "6b48f336-7fb3-4d8a-ba89-3999b4109203",
+      "qEngineObjectID": "e96c1f8e-0262-4f2a-8c35-8dba762a46a1",
+      "qID": "e96c1f8e-0262-4f2a-8c35-8dba762a46a1",
+      "qLogOn": 1,
+      "qName": "Postgres_BanColombia_Prueba",
+      "qSeparateCredentials": false,
+      "qType": "QvOdbcConnectorPackage.exe",
+      "qri": "qri:db:postgresql://icLAWw5PAxCihlxl2JusDshTsgFHlpcjU25Lo5dRvXc",
+      "space": "6a57a14cf89e2c4d4b4d83af",
+      "tags": null,
+      "tenant": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "updated": "2026-07-15T16:13:43.013Z",
+      "user": "6a5434b2c00f988d0ff453a6",
+      "version": "V1"
+    },
+    {
+      "created": "2026-07-15T17:23:27.523Z",
+      "datasourceID": "File_FileTransferConnector",
+      "id": "ed8e6f15-3c1d-41e8-906e-80ba5b134239",
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/data-connections/ed8e6f15-3c1d-41e8-906e-80ba5b134239"
+        }
+      },
+      "privileges": [
+        "change_owner",
+        "change_space",
+        "delete",
+        "list",
+        "read",
+        "update"
+      ],
+      "qArchitecture": 0,
+      "qConnectStatement": "CUSTOM CONNECT TO \"provider=QvWebStorageProviderConnectorPackage.exe;sourceType=File_FileTransferConnector;host=209.50.245.140;sftpPort=22;publicKeyAlgorithm=ECDsaNistP256;publicKeyFingerprint=e2XPTa0fqRSyGhwTJf28woJeC4mezI/m/yQBpsU63Zs;separateCredentials=false;\"",
+      "qCredentialsID": "0505c69a-02cf-457f-933e-c1dfc1c5be51",
+      "qEngineObjectID": "ed8e6f15-3c1d-41e8-906e-80ba5b134239",
+      "qID": "ed8e6f15-3c1d-41e8-906e-80ba5b134239",
+      "qLogOn": 1,
+      "qName": "SFTP",
+      "qSeparateCredentials": false,
+      "qType": "QvWebStorageProviderConnectorPackage.exe",
+      "qri": "qri:file:sftp://Lj8U8CI9Rb4ym3dG3q4vZbaP2l5nYH1fg4KwdXyVlc0",
+      "space": "6a57a14cf89e2c4d4b4d83af",
+      "tags": null,
+      "tenant": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "updated": "2026-07-15T17:23:27.523Z",
+      "user": "6a5434b3c00f988d0ff453aa",
+      "version": "V1"
+    },
+    {
+      "created": "2026-07-18T00:30:21.468Z",
+      "datasourceID": "rest",
+      "id": "246eca81-3750-4354-ae3f-8a93ae8eee91",
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/data-connections/246eca81-3750-4354-ae3f-8a93ae8eee91"
+        }
+      },
+      "privileges": [
+        "change_owner",
+        "change_space",
+        "delete",
+        "list",
+        "read",
+        "update"
+      ],
+      "qArchitecture": 0,
+      "qConnectStatement": "CUSTOM CONNECT TO \"provider=QvRestConnector.exe;url=https://apiqd.andresgaibor.com/api/v1/dataflows;timeout=30;readwritetimeout=300;method=GET;httpProtocol=1.1;isKeepAlive=true;bodyEncoding=UTF-8;sendExpect100Continue=true;autoDetectResponseType=true;checkResponseTypeOnTestConnection=true;keyGenerationStrategy=0;XMLDTD=0;authSchema=anonymous;serverCertificateValidation=UseTrust;checkCertificateRevocation=false;enableMutualSSL=false;addMissingQueryParametersToFinalRequest=false;queryHeaders=X-API-Key%2%1;allowWithConnection=false;retryFailedRequest=false;PaginationType=None;allowResponseHeaders=false;allowHttpsOnly=false;\"",
+      "qCredentialsID": "6dc33f6d-1c35-4a8e-98c8-610e092c7155",
+      "qEngineObjectID": "246eca81-3750-4354-ae3f-8a93ae8eee91",
+      "qID": "246eca81-3750-4354-ae3f-8a93ae8eee91",
+      "qLogOn": 1,
+      "qName": "REST_httpsapiqd.andresgaibor.comapiv1dataflows",
+      "qSeparateCredentials": false,
+      "qType": "QvRestConnector.exe",
+      "qri": "qri:rest://4cARytwknkP-wpmjW5yV3DIekJJeJJjcvFTsHx5RFh8",
+      "space": "6a57a14cf89e2c4d4b4d83af",
+      "tags": null,
+      "tenant": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh",
+      "updated": "2026-07-18T00:30:21.468Z",
+      "user": "6a5434b3c00f988d0ff453aa",
+      "version": "V1"
+    },
+    {
+      "id": "26b09993-341e-4d9a-93a9-68c3d5f3ac3c",
+      "links": {
+        "self": {
+          "href": "https://l676lvg3emfvcq2.us.qlikcloud.com/api/v1/data-connections/26b09993-341e-4d9a-93a9-68c3d5f3ac3c"
+        }
+      },
+      "privileges": [
+        "read"
+      ],
+      "qArchitecture": 0,
+      "qConnectStatement": "CUSTOM CONNECT TO \"provider=qix-datafiles.exe;path=Bancolombia+prueba:datafiles;\"",
+      "qEngineObjectID": "26b09993-341e-4d9a-93a9-68c3d5f3ac3c",
+      "qID": "26b09993-341e-4d9a-93a9-68c3d5f3ac3c",
+      "qLogOn": 0,
+      "qName": "DataFiles",
+      "qType": "qix-datafiles.exe",
+      "space": "6a57a14cf89e2c4d4b4d83af",
+      "tags": null,
+      "tenant": "vGtoupIUZYcHq_6Q2MFn5r-eDCudinkh"
+    }
+  ]
+}

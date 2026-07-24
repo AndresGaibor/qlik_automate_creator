@@ -2,6 +2,9 @@ import {
   esquemaActualizarTenant,
   esquemaActualizarUsuario,
   esquemaAgregarUsuario,
+  esquemaConfigurarAutomatizacionBase,
+  esquemaConfigurarDestinoTenant,
+  esquemaConfigurarImpalaTenant,
   esquemaCrearTenant,
   esquemaCrearTenantQlik,
 } from "@qlik/contratos/admin";
@@ -9,7 +12,7 @@ import { type Context, Hono } from "hono";
 import {
   responderError,
   responderExito,
-} from "../../../plataforma/http/respuestas.js";
+} from "../../../nucleo/http/respuestas.js";
 import { actualizarTenant } from "../aplicacion/casos-de-uso/actualizar-tenant.js";
 import { actualizarUsuario } from "../aplicacion/casos-de-uso/actualizar-usuario.js";
 import { agregarUsuario } from "../aplicacion/casos-de-uso/agregar-usuario.js";
@@ -451,6 +454,120 @@ export function crearRutasAdmin({
       return responderErrorAdmin(c, error);
     }
   });
+
+  const handlerAutomatizacionBase = async (c: Context) => {
+    try {
+      const organizacionId = c.req.param("id");
+      const tenantQlikId = c.req.param("tenantQlikId");
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, organizacionId);
+
+      const cuerpo = await c.req.json();
+      const entrada = esquemaConfigurarAutomatizacionBase.parse(cuerpo);
+
+      const resultado = await repositorio.configurarAutomatizacionBase(
+        organizacionId,
+        tenantQlikId,
+        entrada.automatizacionBaseIdQlik,
+        entrada.automatizacionBaseNombre,
+      );
+
+      if (!resultado) {
+        return responderError(c, "Tenant Qlik no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, resultado);
+    } catch (error) {
+      return responderErrorAdmin(c, error);
+    }
+  };
+
+  rutas.put(
+    "/organizaciones/:id/tenants-qlik/:tenantQlikId/automatizacion-base",
+    handlerAutomatizacionBase,
+  );
+  rutas.put(
+    "/tenants/:id/qlik/:tenantQlikId/automatizacion-base",
+    handlerAutomatizacionBase,
+  );
+
+  const handlerDestino = async (c: Context) => {
+    try {
+      const organizacionId = c.req.param("id");
+      const tenantQlikId = c.req.param("tenantQlikId");
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, organizacionId);
+
+      const cuerpo = await c.req.json();
+      const entrada = esquemaConfigurarDestinoTenant.parse(cuerpo);
+
+      const resultado = await repositorio.configurarDestinoTenant(
+        organizacionId,
+        tenantQlikId,
+        entrada.destinoApiUrl,
+        entrada.destinoApiKey,
+        entrada.destinoBaseDatos,
+      );
+
+      if (!resultado) {
+        return responderError(c, "Tenant Qlik no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, resultado);
+    } catch (error) {
+      return responderErrorAdmin(c, error);
+    }
+  };
+
+  rutas.put(
+    "/organizaciones/:id/tenants-qlik/:tenantQlikId/destino",
+    handlerDestino,
+  );
+  rutas.put(
+    "/tenants/:id/qlik/:tenantQlikId/destino",
+    handlerDestino,
+  );
+
+  const handlerImpala = async (c: Context) => {
+    try {
+      const organizacionId = c.req.param("id");
+      const tenantQlikId = c.req.param("tenantQlikId");
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, organizacionId);
+
+      const cuerpo = await c.req.json();
+      const entrada = esquemaConfigurarImpalaTenant.parse(cuerpo);
+
+      const resultado = await repositorio.configurarImpalaTenant(
+        organizacionId,
+        tenantQlikId,
+        entrada,
+      );
+
+      if (!resultado) {
+        return responderError(c, "Tenant Qlik no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, resultado);
+    } catch (error) {
+      return responderErrorAdmin(c, error);
+    }
+  };
+
+  rutas.put(
+    "/organizaciones/:id/tenants-qlik/:tenantQlikId/impala",
+    handlerImpala,
+  );
+  rutas.put(
+    "/tenants/:id/qlik/:tenantQlikId/impala",
+    handlerImpala,
+  );
 
   return rutas;
 }

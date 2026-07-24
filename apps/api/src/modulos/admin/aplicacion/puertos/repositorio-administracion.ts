@@ -17,6 +17,17 @@ export interface TenantQlikAdministrable {
   nombre: string | null;
   estado: EstadoTenantQlik;
   esPrincipal: boolean;
+  automatizacionBaseIdQlik?: string | null;
+  automatizacionBaseNombre?: string | null;
+  destinoApiUrl?: string | null;
+  destinoApiKey?: string | null;
+  destinoBaseDatos?: string | null;
+  impalaHost?: string | null;
+  impalaPort?: number | null;
+  impalaAuthMechanism?: string | null;
+  impalaUser?: string | null;
+  impalaPassword?: string | null;
+  impalaDatabase?: string | null;
   creadoEn: Date;
 }
 
@@ -30,6 +41,15 @@ export interface UsuarioAdministrable {
   correo: string | null;
   nombre: string;
   rol: RolAdministracion;
+}
+
+export interface EntradaConfigurarImpala {
+  impalaHost: string;
+  impalaPort?: number;
+  impalaAuthMechanism?: string;
+  impalaUser?: string;
+  impalaPassword?: string;
+  impalaDatabase?: string;
 }
 
 export interface RepositorioAdministracion {
@@ -65,6 +85,24 @@ export interface RepositorioAdministracion {
   marcarTenantQlikPrincipal(
     organizacionId: string,
     tenantQlikId: string,
+  ): Promise<TenantQlikAdministrable | null>;
+  configurarAutomatizacionBase(
+    organizacionId: string,
+    tenantQlikId: string,
+    automatizacionBaseIdQlik: string,
+    automatizacionBaseNombre?: string,
+  ): Promise<TenantQlikAdministrable | null>;
+  configurarDestinoTenant(
+    organizacionId: string,
+    tenantQlikId: string,
+    destinoApiUrl: string,
+    destinoApiKey: string,
+    destinoBaseDatos?: string,
+  ): Promise<TenantQlikAdministrable | null>;
+  configurarImpalaTenant(
+    organizacionId: string,
+    tenantQlikId: string,
+    datos: EntradaConfigurarImpala,
   ): Promise<TenantQlikAdministrable | null>;
   eliminarTenantQlik(
     organizacionId: string,

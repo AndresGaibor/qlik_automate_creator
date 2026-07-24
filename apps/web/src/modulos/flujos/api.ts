@@ -1,7 +1,21 @@
 import { clienteApi } from "@/compartido/api/cliente";
 import type { ResumenFlujo } from "@qlik/contratos/flujos";
+import type { EspacioDisponible } from "@qlik/contratos/automatizaciones";
 
 export type { ResumenFlujo };
 export function obtenerFlujos() {
   return clienteApi.get<ResumenFlujo[]>("/flujos");
+}
+
+export function obtenerFlujosConFiltros(espacioId?: string, busqueda?: string) {
+  return clienteApi.get<ResumenFlujo[]>("/flujos", {
+    parametros: {
+      ...(espacioId ? { espacioId } : {}),
+      ...(busqueda ? { q: busqueda } : {}),
+    },
+  });
+}
+
+export function obtenerEspacios() {
+  return clienteApi.get<EspacioDisponible[]>("/automatizaciones/espacios");
 }

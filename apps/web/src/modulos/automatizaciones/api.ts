@@ -22,6 +22,15 @@ export function obtenerAutomatizaciones() {
   return clienteApi.get<ResumenAutomatizacion[]>(RUTA);
 }
 
+export function obtenerAutomatizacionesConFiltros(espacioId?: string, busqueda?: string) {
+  return clienteApi.get<ResumenAutomatizacion[]>(RUTA, {
+    parametros: {
+      ...(espacioId ? { espacioId } : {}),
+      ...(busqueda ? { q: busqueda } : {}),
+    },
+  });
+}
+
 export function obtenerDetalleAutomatizacion(id: string) {
   return clienteApi.get<DetalleAutomatizacion>(
     `${RUTA}/${encodeURIComponent(id)}`,
@@ -53,4 +62,19 @@ export function crearAutomatizacionDesdePlantilla(
     { ...entrada, claveIdempotencia: clave },
     { headers: { "idempotency-key": clave } },
   );
+}
+
+export interface TablaImpala {
+  nombre: string;
+}
+
+export async function obtenerTablasImpala(): Promise<TablaImpala[]> {
+  try {
+    return await clienteApi.get<TablaImpala[]>("/destinos/bases-datos/default/tablas");
+  } catch {
+    const data = await clienteApi.get<{ tableName: string }[]>(
+      "https://apiqd.andresgaibor.com/api/v1/impala/databases/default/tables",
+    );
+    return data.map((t) => ({ nombre: t.tableName }));
+  }
 }

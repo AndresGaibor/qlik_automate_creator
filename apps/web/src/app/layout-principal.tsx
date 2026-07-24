@@ -44,7 +44,10 @@ export function LayoutPrincipal() {
 
   const cerrar = useMutation({
     mutationFn: cerrarSesion,
-    onSuccess: () => navegar({ to: "/login", replace: true }),
+    onSuccess: async () => {
+      queryClient.clear();
+      navegar({ to: "/login", replace: true });
+    },
     onError: (error: Error) => mostrarError(error.message),
   });
 
@@ -61,6 +64,11 @@ export function LayoutPrincipal() {
 
   const sesion = consulta.data;
   const esSuperadmin = sesion.esSuperadmin ?? false;
+  const esAdmin =
+    esSuperadmin ||
+    sesion.tenantsDisponibles.some(
+      (t) => (t as { rol?: string }).rol === "admin" || (t as { rolAdministracion?: string }).rolAdministracion === "admin",
+    );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -89,7 +97,7 @@ export function LayoutPrincipal() {
                 </select>
               </label>
             )}
-            {esSuperadmin && (
+            {esAdmin && (
               <Button
                 variant="ghost"
                 onClick={() => navegar({ to: "/admin/tenants" })}

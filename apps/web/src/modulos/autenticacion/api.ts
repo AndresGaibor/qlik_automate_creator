@@ -21,3 +21,25 @@ export function cambiarTenantActivo(tenantQlikId: string) {
     tenantQlikId,
   });
 }
+
+interface RespuestaIniciarSesion {
+  exito: boolean;
+  datos?: { url: string };
+  error?: { mensaje: string };
+}
+
+export async function iniciarSesion(host: string): Promise<RespuestaIniciarSesion> {
+  const res = await fetch(
+    `/api/auth/qlik/iniciar?host=${encodeURIComponent(host)}&format=json`,
+    { headers: { Accept: "application/json" } },
+  );
+  return res.json();
+}
+
+export async function iniciarSesionPorCorreo(correo: string): Promise<RespuestaIniciarSesion> {
+  const res = await fetch(
+    `/api/auth/qlik/iniciar-por-correo?correo=${encodeURIComponent(correo)}&format=json`,
+    { headers: { Accept: "application/json" } },
+  );
+  return res.json();
+}

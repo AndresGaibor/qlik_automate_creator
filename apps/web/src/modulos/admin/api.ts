@@ -116,3 +116,59 @@ export function eliminarTenantQlik(
     `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}`,
   );
 }
+
+export function configurarAutomatizacionBaseTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+  automatizacionBaseIdQlik: string,
+  automatizacionBaseNombre?: string,
+) {
+  return clienteApi.put<TenantQlik>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/automatizacion-base`,
+    {
+      automatizacionBaseIdQlik,
+      automatizacionBaseNombre,
+    },
+  );
+}
+
+export function configurarDestinoTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+  destinoApiUrl: string,
+  destinoApiKey: string,
+  destinoBaseDatos?: string,
+) {
+  return clienteApi.put<TenantQlik>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/destino`,
+    {
+      destinoApiUrl,
+      destinoApiKey,
+      destinoBaseDatos,
+    },
+  );
+}
+
+export function configurarImpalaTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+  datos: {
+    impalaHost: string;
+    impalaPort?: number;
+    impalaAuthMechanism?: string;
+    impalaUser?: string;
+    impalaPassword?: string;
+    impalaDatabase?: string;
+  },
+) {
+  return clienteApi.put<TenantQlik>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/impala`,
+    datos,
+  );
+}
+
+export function listarAutomatizacionesParaAdmin() {
+  return clienteApi.get<import("@qlik/contratos/automatizaciones").ResumenAutomatizacion[]>("/automatizaciones", {
+    parametros: { incluirBase: "true" },
+  });
+}

@@ -5,8 +5,8 @@ import type { PuertoAuditoria } from "../../../nucleo/auditoria/puerto-auditoria
 import type { PuertoOutbox } from "../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../nucleo/idempotencia/puerto-idempotencia.js";
 import { obtenerContextoSolicitud } from "../../../plataforma/contexto/contexto-solicitud.js";
-import { leerJson } from "../../../plataforma/http/leer-json.js";
-import { responderExito } from "../../../plataforma/http/respuestas.js";
+import { leerJson } from "../../../nucleo/http/leer-json.js";
+import { responderExito } from "../../../nucleo/http/respuestas.js";
 import type { ServicioQlik } from "../../qlik/publico.js";
 import { ConsultarPanelAutomatizaciones } from "../aplicacion/casos-de-uso/consultar-panel.js";
 import { CrearAutomatizacionDesdePlantilla } from "../aplicacion/casos-de-uso/crear-desde-plantilla.js";
@@ -36,10 +36,22 @@ export function crearRutasPanelAutomatizaciones(
   rutas.get("/", async (c) => {
     const qlik = await dependencias.resolverQlik(c);
     const espacioId = c.req.query("espacioId")?.trim() || undefined;
-    return responderExito(
-      c,
-      await new ConsultarPanelAutomatizaciones(qlik).listar(espacioId),
+    const q =
+      c.req.query("q")?.trim() ||
+      c.req.query("busqueda")?.trim() ||
+      undefined;
+
+    let lista = await new ConsultarPanelAutomatizaciones(qlik).listar(
+      espacioId,
     );
+    if (q) {
+      const qLower = q.toLowerCase();
+      lista = lista.filter((auto) =>
+        auto.nombre.toLowerCase().includes(qLower),
+      );
+    }
+
+    return responderExito(c, lista);
   });
 
   rutas.get("/espacios", async (c) => {

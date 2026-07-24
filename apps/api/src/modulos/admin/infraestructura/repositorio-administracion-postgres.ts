@@ -103,40 +103,58 @@ export class RepositorioAdministracionPostgres
 
   async agregarUsuario(
     organizacionId: string,
-    correo: string,
+    correoEntrada: string,
     rol: RolAdministracion,
   ) {
     if (!(await this.obtenerOrganizacion(organizacionId))) return null;
-    let usuario = await db.query.usuarios.findFirst({
-      where: eq(usuarios.correo, correo),
-    });
-    if (!usuario) {
-      [usuario] = await db
-        .insert(usuarios)
-        .values({
-          nombre: correo.split("@")[0] ?? correo,
-          correo,
-          estado: "activo",
-        })
-        .returning();
+
+    // Separar por coma, punto y coma, espacios o saltos de línea
+    const correos = correoEntrada
+      .split(/[,;\s\n]+/)
+      .map((c) => c.trim().toLowerCase())
+      .filter((c) => c.length > 0 && c.includes("@"));
+
+    if (correos.length === 0) {
+      throw new Error("Debes ingresar al menos un correo electrónico válido");
     }
-    if (!usuario) throw new Error("No se pudo crear el usuario");
-    await db
-      .insert(membresiasOrganizacion)
-      .values({ organizacionId, usuarioId: usuario.id, rol })
-      .onConflictDoUpdate({
-        target: [
-          membresiasOrganizacion.organizacionId,
-          membresiasOrganizacion.usuarioId,
-        ],
-        set: { rol },
+
+    let ultimoUsuario: UsuarioAdministrable | null = null;
+
+    for (const correo of correos) {
+      let usuario = await db.query.usuarios.findFirst({
+        where: eq(usuarios.correo, correo),
       });
-    return {
-      id: usuario.id,
-      correo: usuario.correo,
-      nombre: usuario.nombre,
-      rol,
-    };
+      if (!usuario) {
+        [usuario] = await db
+          .insert(usuarios)
+          .values({
+            nombre: "Pendiente de primer ingreso",
+            correo,
+            estado: "activo",
+          })
+          .returning();
+      }
+      if (!usuario) throw new Error(`No se pudo crear el usuario ${correo}`);
+      await db
+        .insert(membresiasOrganizacion)
+        .values({ organizacionId, usuarioId: usuario.id, rol })
+        .onConflictDoUpdate({
+          target: [
+            membresiasOrganizacion.organizacionId,
+            membresiasOrganizacion.usuarioId,
+          ],
+          set: { rol },
+        });
+
+      ultimoUsuario = {
+        id: usuario.id,
+        correo: usuario.correo,
+        nombre: usuario.nombre,
+        rol,
+      };
+    }
+
+    return ultimoUsuario;
   }
 
   async actualizarRolUsuario(
@@ -186,11 +204,16 @@ export class RepositorioAdministracionPostgres
 
   async crearTenantQlik(entrada: {
     organizacionId: string;
-    tenantIdQlik: string;
+    tenantIdQlik?: string;
     host: string;
     nombre?: string;
   }): Promise<TenantQlikAdministrable | null> {
     if (!(await this.obtenerOrganizacion(entrada.organizacionId))) return null;
+    const hostNormalizado = normalizarHostQlik(entrada.host);
+    const tenantIdResolved =
+      entrada.tenantIdQlik?.trim() ||
+      `qlik_${hostNormalizado.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
     return db.transaction(async (tx) => {
       const existentes = await tx.query.tenantsQlik.findMany({
         where: eq(tenantsQlik.organizacionId, entrada.organizacionId),
@@ -199,8 +222,8 @@ export class RepositorioAdministracionPostgres
         .insert(tenantsQlik)
         .values({
           organizacionId: entrada.organizacionId,
-          tenantIdQlik: entrada.tenantIdQlik,
-          host: normalizarHostQlik(entrada.host),
+          tenantIdQlik: tenantIdResolved,
+          host: hostNormalizado,
           nombre: entrada.nombre ?? null,
           esPrincipal: decidirSiNuevoTenantEsPrincipal(existentes.length),
         })
@@ -233,6 +256,90 @@ export class RepositorioAdministracionPostgres
         .returning();
       return actualizado ? mapearTenantQlik(actualizado) : null;
     });
+  }
+
+  async configurarAutomatizacionBase(
+    organizacionId: string,
+    tenantQlikId: string,
+    automatizacionBaseIdQlik: string,
+    automatizacionBaseNombre?: string,
+  ): Promise<TenantQlikAdministrable | null> {
+    const [fila] = await db
+      .update(tenantsQlik)
+      .set({
+        automatizacionBaseIdQlik,
+        automatizacionBaseNombre: automatizacionBaseNombre ?? null,
+        actualizadoEn: new Date(),
+      })
+      .where(
+        and(
+          eq(tenantsQlik.id, tenantQlikId),
+          eq(tenantsQlik.organizacionId, organizacionId),
+        ),
+      )
+      .returning();
+
+    return fila ? mapearTenantQlik(fila) : null;
+  }
+
+  async configurarDestinoTenant(
+    organizacionId: string,
+    tenantQlikId: string,
+    destinoApiUrl: string,
+    destinoApiKey: string,
+    destinoBaseDatos?: string,
+  ): Promise<TenantQlikAdministrable | null> {
+    const [fila] = await db
+      .update(tenantsQlik)
+      .set({
+        destinoApiUrl,
+        destinoApiKey,
+        destinoBaseDatos: destinoBaseDatos ?? "default",
+        actualizadoEn: new Date(),
+      })
+      .where(
+        and(
+          eq(tenantsQlik.id, tenantQlikId),
+          eq(tenantsQlik.organizacionId, organizacionId),
+        ),
+      )
+      .returning();
+
+    return fila ? mapearTenantQlik(fila) : null;
+  }
+
+  async configurarImpalaTenant(
+    organizacionId: string,
+    tenantQlikId: string,
+    datos: {
+      impalaHost: string;
+      impalaPort?: number;
+      impalaAuthMechanism?: string;
+      impalaUser?: string;
+      impalaPassword?: string;
+      impalaDatabase?: string;
+    },
+  ): Promise<TenantQlikAdministrable | null> {
+    const [fila] = await db
+      .update(tenantsQlik)
+      .set({
+        impalaHost: datos.impalaHost,
+        impalaPort: datos.impalaPort ?? 21050,
+        impalaAuthMechanism: datos.impalaAuthMechanism ?? "NOSASL",
+        impalaUser: datos.impalaUser ?? null,
+        impalaPassword: datos.impalaPassword ?? null,
+        impalaDatabase: datos.impalaDatabase ?? "default",
+        actualizadoEn: new Date(),
+      })
+      .where(
+        and(
+          eq(tenantsQlik.id, tenantQlikId),
+          eq(tenantsQlik.organizacionId, organizacionId),
+        ),
+      )
+      .returning();
+
+    return fila ? mapearTenantQlik(fila) : null;
   }
 
   async eliminarTenantQlik(

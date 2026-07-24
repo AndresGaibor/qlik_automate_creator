@@ -68,4 +68,23 @@ describe("ServicioAutenticacionQlik dinámico", () => {
     expect(accesoGuardado?.tenantQlikId).toBe(tenant.id);
     expect(accesoGuardado?.hostTenant).toBe(tenant.host);
   });
+
+  it("inicia OAuth resolviendo el tenant a partir del correo del usuario", async () => {
+    const repositorio = {
+      obtenerTenantPorCorreoUsuario: async (correo: string) =>
+        correo === "usuario@empresa.com" ? tenant : null,
+      obtenerTenantPorHost: async (host: string) =>
+        host === tenant.host ? tenant : null,
+    } as RepositorioAutenticacion;
+
+    const servicio = new ServicioAutenticacionQlik(
+      () => oauthFalso(),
+      repositorio,
+    );
+
+    const resultado = await servicio.iniciarPorCorreo("usuario@empresa.com");
+
+    expect(resultado.tenantQlikId).toBe(tenant.id);
+    expect(resultado.url).toContain("https://empresa.eu.qlikcloud.com/oauth/authorize");
+  });
 });

@@ -31,7 +31,7 @@ import {
 } from "@qlik/contratos/qlik";
 import { type Context, Hono } from "hono";
 import { type ZodType, z } from "zod";
-import { ErrorAplicacion } from "../../../plataforma/errores/error-aplicacion.js";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { ReenviarSolicitudQlik } from "../aplicacion/casos-de-uso/reenviar-solicitud-qlik.js";
 import type {
   MetodoHttpQlik,

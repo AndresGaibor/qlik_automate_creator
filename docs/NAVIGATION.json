@@ -1,0 +1,1143 @@
+{
+  "metadata": {
+    "title": "Qlik REST APIs, Authentication, and Toolkits Documentation Index",
+    "total_files": 189,
+    "destination_path": "/Users/andresgaibor/code/javascript/qlik_automate_creator/docs"
+  },
+  "files": [
+    {
+      "title": "Agent Navigation Guide for Qlik REST APIs & Toolkits",
+      "rel_path": "AGENTS_GUIDE.md",
+      "category": "root",
+      "methods_count": 0
+    },
+    {
+      "title": "Arquitectura — Qlik Automatizaciones",
+      "rel_path": "arquitectura/ARQUITECTURA.md",
+      "category": "arquitectura",
+      "methods_count": 0
+    },
+    {
+      "title": "Arquitectura del sistema",
+      "rel_path": "arquitectura/README.md",
+      "category": "arquitectura",
+      "methods_count": 0
+    },
+    {
+      "title": "Cobertura del proxy Qlik",
+      "rel_path": "arquitectura/rutas-qlik.md",
+      "category": "arquitectura",
+      "methods_count": 66
+    },
+    {
+      "title": "Generate your first API key",
+      "rel_path": "authenticate/api-key/generate-your-first-api-key.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Content Security Policy",
+      "rel_path": "authenticate/content-security-policy.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Create Signed Tokens for JWT Authorization",
+      "rel_path": "authenticate/jwt/create-signed-tokens-for-jwt-authorization.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Implement JWT Authorization",
+      "rel_path": "authenticate/jwt/implement-jwt-authorization.md",
+      "category": "authenticate",
+      "methods_count": 2
+    },
+    {
+      "title": "Session Cookie Proxy for Embedding Qlik Cloud",
+      "rel_path": "authenticate/jwt/jwt-proxy.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Implement a Qlik Cloud session cookie proxy",
+      "rel_path": "authenticate/jwt/jwt-proxy/quickstart-qlik-jwt-proxy.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Create an anonymous OAuth2 client",
+      "rel_path": "authenticate/oauth/create/create-oauth-client-anonymous.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Create a M2M impersonation OAuth2 client",
+      "rel_path": "authenticate/oauth/create/create-oauth-client-m2m-impersonation.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Create a SPA OAuth2 client",
+      "rel_path": "authenticate/oauth/create/create-oauth-client-spa.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Create a M2M OAuth2 client",
+      "rel_path": "authenticate/oauth/create/create-oauth-client.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Create an organization-level OAuth2 client",
+      "rel_path": "authenticate/oauth/create/create-organization-level-oauth-client.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Create a region level M2M OAuth2 client",
+      "rel_path": "authenticate/oauth/create/create-region-oauth-client.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Get started with OAuth machine-to-machine",
+      "rel_path": "authenticate/oauth/getting-started-oauth-m2m.md",
+      "category": "authenticate",
+      "methods_count": 4
+    },
+    {
+      "title": "Guiding principles for OAuth impersonation",
+      "rel_path": "authenticate/oauth/guiding-principles-oauth-impersonation.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Retrieve and use OAuth impersonation tokens",
+      "rel_path": "authenticate/oauth/implement-oauth-impersonation.md",
+      "category": "authenticate",
+      "methods_count": 1
+    },
+    {
+      "title": "OAuth Overview",
+      "rel_path": "authenticate/oauth/index.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Manage OAuth tokens via API",
+      "rel_path": "authenticate/oauth/manage-oauth-tokens.md",
+      "category": "authenticate",
+      "methods_count": 1
+    },
+    {
+      "title": "Manage OAuth clients via API",
+      "rel_path": "authenticate/oauth/oauth-clients-api.md",
+      "category": "authenticate",
+      "methods_count": 2
+    },
+    {
+      "title": "Authorize the Platform SDK using OAuth",
+      "rel_path": "authenticate/oauth/oauth-connect-python-m2m.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Authorize qlik-cli using OAuth",
+      "rel_path": "authenticate/oauth/oauth-connect-qlik-cli.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "OAuth dynamic client registration",
+      "rel_path": "authenticate/oauth/oauth-dynamic-client-registration.md",
+      "category": "authenticate",
+      "methods_count": 3
+    },
+    {
+      "title": "Private Key JWT reference",
+      "rel_path": "authenticate/oauth/oauth-private-key-jwt-reference.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Authenticate with Private Key JWT",
+      "rel_path": "authenticate/oauth/oauth-private-key-jwt.md",
+      "category": "authenticate",
+      "methods_count": 3
+    },
+    {
+      "title": "OAuth Scopes",
+      "rel_path": "authenticate/oauth/scopes.md",
+      "category": "authenticate",
+      "methods_count": 1
+    },
+    {
+      "title": "Authentication",
+      "rel_path": "authenticate/README.md",
+      "category": "authenticate",
+      "methods_count": 0
+    },
+    {
+      "title": "Bootstrap inicial",
+      "rel_path": "desarrollo/bootstrap-inicial.md",
+      "category": "desarrollo",
+      "methods_count": 0
+    },
+    {
+      "title": "Puesta en marcha",
+      "rel_path": "desarrollo/puesta-en-marcha.md",
+      "category": "desarrollo",
+      "methods_count": 0
+    },
+    {
+      "title": "OAuth well-known configuration REST | Qlik Developer Portal",
+      "rel_path": "endpoints/.well-known.md",
+      "category": "endpoints",
+      "methods_count": 5
+    },
+    {
+      "title": "Apps REST | Qlik Developer Portal",
+      "rel_path": "endpoints/analytics-apps.md",
+      "category": "endpoints",
+      "methods_count": 34
+    },
+    {
+      "title": "Change stores REST | Qlik Developer Portal",
+      "rel_path": "endpoints/analytics-change-stores.md",
+      "category": "endpoints",
+      "methods_count": 15
+    },
+    {
+      "title": "Adaptive cards REST | Qlik Developer Portal",
+      "rel_path": "endpoints/analytics-discovery-agent-adaptive-cards.md",
+      "category": "endpoints",
+      "methods_count": 3
+    },
+    {
+      "title": "ODAG apps REST | Qlik Developer Portal",
+      "rel_path": "endpoints/analytics-odag-apps.md",
+      "category": "endpoints",
+      "methods_count": 6
+    },
+    {
+      "title": "ODAG links REST | Qlik Developer Portal",
+      "rel_path": "endpoints/analytics-odag-links.md",
+      "category": "endpoints",
+      "methods_count": 45
+    },
+    {
+      "title": "ODAG requests REST | Qlik Developer Portal",
+      "rel_path": "endpoints/analytics-odag-requests.md",
+      "category": "endpoints",
+      "methods_count": 38
+    },
+    {
+      "title": "ODAG settings REST | Qlik Developer Portal",
+      "rel_path": "endpoints/analytics-odag-settings.md",
+      "category": "endpoints",
+      "methods_count": 16
+    },
+    {
+      "title": "API keys REST | Qlik Developer Portal",
+      "rel_path": "endpoints/api-keys.md",
+      "category": "endpoints",
+      "methods_count": 18
+    },
+    {
+      "title": "Apps REST | Qlik Developer Portal",
+      "rel_path": "endpoints/apps.md",
+      "category": "endpoints",
+      "methods_count": 100
+    },
+    {
+      "title": "Assistants REST | Qlik Developer Portal",
+      "rel_path": "endpoints/assistants.md",
+      "category": "endpoints",
+      "methods_count": 60
+    },
+    {
+      "title": "Audits REST | Qlik Developer Portal",
+      "rel_path": "endpoints/audits.md",
+      "category": "endpoints",
+      "methods_count": 7
+    },
+    {
+      "title": "Automation connections REST | Qlik Developer Portal",
+      "rel_path": "endpoints/automation-connections.md",
+      "category": "endpoints",
+      "methods_count": 38
+    },
+    {
+      "title": "Automation connectors REST | Qlik Developer Portal",
+      "rel_path": "endpoints/automation-connectors.md",
+      "category": "endpoints",
+      "methods_count": 6
+    },
+    {
+      "title": "Automations REST | Qlik Developer Portal",
+      "rel_path": "endpoints/automations.md",
+      "category": "endpoints",
+      "methods_count": 72
+    },
+    {
+      "title": "AutoML real-time predictions REST | Qlik Developer Portal",
+      "rel_path": "endpoints/automl-deployments.md",
+      "category": "endpoints",
+      "methods_count": 4
+    },
+    {
+      "title": "AutoML dataset predictions REST | Qlik Developer Portal",
+      "rel_path": "endpoints/automl-predictions.md",
+      "category": "endpoints",
+      "methods_count": 19
+    },
+    {
+      "title": "Banners REST | Qlik Developer Portal",
+      "rel_path": "endpoints/banners.md",
+      "category": "endpoints",
+      "methods_count": 9
+    },
+    {
+      "title": "Brands REST | Qlik Developer Portal",
+      "rel_path": "endpoints/brands.md",
+      "category": "endpoints",
+      "methods_count": 32
+    },
+    {
+      "title": "Collections REST | Qlik Developer Portal",
+      "rel_path": "endpoints/collections.md",
+      "category": "endpoints",
+      "methods_count": 23
+    },
+    {
+      "title": "Conditions REST | Qlik Developer Portal",
+      "rel_path": "endpoints/conditions.md",
+      "category": "endpoints",
+      "methods_count": 24
+    },
+    {
+      "title": "Entitlement consumption REST | Qlik Developer Portal",
+      "rel_path": "endpoints/consumption.md",
+      "category": "endpoints",
+      "methods_count": 2
+    },
+    {
+      "title": "Auth settings REST | Qlik Developer Portal",
+      "rel_path": "endpoints/core-auth-settings.md",
+      "category": "endpoints",
+      "methods_count": 9
+    },
+    {
+      "title": "IP Policies REST | Qlik Developer Portal",
+      "rel_path": "endpoints/core-ip-policies.md",
+      "category": "endpoints",
+      "methods_count": 23
+    },
+    {
+      "title": "CSP origins REST | Qlik Developer Portal",
+      "rel_path": "endpoints/csp-origins.md",
+      "category": "endpoints",
+      "methods_count": 15
+    },
+    {
+      "title": "Data alerts REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-alerts.md",
+      "category": "endpoints",
+      "methods_count": 34
+    },
+    {
+      "title": "Data assets REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-assets.md",
+      "category": "endpoints",
+      "methods_count": 14
+    },
+    {
+      "title": "Data connections REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-connections.md",
+      "category": "endpoints",
+      "methods_count": 36
+    },
+    {
+      "title": "Data credentials REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-credentials.md",
+      "category": "endpoints",
+      "methods_count": 14
+    },
+    {
+      "title": "Data files REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-files.md",
+      "category": "endpoints",
+      "methods_count": 26
+    },
+    {
+      "title": "Data products REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-governance-data-products.md",
+      "category": "endpoints",
+      "methods_count": 60
+    },
+    {
+      "title": "Data qualities REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-governance-data-qualities.md",
+      "category": "endpoints",
+      "methods_count": 35
+    },
+    {
+      "title": "Trust scores REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-governance-trust-scores.md",
+      "category": "endpoints",
+      "methods_count": 6
+    },
+    {
+      "title": "Data qualities REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-qualities.md",
+      "category": "endpoints",
+      "methods_count": 18
+    },
+    {
+      "title": "Data sets REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-sets.md",
+      "category": "endpoints",
+      "methods_count": 12
+    },
+    {
+      "title": "Data sources REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-sources.md",
+      "category": "endpoints",
+      "methods_count": 10
+    },
+    {
+      "title": "Data stores REST | Qlik Developer Portal",
+      "rel_path": "endpoints/data-stores.md",
+      "category": "endpoints",
+      "methods_count": 20
+    },
+    {
+      "title": "Data integration projects REST | Qlik Developer Portal",
+      "rel_path": "endpoints/di-projects.md",
+      "category": "endpoints",
+      "methods_count": 87
+    },
+    {
+      "title": "Direct Access Agents REST | Qlik Developer Portal",
+      "rel_path": "endpoints/direct-access-agents.md",
+      "category": "endpoints",
+      "methods_count": 48
+    },
+    {
+      "title": "Encryption REST | Qlik Developer Portal",
+      "rel_path": "endpoints/encryption.md",
+      "category": "endpoints",
+      "methods_count": 26
+    },
+    {
+      "title": "Extensions REST | Qlik Developer Portal",
+      "rel_path": "endpoints/extensions.md",
+      "category": "endpoints",
+      "methods_count": 17
+    },
+    {
+      "title": "Glossaries REST | Qlik Developer Portal",
+      "rel_path": "endpoints/glossaries.md",
+      "category": "endpoints",
+      "methods_count": 48
+    },
+    {
+      "title": "Groups REST | Qlik Developer Portal",
+      "rel_path": "endpoints/groups.md",
+      "category": "endpoints",
+      "methods_count": 21
+    },
+    {
+      "title": "Identity providers REST | Qlik Developer Portal",
+      "rel_path": "endpoints/identity-providers.md",
+      "category": "endpoints",
+      "methods_count": 16
+    },
+    {
+      "title": "Items REST | Qlik Developer Portal",
+      "rel_path": "endpoints/items.md",
+      "category": "endpoints",
+      "methods_count": 16
+    },
+    {
+      "title": "Knowledgebases REST | Qlik Developer Portal",
+      "rel_path": "endpoints/knowledgebases.md",
+      "category": "endpoints",
+      "methods_count": 40
+    },
+    {
+      "title": "Licenses REST | Qlik Developer Portal",
+      "rel_path": "endpoints/licenses.md",
+      "category": "endpoints",
+      "methods_count": 22
+    },
+    {
+      "title": "Lineage graphs REST | Qlik Developer Portal",
+      "rel_path": "endpoints/lineage-graphs.md",
+      "category": "endpoints",
+      "methods_count": 16
+    },
+    {
+      "title": "Login REST | Qlik Developer Portal",
+      "rel_path": "endpoints/login.md",
+      "category": "endpoints",
+      "methods_count": 6
+    },
+    {
+      "title": "Machine Learning REST | Qlik Developer Portal",
+      "rel_path": "endpoints/ml.md",
+      "category": "endpoints",
+      "methods_count": 88
+    },
+    {
+      "title": "Notes REST | Qlik Developer Portal",
+      "rel_path": "endpoints/notes.md",
+      "category": "endpoints",
+      "methods_count": 9
+    },
+    {
+      "title": "Notifications REST | Qlik Developer Portal",
+      "rel_path": "endpoints/notifications.md",
+      "category": "endpoints",
+      "methods_count": 2
+    },
+    {
+      "title": "OAuth clients REST | Qlik Developer Portal",
+      "rel_path": "endpoints/oauth-clients.md",
+      "category": "endpoints",
+      "methods_count": 33
+    },
+    {
+      "title": "OAuth tokens REST | Qlik Developer Portal",
+      "rel_path": "endpoints/oauth-tokens.md",
+      "category": "endpoints",
+      "methods_count": 5
+    },
+    {
+      "title": "OAuth REST | Qlik Developer Portal",
+      "rel_path": "endpoints/oauth.md",
+      "category": "endpoints",
+      "methods_count": 17
+    },
+    {
+      "title": "Natural language REST | Qlik Developer Portal",
+      "rel_path": "endpoints/questions.md",
+      "category": "endpoints",
+      "methods_count": 6
+    },
+    {
+      "title": "Quotas REST | Qlik Developer Portal",
+      "rel_path": "endpoints/quotas.md",
+      "category": "endpoints",
+      "methods_count": 4
+    },
+    {
+      "title": "Reload tasks REST | Qlik Developer Portal",
+      "rel_path": "endpoints/reload-tasks.md",
+      "category": "endpoints",
+      "methods_count": 18
+    },
+    {
+      "title": "Reloads REST | Qlik Developer Portal",
+      "rel_path": "endpoints/reloads.md",
+      "category": "endpoints",
+      "methods_count": 10
+    },
+    {
+      "title": "Report templates REST | Qlik Developer Portal",
+      "rel_path": "endpoints/report-templates.md",
+      "category": "endpoints",
+      "methods_count": 19
+    },
+    {
+      "title": "Reports REST | Qlik Developer Portal",
+      "rel_path": "endpoints/reports.md",
+      "category": "endpoints",
+      "methods_count": 6
+    },
+    {
+      "title": "Roles REST | Qlik Developer Portal",
+      "rel_path": "endpoints/roles.md",
+      "category": "endpoints",
+      "methods_count": 13
+    },
+    {
+      "title": "Tasks REST | Qlik Developer Portal",
+      "rel_path": "endpoints/scheduling-tasks.md",
+      "category": "endpoints",
+      "methods_count": 75
+    },
+    {
+      "title": "Sharing tasks REST | Qlik Developer Portal",
+      "rel_path": "endpoints/sharing-tasks.md",
+      "category": "endpoints",
+      "methods_count": 28
+    },
+    {
+      "title": "Spaces REST | Qlik Developer Portal",
+      "rel_path": "endpoints/spaces.md",
+      "category": "endpoints",
+      "methods_count": 38
+    },
+    {
+      "title": "Tasks REST | Qlik Developer Portal",
+      "rel_path": "endpoints/tasks.md",
+      "category": "endpoints",
+      "methods_count": 42
+    },
+    {
+      "title": "Temporary contents REST | Qlik Developer Portal",
+      "rel_path": "endpoints/temp-contents.md",
+      "category": "endpoints",
+      "methods_count": 20
+    },
+    {
+      "title": "Tenant settings REST | Qlik Developer Portal",
+      "rel_path": "endpoints/tenant-settings.md",
+      "category": "endpoints",
+      "methods_count": 37
+    },
+    {
+      "title": "Tenants REST | Qlik Developer Portal",
+      "rel_path": "endpoints/tenants.md",
+      "category": "endpoints",
+      "methods_count": 17
+    },
+    {
+      "title": "Themes REST | Qlik Developer Portal",
+      "rel_path": "endpoints/themes.md",
+      "category": "endpoints",
+      "methods_count": 17
+    },
+    {
+      "title": "Email configuration REST | Qlik Developer Portal",
+      "rel_path": "endpoints/transports.md",
+      "category": "endpoints",
+      "methods_count": 25
+    },
+    {
+      "title": "Pinned links REST | Qlik Developer Portal",
+      "rel_path": "endpoints/ui-config.md",
+      "category": "endpoints",
+      "methods_count": 19
+    },
+    {
+      "title": "Users REST | Qlik Developer Portal",
+      "rel_path": "endpoints/users.md",
+      "category": "endpoints",
+      "methods_count": 23
+    },
+    {
+      "title": "Web integrations REST | Qlik Developer Portal",
+      "rel_path": "endpoints/web-integrations.md",
+      "category": "endpoints",
+      "methods_count": 13
+    },
+    {
+      "title": "Web notifications REST | Qlik Developer Portal",
+      "rel_path": "endpoints/web-notifications.md",
+      "category": "endpoints",
+      "methods_count": 16
+    },
+    {
+      "title": "Webhooks REST | Qlik Developer Portal",
+      "rel_path": "endpoints/webhooks.md",
+      "category": "endpoints",
+      "methods_count": 20
+    },
+    {
+      "title": "Automation connections REST | Qlik Developer Portal",
+      "rel_path": "endpoints/workflows-automation-connections.md",
+      "category": "endpoints",
+      "methods_count": 46
+    },
+    {
+      "title": "Automation connectors REST | Qlik Developer Portal",
+      "rel_path": "endpoints/workflows-automation-connectors.md",
+      "category": "endpoints",
+      "methods_count": 15
+    },
+    {
+      "title": "Automations REST | Qlik Developer Portal",
+      "rel_path": "endpoints/workflows-automations.md",
+      "category": "endpoints",
+      "methods_count": 100
+    },
+    {
+      "title": "Qlik Developer Documentation Master Index",
+      "rel_path": "INDEX.md",
+      "category": "root",
+      "methods_count": 0
+    },
+    {
+      "title": "OAuth 2.0 con Qlik Cloud — Guía Completa",
+      "rel_path": "oauth-qlik.md",
+      "category": "root",
+      "methods_count": 11
+    },
+    {
+      "title": "Get started with organization APIs | Qlik Developer Portal",
+      "rel_path": "org-rest/get-started.md",
+      "category": "org-rest",
+      "methods_count": 1
+    },
+    {
+      "title": "Organization REST APIs | Qlik Developer Portal",
+      "rel_path": "org-rest/org-rest-overview.md",
+      "category": "org-rest",
+      "methods_count": 0
+    },
+    {
+      "title": "CSRF token REST | Qlik Developer Portal",
+      "rel_path": "overview/csrf-token.md",
+      "category": "overview",
+      "methods_count": 3
+    },
+    {
+      "title": "API namespaces | Qlik Developer Portal",
+      "rel_path": "overview/namespaces.md",
+      "category": "overview",
+      "methods_count": 0
+    },
+    {
+      "title": "Pagination, sorting, filtering | Qlik Developer Portal",
+      "rel_path": "overview/pagination-sorting-filtering.md",
+      "category": "overview",
+      "methods_count": 4
+    },
+    {
+      "title": "Rate limiting | Qlik Developer Portal",
+      "rel_path": "overview/rate-limiting.md",
+      "category": "overview",
+      "methods_count": 6
+    },
+    {
+      "title": "REST APIs | Qlik Developer Portal",
+      "rel_path": "overview/rest-overview.md",
+      "category": "overview",
+      "methods_count": 7
+    },
+    {
+      "title": "API Qlik — Investigación",
+      "rel_path": "pdr/APIS.md",
+      "category": "pdr",
+      "methods_count": 16
+    },
+    {
+      "title": "Conversación PDR — Qlik Automate Creator",
+      "rel_path": "pdr/CONVERSACION.md",
+      "category": "pdr",
+      "methods_count": 0
+    },
+    {
+      "title": "Métricas de Éxito — Qlik Automate Creator",
+      "rel_path": "pdr/METRICAS.md",
+      "category": "pdr",
+      "methods_count": 0
+    },
+    {
+      "title": "PDR — Qlik Automate Creator",
+      "rel_path": "pdr/PDR.md",
+      "category": "pdr",
+      "methods_count": 3
+    },
+    {
+      "title": "PDR — Qlik Automate Creator",
+      "rel_path": "pdr/README.md",
+      "category": "pdr",
+      "methods_count": 0
+    },
+    {
+      "title": "Manual Técnico: Operaciones y Automatización con Qlik Cloud REST API",
+      "rel_path": "QLIK_CLOUD_API_HANDBOOK.md",
+      "category": "root",
+      "methods_count": 29
+    },
+    {
+      "title": "Qlik Automate API REST",
+      "rel_path": "qlik-automate-api.md",
+      "category": "root",
+      "methods_count": 21
+    },
+    {
+      "title": "Qlik Documentation Summary",
+      "rel_path": "SUMMARY.md",
+      "category": "root",
+      "methods_count": 0
+    },
+    {
+      "title": "Qlik Automate Creator - Implementation Plan",
+      "rel_path": "superpowers/plans/2026-07-21-qlik-automatizaciones-mvp.md",
+      "category": "superpowers",
+      "methods_count": 4
+    },
+    {
+      "title": "Feedback visible de errores en frontend Implementation Plan",
+      "rel_path": "superpowers/plans/2026-07-22-frontend-error-feedback-plan.md",
+      "category": "superpowers",
+      "methods_count": 0
+    },
+    {
+      "title": "Model Routing Budget Implementation Plan",
+      "rel_path": "superpowers/plans/2026-07-22-model-routing-budget.md",
+      "category": "superpowers",
+      "methods_count": 0
+    },
+    {
+      "title": "Qlik Automate Operational Panel Implementation Plan",
+      "rel_path": "superpowers/plans/2026-07-22-qlik-automate-operational-panel.md",
+      "category": "superpowers",
+      "methods_count": 6
+    },
+    {
+      "title": "Nombres legibles en automatizaciones Implementation Plan",
+      "rel_path": "superpowers/plans/2026-07-23-automation-display-names.md",
+      "category": "superpowers",
+      "methods_count": 2
+    },
+    {
+      "title": "Organizaciones, tenants Qlik y OAuth dinámico Implementation Plan",
+      "rel_path": "superpowers/plans/2026-07-24-organizaciones-tenants-oauth-dinamico.md",
+      "category": "superpowers",
+      "methods_count": 0
+    },
+    {
+      "title": "Reestructuración On-Premise Implementation Plan",
+      "rel_path": "superpowers/plans/2026-07-24-reestructuracion-on-premise.md",
+      "category": "superpowers",
+      "methods_count": 0
+    },
+    {
+      "title": "Tenant Activo y Contexto de Solicitud Implementation Plan",
+      "rel_path": "superpowers/plans/2026-07-24-tenant-activo-contexto-solicitud.md",
+      "category": "superpowers",
+      "methods_count": 0
+    },
+    {
+      "title": "Diseño: feedback visible de errores en frontend",
+      "rel_path": "superpowers/specs/2026-07-22-frontend-error-feedback-design.md",
+      "category": "superpowers",
+      "methods_count": 0
+    },
+    {
+      "title": "Qlik Automate Operational Panel",
+      "rel_path": "superpowers/specs/2026-07-22-qlik-automate-operational-panel-design.md",
+      "category": "superpowers",
+      "methods_count": 6
+    },
+    {
+      "title": "Nombres legibles en automatizaciones",
+      "rel_path": "superpowers/specs/2026-07-23-automation-display-names-design.md",
+      "category": "superpowers",
+      "methods_count": 0
+    },
+    {
+      "title": "Enigma-go overview | Qlik Developer Portal",
+      "rel_path": "toolkits/enigma-go.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/enigma-go.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "enigma.js overview | Qlik Developer Portal",
+      "rel_path": "toolkits/enigma-js.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/enigma-js.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Qlik Sense .NET SDK overview | Qlik Developer Portal",
+      "rel_path": "toolkits/net-sdk.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/net-sdk.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "No-code overview | Qlik Developer Portal",
+      "rel_path": "toolkits/no-code.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/no-code.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Python Platform SDK overview | Qlik Developer Portal",
+      "rel_path": "toolkits/platform-sdk.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/platform-sdk.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Authentication | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-authentication.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-authentication.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Obtain a list of sheets from an analytics app | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-app-sheet-list.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-app-sheet-list.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Create an analytics app | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-create-app.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-create-app.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "createCube function for qlik-api | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-create-cube.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-create-cube.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Create a session app | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-create-session-app.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-create-session-app.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Fetch spaces in a tenant | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-fetch-spaces.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-fetch-spaces.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "getCurrentSelections with qlik-api | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-get-current-selections.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-get-current-selections.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Open an app without data | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-open-app-no-data.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples-open-app-no-data.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "qlik-api code examples | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-examples.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Features | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-features.md",
+      "category": "toolkits",
+      "methods_count": 3
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-features.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "QIX | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-qix.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-qix.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "REST | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-rest.md",
+      "category": "toolkits",
+      "methods_count": 1
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api-rest.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Qlik-api overview | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-api.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Get started with qlik-cli examples | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-get-started-qlik-cli.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-get-started-qlik-cli.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Get started | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-install-qlik-cli.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-install-qlik-cli.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Authenticate to Qlik using qlik-cli contexts | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-qlik-cli-contexts.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-qlik-cli-contexts.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Handle character escaping in qlik-cli | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-qlik-cli-escaping.md",
+      "category": "toolkits",
+      "methods_count": 1
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-qlik-cli-escaping.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "How pagination works in qlik-cli | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-qlik-cli-pagination.md",
+      "category": "toolkits",
+      "methods_count": 3
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-qlik-cli-pagination.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Using qlik-cli with Qlik Sense Enterprise client-managed Repository API (QRS) | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-qlik-cli-qrs-get-started.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli-qlik-cli-qrs-get-started.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Qlik-cli overview | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "404: Not found | Qlik Developer Portal",
+      "rel_path": "toolkits/qlik-cli.md.md",
+      "category": "toolkits",
+      "methods_count": 0
+    },
+    {
+      "title": "Overview - Toolkits | Qlik Developer Portal",
+      "rel_path": "toolkits/toolkits-overview.md",
+      "category": "toolkits",
+      "methods_count": 0
+    }
+  ]
+}

@@ -3,7 +3,7 @@ import type {
   EspacioDisponible,
   ResumenAutomatizacion,
 } from "@qlik/contratos/automatizaciones";
-import type { ServicioQlik, UsuarioQlik } from "../../../qlik/publico.js";
+import type { PuertoQlik, UsuarioQlik } from "../../../qlik/publico.js";
 import {
   aDetalleAutomatizacion,
   aEspacioDisponible,
@@ -13,7 +13,7 @@ import {
 } from "../mapeador-panel.js";
 
 export class ConsultarPanelAutomatizaciones {
-  constructor(private readonly qlik: ServicioQlik) {}
+  constructor(private readonly qlik: PuertoQlik) {}
 
   async listar(espacioId?: string): Promise<ResumenAutomatizacion[]> {
     const automatizaciones = await this.qlik.listarAutomatizaciones({

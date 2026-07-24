@@ -52,6 +52,73 @@ export class RepositorioAutenticacionPostgres
       : null;
   }
 
+  async obtenerTenantPorCorreoUsuario(correo: string) {
+    const correoNormalizado = correo.trim().toLowerCase();
+
+    // 1. Buscar usuario en la base de datos local
+    const usuario = await db.query.usuarios.findFirst({
+      where: eq(usuarios.correo, correoNormalizado),
+    });
+
+    let organizacionId: string | null = null;
+
+    if (usuario) {
+      const membresia = await db.query.membresiasOrganizacion.findFirst({
+        where: eq(membresiasOrganizacion.usuarioId, usuario.id),
+      });
+      if (membresia) {
+        organizacionId = membresia.organizacionId;
+      }
+    }
+
+    if (organizacionId) {
+      const org = await db.query.organizaciones.findFirst({
+        where: eq(organizaciones.id, organizacionId),
+      });
+
+      if (org && org.estado === "activa") {
+        const tenantObj = await db.query.tenantsQlik.findFirst({
+          where: and(
+            eq(tenantsQlik.organizacionId, organizacionId),
+            eq(tenantsQlik.estado, "activo"),
+          ),
+        });
+        if (tenantObj) {
+          return {
+            id: tenantObj.id,
+            host: tenantObj.host,
+            estado: tenantObj.estado as "activo" | "desconectado" | "suspendido",
+          };
+        }
+      }
+    }
+
+    // 2. Verificar lista de correos superadmin (separados por coma)
+    const superadmins = (this.superadminMail ?? process.env.SUPERADMINMAIL ?? process.env.SUPERADMIN_EMAIL ?? "")
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const esSuperadmin = superadmins.includes(correoNormalizado);
+
+    // 3. Si es superadmin explícito, le asigna el tenant principal activo del sistema
+    if (esSuperadmin) {
+      const tenantPrincipal = await db.query.tenantsQlik.findFirst({
+        where: eq(tenantsQlik.estado, "activo"),
+      });
+      if (tenantPrincipal) {
+        return {
+          id: tenantPrincipal.id,
+          host: tenantPrincipal.host,
+          estado: tenantPrincipal.estado as "activo" | "desconectado" | "suspendido",
+        };
+      }
+    }
+
+    // 4. Si no está en usuarios ni es superadmin, se rechaza la autenticación
+    return null;
+  }
+
   async guardarAcceso(
     datos: DatosNuevaSesion,
   ): Promise<{ tokenSesion: string }> {
@@ -91,6 +158,22 @@ export class RepositorioAutenticacionPostgres
         usuario = await tx.query.usuarios.findFirst({
           where: eq(usuarios.correo, datos.usuarioQlik.correo),
         });
+      }
+
+      const superadmins = (this.superadminMail ?? process.env.SUPERADMINMAIL ?? process.env.SUPERADMIN_EMAIL ?? "")
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean);
+
+      const esSuperadmin = Boolean(
+        datos.usuarioQlik.correo &&
+          superadmins.includes(datos.usuarioQlik.correo.trim().toLowerCase()),
+      );
+
+      if (!usuario && !esSuperadmin) {
+        throw new Error(
+          "Acceso denegado. Tu correo no ha sido pre-registrado por el administrador del tenant.",
+        );
       }
 
       if (!usuario) {

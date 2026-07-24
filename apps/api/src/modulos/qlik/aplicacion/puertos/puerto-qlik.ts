@@ -20,9 +20,6 @@ export interface RespuestaCrudaQlik {
 export interface PuertoQlik {
   solicitarJson<T>(solicitud: SolicitudQlik): Promise<T>;
   solicitarCrudo(solicitud: SolicitudQlik): Promise<RespuestaCrudaQlik>;
-}
-
-export interface ServicioQlik extends PuertoQlik {
   listarEspacios(
     consulta?: Record<string, string | number | boolean | undefined>,
   ): Promise<import("../../dominio/modelos-qlik.js").EspacioQlik[]>;
@@ -66,3 +63,5 @@ export interface ServicioQlik extends PuertoQlik {
     espacioId?: string,
   ): Promise<import("../../dominio/modelos-qlik.js").FlujoQlik[]>;
 }
+
+export type ServicioQlik = PuertoQlik;

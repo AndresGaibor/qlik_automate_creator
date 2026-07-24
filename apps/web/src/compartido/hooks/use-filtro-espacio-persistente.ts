@@ -1,40 +1,46 @@
 import { useCallback, useEffect, useState } from "react";
 
-const CLAVE_FILTRO = "espacioId";
+const CLAVE_FILTRO_URL = "espacioId";
+const CLAVE_STORAGE = "qlik_filtro_espacio_id";
 
-function leerEspacioIdDesdeUrl(): string {
+function obtenerEspacioInicial(): string {
   if (typeof window === "undefined") return "";
-  return new URLSearchParams(window.location.search).get(CLAVE_FILTRO) ?? "";
+  const paramUrl = new URLSearchParams(window.location.search).get(CLAVE_FILTRO_URL);
+  if (paramUrl) return paramUrl;
+  return localStorage.getItem(CLAVE_STORAGE) ?? "";
 }
 
-function escribirEspacioIdEnUrl(espacioId: string) {
+function persistirEspacio(espacioId: string) {
+  if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
   if (espacioId) {
-    url.searchParams.set(CLAVE_FILTRO, espacioId);
+    url.searchParams.set(CLAVE_FILTRO_URL, espacioId);
+    localStorage.setItem(CLAVE_STORAGE, espacioId);
   } else {
-    url.searchParams.delete(CLAVE_FILTRO);
+    url.searchParams.delete(CLAVE_FILTRO_URL);
+    localStorage.removeItem(CLAVE_STORAGE);
   }
-  window.history.replaceState(
-    {},
-    "",
-    `${url.pathname}${url.search}${url.hash}`,
-  );
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 export function useFiltroEspacioPersistente() {
-  const [espacioId, setEspacioId] = useState(leerEspacioIdDesdeUrl);
+  const [espacioId, setEspacioId] = useState(obtenerEspacioInicial);
 
   useEffect(() => {
-    const sincronizar = () => setEspacioId(leerEspacioIdDesdeUrl());
+    if (espacioId && typeof window !== "undefined") {
+      persistirEspacio(espacioId);
+    }
+  }, [espacioId]);
+
+  useEffect(() => {
+    const sincronizar = () => setEspacioId(obtenerEspacioInicial());
     window.addEventListener("popstate", sincronizar);
     return () => window.removeEventListener("popstate", sincronizar);
   }, []);
 
   const establecerEspacioId = useCallback((valor: string) => {
     setEspacioId(valor);
-    if (typeof window !== "undefined") {
-      escribirEspacioIdEnUrl(valor);
-    }
+    persistirEspacio(valor);
   }, []);
 
   return { espacioId, establecerEspacioId };

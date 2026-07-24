@@ -1,11 +1,11 @@
-import { ErrorConflicto } from "../../../../plataforma/errores/error-aplicacion.js";
-import type { ServicioQlik } from "../../../qlik/publico.js";
+import { ErrorConflicto } from "../../../../nucleo/errores/error-aplicacion.js";
+import type { PuertoQlik } from "../../../qlik/publico.js";
 import { estaEjecucionEnCurso } from "../../dominio/estado-ejecucion.js";
 import type { PuertoBloqueoEjecucion } from "../puertos/puerto-bloqueo-ejecucion.js";
 
 export class EjecutarAutomatizacion {
   constructor(
-    private readonly qlik: ServicioQlik,
+    private readonly qlik: PuertoQlik,
     private readonly bloqueos: PuertoBloqueoEjecucion,
   ) {}
 

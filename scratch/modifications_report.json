@@ -1,0 +1,616 @@
+{
+  "duplicatedDataflow": {
+    "attributes": {
+      "id": "34d272b9-8f60-40d7-93a3-a68c5591bd2d",
+      "name": "API_Test_Copied_Dataflow_1784907830507",
+      "description": "Dataflow duplicado mediante prueba controlada de API REST",
+      "thumbnail": "",
+      "lastReloadTime": "2026-07-20T16:02:47.598Z",
+      "createdDate": "2026-07-24T15:43:51.470Z",
+      "modifiedDate": "2026-07-24T15:43:51.888Z",
+      "owner": "auth0|fd6c187d6fd23775e69c0dbc1e49aeed215411f6a2b282d152a5cb35c7634fa0",
+      "ownerId": "6a5434b3c00f988d0ff453aa",
+      "dynamicColor": "",
+      "published": false,
+      "publishTime": "",
+      "custom": {},
+      "hasSectionAccess": false,
+      "encrypted": true,
+      "originAppId": "",
+      "isDirectQueryMode": false,
+      "usage": "DATAFLOW_PREP",
+      "spaceId": "6a57a14cf89e2c4d4b4d83af",
+      "_resourcetype": "app"
+    },
+    "privileges": [
+      "read",
+      "update",
+      "delete",
+      "reload",
+      "export",
+      "duplicate",
+      "change_owner",
+      "change_space",
+      "export_reduced",
+      "source",
+      "exportappdata",
+      "evaluate",
+      "manage",
+      "publish_source"
+    ],
+    "create": [
+      {
+        "resource": "sheet",
+        "canCreate": true
+      },
+      {
+        "resource": "bookmark",
+        "canCreate": true
+      },
+      {
+        "resource": "snapshot",
+        "canCreate": true
+      },
+      {
+        "resource": "story",
+        "canCreate": true
+      },
+      {
+        "resource": "dimension",
+        "canCreate": true
+      },
+      {
+        "resource": "measure",
+        "canCreate": true
+      },
+      {
+        "resource": "masterobject",
+        "canCreate": true
+      },
+      {
+        "resource": "sheetgroup",
+        "canCreate": true
+      },
+      {
+        "resource": "variable",
+        "canCreate": true
+      }
+    ]
+  },
+  "duplicatedAutomation": {
+    "id": "cd035fef-2e74-4832-b869-8b73fb027187"
+  },
+  "automationDetails": {
+    "id": "cd035fef-2e74-4832-b869-8b73fb027187",
+    "ownerId": "6a5434b3c00f988d0ff453aa",
+    "name": "API_Test_Automation_1784907831879",
+    "spaceId": "6a57a14cf89e2c4d4b4d83af",
+    "state": "available",
+    "description": "Prueba para validar la conexion a S3",
+    "schedules": [],
+    "snippetIds": [
+      "b5dbb7a0-e715-11ea-b2bf-43bb35adee19"
+    ],
+    "endpointIds": [
+      "10e86460-894b-11ee-9901-2b5fbccf1850",
+      "0be997b0-887f-11ee-b001-fd990daaf59a",
+      "8cc63340-107b-11ec-ab5d-f9b221ed2dc5"
+    ],
+    "connectorIds": [
+      "f60a3e10-8846-11ee-8cdc-5bfcb95b42e5",
+      "61a87510-c7a3-11ea-95da-0fb0c241e75c"
+    ],
+    "workspace": {
+      "blocks": [
+        {
+          "x": 54,
+          "y": -60,
+          "id": "bd53d7d6-dda5-4dbd-a70c-d8826d1cd47d",
+          "name": "Start",
+          "type": "StartBlock",
+          "inputs": [
+            {
+              "id": "run_mode",
+              "type": "select",
+              "value": "manual",
+              "structure": []
+            }
+          ],
+          "childId": "80DEF053-0E6B-405E-AD7B-E14199A7A5DA",
+          "comment": null,
+          "disabled": false,
+          "settings": [],
+          "collapsed": [],
+          "displayName": "Start",
+          "loopBlockId": null
+        },
+        {
+          "x": 54,
+          "y": 220,
+          "id": "3D45A7ED-2F19-4CBF-A674-8655B2BDE3A8",
+          "form": [
+            {
+              "id": "inputs-input-0",
+              "type": "select",
+              "label": "Flujo de datos",
+              "order": 0,
+              "values": "{ $.listApps[*].name }",
+              "options": [],
+              "helpText": "Selecciona el flujo de datos a ejecutar",
+              "isRequired": true
+            }
+          ],
+          "name": "inputs",
+          "type": "FormBlock",
+          "inputs": [],
+          "childId": "EF0276A4-BD02-410B-B350-1F79E4C4490D",
+          "comment": null,
+          "disabled": false,
+          "settings": [
+            {
+              "id": "persist_data",
+              "type": "select",
+              "value": "no",
+              "structure": []
+            },
+            {
+              "id": "automations_censor_data",
+              "type": "checkbox",
+              "value": false,
+              "structure": []
+            }
+          ],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Inputs",
+          "loopBlockId": null,
+          "persistData": "no"
+        },
+        {
+          "x": -228,
+          "y": 20,
+          "id": "1A2FEA49-CDB6-4D02-9EAC-BE1A8C1D79DA",
+          "name": "updateRunTitle",
+          "type": "UpdateJobBlock",
+          "inputs": [
+            {
+              "id": "title",
+              "type": "string",
+              "value": null,
+              "structure": []
+            }
+          ],
+          "childId": null,
+          "comment": null,
+          "disabled": false,
+          "settings": [
+            {
+              "id": "automations_censor_data",
+              "type": "checkbox",
+              "value": false,
+              "structure": []
+            }
+          ],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Update Run Title",
+          "loopBlockId": null
+        },
+        {
+          "x": -236,
+          "y": -75,
+          "id": "CC270CC5-3D8F-47E8-BD5B-FDAE2402C67D",
+          "name": "goToLabel",
+          "type": "GotoBlock",
+          "inputs": [
+            {
+              "id": "label",
+              "type": "select",
+              "value": null,
+              "structure": []
+            }
+          ],
+          "childId": null,
+          "comment": null,
+          "disabled": false,
+          "settings": [],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Go To Label",
+          "loopBlockId": null
+        },
+        {
+          "x": 125,
+          "y": 654,
+          "id": "610B675C-8AF2-4EEC-8039-0284A97F4A66",
+          "name": "customCode",
+          "type": "CustomCodeBlock3",
+          "inputs": [
+            {
+              "id": "language",
+              "type": "select",
+              "value": "nodejs",
+              "structure": [],
+              "displayValue": "Node.js 24.0"
+            },
+            {
+              "id": "inputs",
+              "mode": "keyValue",
+              "type": "object",
+              "value": [
+                {
+                  "key": "First Name",
+                  "value": "John"
+                },
+                {
+                  "key": "Last Name",
+                  "value": "Doe"
+                }
+              ],
+              "structure": []
+            },
+            {
+              "id": "code",
+              "type": "code",
+              "value": "// Example code\nconst fullName = inputs['First Name'] + ' ' + inputs['Last Name']\n\nconsole.log(JSON.stringify(fullName))",
+              "structure": []
+            }
+          ],
+          "childId": null,
+          "comment": null,
+          "disabled": false,
+          "settings": [
+            {
+              "id": "blendr_on_error",
+              "type": "select",
+              "value": "stop",
+              "structure": []
+            },
+            {
+              "id": "automations_censor_data",
+              "type": "checkbox",
+              "value": false,
+              "structure": []
+            }
+          ],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Custom Code",
+          "loopBlockId": null
+        },
+        {
+          "x": -488,
+          "y": 544,
+          "id": "34C73924-0DCF-42A5-AB24-43E55D70186F",
+          "name": "startDataTask",
+          "type": "EndpointBlock",
+          "inputs": [
+            {
+              "id": "11105730-894b-11ee-b1d3-3d3b1aee1fe4",
+              "type": "string",
+              "value": "{ $.inputs.'Automatizacion de origen' }",
+              "structure": []
+            },
+            {
+              "id": "111a0420-894b-11ee-a3d8-0d59f312d7a4",
+              "type": "string",
+              "value": "{ $.inputs.'Automatizacion de origen' }",
+              "structure": []
+            }
+          ],
+          "childId": null,
+          "comment": null,
+          "disabled": false,
+          "settings": [
+            {
+              "id": "blendr_on_error",
+              "type": "select",
+              "value": "stop",
+              "structure": []
+            },
+            {
+              "id": "automations_censor_data",
+              "type": "checkbox",
+              "value": false,
+              "structure": []
+            }
+          ],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Qlik Talend Data Integration - Start Data Task",
+          "loopBlockId": null,
+          "endpoint_guid": "10e86460-894b-11ee-9901-2b5fbccf1850",
+          "datasourcetype_guid": "f60a3e10-8846-11ee-8cdc-5bfcb95b42e5"
+        },
+        {
+          "x": -488,
+          "y": 384,
+          "id": "A96BF6FE-13D3-4208-AA52-6C52BBCF7E33",
+          "name": "listProjects",
+          "type": "EndpointBlock",
+          "inputs": [
+            {
+              "id": "0ebb17d0-8a00-11ee-a588-15cc766eac2c",
+              "type": "string",
+              "value": "{ $.inputs.'Automatizacion de origen' }",
+              "structure": []
+            }
+          ],
+          "childId": "34C73924-0DCF-42A5-AB24-43E55D70186F",
+          "comment": null,
+          "disabled": false,
+          "settings": [
+            {
+              "id": "maxitemcount",
+              "type": "string",
+              "value": null,
+              "structure": []
+            },
+            {
+              "id": "blendr_on_error",
+              "type": "select",
+              "value": "stop",
+              "structure": []
+            },
+            {
+              "id": "cache",
+              "type": "select",
+              "value": "0",
+              "structure": []
+            },
+            {
+              "id": "automations_censor_data",
+              "type": "checkbox",
+              "value": false,
+              "structure": []
+            }
+          ],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Qlik Talend Data Integration - List Projects",
+          "loopBlockId": null,
+          "endpoint_guid": "0be997b0-887f-11ee-b001-fd990daaf59a",
+          "datasourcetype_guid": "f60a3e10-8846-11ee-8cdc-5bfcb95b42e5"
+        },
+        {
+          "x": 346,
+          "y": 413,
+          "id": "07AE69D0-6F7F-4CD6-9451-0985967C77C0",
+          "name": "DoReload",
+          "type": "SnippetBlock",
+          "inputs": [
+            {
+              "id": "29603390-e716-11ea-9e37-05e08ee32111",
+              "type": "string",
+              "value": "f16387d7-63af-484f-b267-f3856540dbe6",
+              "structure": [],
+              "displayValue": "BanColombia Prueba 1 (f16387d7-63af-484f-b267-f3856540dbe6)"
+            },
+            {
+              "id": "2ac9eef0-a677-11eb-aacc-8b755d0fe484",
+              "type": "select",
+              "value": "Start reload and continue",
+              "structure": [],
+              "displayValue": "Start reload and continue"
+            },
+            {
+              "id": "6892c0c0-c795-11eb-9860-9dc8cb705e25",
+              "type": "select",
+              "value": null,
+              "structure": []
+            },
+            {
+              "id": "ecebf340-c797-11eb-8671-53658babb1a1",
+              "type": "select",
+              "value": null,
+              "structure": []
+            },
+            {
+              "id": "069de770-8277-11f0-a252-ad6769632a1c",
+              "type": "select",
+              "value": null,
+              "structure": []
+            },
+            {
+              "id": "06a02bd0-8277-11f0-b78b-f7910663702f",
+              "mode": "keyValue",
+              "type": "object",
+              "value": null,
+              "structure": []
+            },
+            {
+              "id": "cc8dd1c0-a438-11f0-9e17-c77404b63446",
+              "type": "select",
+              "value": null,
+              "structure": []
+            }
+          ],
+          "childId": "0B3CB882-A299-4155-926F-93EA62173C83",
+          "comment": null,
+          "disabled": false,
+          "settings": [
+            {
+              "id": "blendr_on_error",
+              "type": "select",
+              "value": "stop",
+              "structure": []
+            },
+            {
+              "id": "automations_censor_data",
+              "type": "checkbox",
+              "value": false,
+              "structure": []
+            }
+          ],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Qlik Cloud Services - Do Reload",
+          "loopBlockId": null,
+          "snippet_guid": "b5dbb7a0-e715-11ea-b2bf-43bb35adee19",
+          "datasourcetype_guid": "61a87510-c7a3-11ea-95da-0fb0c241e75c"
+        },
+        {
+          "x": 54,
+          "y": 60,
+          "id": "80DEF053-0E6B-405E-AD7B-E14199A7A5DA",
+          "name": "listApps",
+          "type": "EndpointBlock",
+          "inputs": [
+            {
+              "id": "8cd8db50-107b-11ec-8082-edc45dd151ef",
+              "type": "select",
+              "value": null,
+              "structure": []
+            },
+            {
+              "id": "8ce4fad0-107b-11ec-a6ac-2bd407ad134b",
+              "type": "string",
+              "value": "6a57a14cf89e2c4d4b4d83af",
+              "structure": [],
+              "displayValue": "Bancolombia prueba (6a57a14cf89e2c4d4b4d83af)"
+            }
+          ],
+          "childId": "3D45A7ED-2F19-4CBF-A674-8655B2BDE3A8",
+          "comment": null,
+          "disabled": false,
+          "settings": [
+            {
+              "id": "maxitemcount",
+              "type": "string",
+              "value": null,
+              "structure": []
+            },
+            {
+              "id": "blendr_on_error",
+              "type": "select",
+              "value": "stop",
+              "structure": []
+            },
+            {
+              "id": "cache",
+              "type": "select",
+              "value": "0",
+              "structure": []
+            },
+            {
+              "id": "automations_censor_data",
+              "type": "checkbox",
+              "value": false,
+              "structure": []
+            },
+            {
+              "id": "datasource",
+              "value": "c0ba2a88-8011-4142-9e00-5c708d3bbb43",
+              "displayValue": "Qlik Cloud Services"
+            }
+          ],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Qlik Cloud Services - List Apps",
+          "loopBlockId": null,
+          "endpoint_guid": "8cc63340-107b-11ec-ab5d-f9b221ed2dc5",
+          "datasourcetype_guid": "61a87510-c7a3-11ea-95da-0fb0c241e75c"
+        },
+        {
+          "x": 346,
+          "y": 533,
+          "id": "0B3CB882-A299-4155-926F-93EA62173C83",
+          "name": "Unknown Variable ",
+          "type": "VariableBlock",
+          "inputs": [],
+          "childId": null,
+          "comment": null,
+          "disabled": false,
+          "settings": [],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "operations": [],
+          "displayName": "Variable",
+          "loopBlockId": null,
+          "variableGuid": "variable-empty"
+        },
+        {
+          "x": 32,
+          "y": 328,
+          "id": "EF0276A4-BD02-410B-B350-1F79E4C4490D",
+          "name": "output",
+          "type": "ShowBlock",
+          "inputs": [
+            {
+              "id": "input",
+              "type": "string",
+              "value": "{ $.inputs }",
+              "structure": []
+            }
+          ],
+          "childId": null,
+          "comment": null,
+          "disabled": false,
+          "settings": [
+            {
+              "id": "display_mode",
+              "type": "select",
+              "value": "add",
+              "structure": []
+            }
+          ],
+          "collapsed": [
+            {
+              "name": "loop",
+              "isCollapsed": false
+            }
+          ],
+          "displayName": "Output",
+          "loopBlockId": null
+        }
+      ],
+      "variables": []
+    },
+    "lastRun": null,
+    "lastRunStatus": null,
+    "runMode": "manual",
+    "createdAt": "2026-07-24T15:43:52.000000Z",
+    "updatedAt": "2026-07-24T15:43:52.000000Z",
+    "lastRunAt": null,
+    "containsBillable": false,
+    "timeout": null,
+    "executionToken": "HWWbXmh5bhTnqsxuolANK8ASV2kLuxPKxgxiI7fmDrk6NgQwMyStL2oYqmr1oRUT",
+    "maxConcurrentRuns": 1
+  }
+}
