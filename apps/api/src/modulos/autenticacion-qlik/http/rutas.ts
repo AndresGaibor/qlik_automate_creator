@@ -9,6 +9,7 @@ import type { ServicioAutenticacionQlik } from "../aplicacion/servicio-autentica
 const COOKIE_SESION = "sesion_usuario";
 const COOKIE_ESTADO = "oauth_estado";
 const COOKIE_VERIFICADOR = "oauth_verifier";
+const COOKIE_TENANT_QLIK = "oauth_tenant_qlik";
 
 export function crearRutasAutenticacionQlik(
   servicio: ServicioAutenticacionQlik,
@@ -23,12 +24,32 @@ export function crearRutasAutenticacionQlik(
   };
 
   rutas.get("/iniciar", async (c) => {
-    const inicio = await servicio.iniciar();
+    const host = c.req.query("host")?.trim();
+    if (!host) {
+      return responderError(c, "Debes indicar el host del tenant Qlik", 400, {
+        codigo: "TENANT_QLIK_REQUERIDO",
+      });
+    }
+    let inicio: Awaited<ReturnType<ServicioAutenticacionQlik["iniciar"]>>;
+    try {
+      inicio = await servicio.iniciar(host);
+    } catch (error) {
+      return responderError(
+        c,
+        error instanceof Error ? error.message : "Tenant Qlik inválido",
+        400,
+        { codigo: "TENANT_QLIK_INVALIDO" },
+      );
+    }
     setCookie(c, COOKIE_ESTADO, inicio.estado, {
       ...cookieSegura,
       maxAge: 600,
     });
     setCookie(c, COOKIE_VERIFICADOR, inicio.verificador, {
+      ...cookieSegura,
+      maxAge: 600,
+    });
+    setCookie(c, COOKIE_TENANT_QLIK, inicio.tenantQlikId, {
       ...cookieSegura,
       maxAge: 600,
     });
@@ -39,10 +60,18 @@ export function crearRutasAutenticacionQlik(
     const { code: codigo, state: estado } = c.req.query();
     const estadoGuardado = getCookie(c, COOKIE_ESTADO);
     const verificador = getCookie(c, COOKIE_VERIFICADOR);
+    const tenantQlikId = getCookie(c, COOKIE_TENANT_QLIK);
     deleteCookie(c, COOKIE_ESTADO, { path: "/" });
     deleteCookie(c, COOKIE_VERIFICADOR, { path: "/" });
+    deleteCookie(c, COOKIE_TENANT_QLIK, { path: "/" });
 
-    if (!codigo || !estado || estado !== estadoGuardado || !verificador) {
+    if (
+      !codigo ||
+      !estado ||
+      estado !== estadoGuardado ||
+      !verificador ||
+      !tenantQlikId
+    ) {
       return responderError(c, "Estado OAuth inválido", 400, {
         codigo: "OAUTH_ESTADO_INVALIDO",
       });
@@ -50,6 +79,7 @@ export function crearRutasAutenticacionQlik(
 
     try {
       const { tokenSesion } = await servicio.completar({
+        tenantQlikId,
         codigo,
         verificador,
         ip:

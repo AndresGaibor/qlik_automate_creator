@@ -26,6 +26,32 @@ export class RepositorioAutenticacionPostgres
 {
   constructor(private readonly superadminMail?: string) {}
 
+  async obtenerTenantPorHost(host: string) {
+    const tenant = await db.query.tenantsQlik.findFirst({
+      where: eq(tenantsQlik.host, normalizarHost(host)),
+    });
+    return tenant
+      ? {
+          id: tenant.id,
+          host: tenant.host,
+          estado: tenant.estado as "activo" | "desconectado" | "suspendido",
+        }
+      : null;
+  }
+
+  async obtenerTenantPorId(id: string) {
+    const tenant = await db.query.tenantsQlik.findFirst({
+      where: eq(tenantsQlik.id, id),
+    });
+    return tenant
+      ? {
+          id: tenant.id,
+          host: tenant.host,
+          estado: tenant.estado as "activo" | "desconectado" | "suspendido",
+        }
+      : null;
+  }
+
   async guardarAcceso(
     datos: DatosNuevaSesion,
   ): Promise<{ tokenSesion: string }> {
@@ -37,32 +63,16 @@ export class RepositorioAutenticacionPostgres
     );
 
     await db.transaction(async (tx) => {
-      let tenant = await tx.query.tenantsQlik.findFirst({
-        where: eq(tenantsQlik.host, datos.hostTenant),
+      const tenant = await tx.query.tenantsQlik.findFirst({
+        where: and(
+          eq(tenantsQlik.id, datos.tenantQlikId),
+          eq(tenantsQlik.host, normalizarHost(datos.hostTenant)),
+        ),
       });
-
-      let organizacionId: string;
-      if (!tenant) {
-        const [organizacion] = await tx
-          .insert(organizaciones)
-          .values({ nombre: `Qlik - ${datos.hostTenant}` })
-          .returning();
-        if (!organizacion) throw new Error("No se pudo crear la organización");
-        const [tenantCreado] = await tx
-          .insert(tenantsQlik)
-          .values({
-            tenantIdQlik: datos.hostTenant,
-            host: datos.hostTenant,
-            nombre: "Tenant principal",
-            organizacionId: organizacion.id,
-          })
-          .returning();
-        if (!tenantCreado) throw new Error("No se pudo crear el tenant Qlik");
-        tenant = tenantCreado;
-        organizacionId = organizacion.id;
-      } else {
-        organizacionId = tenant.organizacionId;
+      if (!tenant || tenant.estado !== "activo") {
+        throw new Error("Tenant Qlik no registrado o inactivo");
       }
+      const organizacionId = tenant.organizacionId;
 
       let identidad = await tx.query.identidadesQlik.findFirst({
         where: and(
@@ -344,4 +354,13 @@ export class RepositorioAutenticacionPostgres
 
 function hash(valor: string): string {
   return crypto.createHash("sha256").update(valor).digest("hex");
+}
+
+function normalizarHost(host: string): string {
+  const valor = /^https?:\/\//i.test(host) ? host : `https://${host}`;
+  const url = new URL(valor);
+  if (url.protocol !== "https:" || url.pathname !== "/") {
+    throw new Error("El host Qlik debe ser HTTPS y no contener ruta");
+  }
+  return url.host.toLowerCase();
 }

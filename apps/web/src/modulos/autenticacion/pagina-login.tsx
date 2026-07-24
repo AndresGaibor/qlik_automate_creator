@@ -25,6 +25,7 @@ function obtenerMensajeSeguro(errorParam: string): string {
 export function PaginaLogin() {
   const { mostrarError } = useNotificaciones();
   const [errorOAuth, setErrorOAuth] = useState<string | null>(null);
+  const [hostTenant, setHostTenant] = useState("");
 
   // Procesar oauth_error de la URL al montar
   useEffect(() => {
@@ -61,8 +62,30 @@ export function PaginaLogin() {
             Esta aplicación usa autenticación OAuth de Qlik. Inicia sesión con
             tu cuenta de Qlik Cloud.
           </p>
-          <Button asChild className="w-full">
-            <a href="/api/auth/qlik/iniciar">Iniciar sesión</a>
+          <label
+            htmlFor="host-tenant-qlik"
+            className="mb-4 block text-sm font-medium text-gray-700"
+          >
+            Host del tenant Qlik
+            <input
+              id="host-tenant-qlik"
+              type="text"
+              value={hostTenant}
+              onChange={(evento) => setHostTenant(evento.target.value)}
+              placeholder="empresa.eu.qlikcloud.com"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </label>
+          <Button
+            className="w-full"
+            disabled={!hostTenant.trim()}
+            onClick={() => {
+              window.location.href = `/api/auth/qlik/iniciar?host=${encodeURIComponent(
+                hostTenant.trim(),
+              )}`;
+            }}
+          >
+            Iniciar sesión
           </Button>
         </CardContent>
       </Card>

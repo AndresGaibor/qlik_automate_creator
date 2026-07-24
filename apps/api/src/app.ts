@@ -186,26 +186,18 @@ function crearServicioAutenticacionDiferido(
   repositorio: RepositorioAutenticacion,
   configuracion?: ConfiguracionAplicacion,
 ): ServicioAutenticacionQlik {
-  const crear = () =>
-    new ServicioAutenticacionQlik(
+  return new ServicioAutenticacionQlik(
+    (hostTenant) =>
       new ClienteOAuthQlik(
         configuracion?.QLIK_CLIENT_ID ?? exigirEntorno("QLIK_CLIENT_ID"),
         configuracion?.QLIK_CLIENT_SECRET ??
           exigirEntorno("QLIK_CLIENT_SECRET"),
         configuracion?.QLIK_REDIRECT_URI ?? exigirEntorno("QLIK_REDIRECT_URI"),
-        configuracion?.QLIK_TENANT_HOST ?? exigirEntorno("QLIK_TENANT_HOST"),
+        hostTenant,
         configuracion?.QLIK_OAUTH_SCOPES ?? process.env.QLIK_OAUTH_SCOPES,
       ),
-      repositorio,
-      configuracion?.QLIK_TENANT_HOST ?? exigirEntorno("QLIK_TENANT_HOST"),
-    );
-
-  return {
-    iniciar: () => crear().iniciar(),
-    completar: (entrada) => crear().completar(entrada),
-    consultarSesion: (token) => crear().consultarSesion(token),
-    cerrarSesion: (token) => crear().cerrarSesion(token),
-  } as ServicioAutenticacionQlik;
+    repositorio,
+  );
 }
 
 function crearResolverContextoAdminPredeterminado(

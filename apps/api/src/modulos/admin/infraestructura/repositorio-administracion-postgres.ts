@@ -3,14 +3,22 @@ import { db } from "../../../plataforma/persistencia/conexion.js";
 import {
   membresiasOrganizacion,
   organizaciones,
+  tenantsQlik,
   usuarios,
 } from "../../../plataforma/persistencia/esquema.js";
 import type {
   EstadoOrganizacion,
+  EstadoTenantQlik,
   RepositorioAdministracion,
+  ResultadoEliminarTenantQlik,
   RolAdministracion,
+  TenantQlikAdministrable,
   UsuarioAdministrable,
 } from "../aplicacion/puertos/repositorio-administracion.js";
+import {
+  decidirSiNuevoTenantEsPrincipal,
+  validarEliminacionTenantQlik,
+} from "../dominio/tenant-qlik.js";
 
 const normalizarRol = (rol: string): RolAdministracion =>
   rol === "admin" || rol === "administrador" ? "admin" : "usuario";
@@ -167,4 +175,99 @@ export class RepositorioAdministracionPostgres
       .returning();
     return filas.length > 0;
   }
+  async listarTenantsQlik(
+    organizacionId: string,
+  ): Promise<TenantQlikAdministrable[]> {
+    const filas = await db.query.tenantsQlik.findMany({
+      where: eq(tenantsQlik.organizacionId, organizacionId),
+    });
+    return filas.map(mapearTenantQlik);
+  }
+
+  async crearTenantQlik(entrada: {
+    organizacionId: string;
+    tenantIdQlik: string;
+    host: string;
+    nombre?: string;
+  }): Promise<TenantQlikAdministrable | null> {
+    if (!(await this.obtenerOrganizacion(entrada.organizacionId))) return null;
+    return db.transaction(async (tx) => {
+      const existentes = await tx.query.tenantsQlik.findMany({
+        where: eq(tenantsQlik.organizacionId, entrada.organizacionId),
+      });
+      const [fila] = await tx
+        .insert(tenantsQlik)
+        .values({
+          organizacionId: entrada.organizacionId,
+          tenantIdQlik: entrada.tenantIdQlik,
+          host: normalizarHostQlik(entrada.host),
+          nombre: entrada.nombre ?? null,
+          esPrincipal: decidirSiNuevoTenantEsPrincipal(existentes.length),
+        })
+        .returning();
+      if (!fila) throw new Error("No se pudo crear el tenant Qlik");
+      return mapearTenantQlik(fila);
+    });
+  }
+
+  async marcarTenantQlikPrincipal(
+    organizacionId: string,
+    tenantQlikId: string,
+  ): Promise<TenantQlikAdministrable | null> {
+    return db.transaction(async (tx) => {
+      const tenant = await tx.query.tenantsQlik.findFirst({
+        where: and(
+          eq(tenantsQlik.id, tenantQlikId),
+          eq(tenantsQlik.organizacionId, organizacionId),
+        ),
+      });
+      if (!tenant) return null;
+      await tx
+        .update(tenantsQlik)
+        .set({ esPrincipal: false, actualizadoEn: new Date() })
+        .where(eq(tenantsQlik.organizacionId, organizacionId));
+      const [actualizado] = await tx
+        .update(tenantsQlik)
+        .set({ esPrincipal: true, actualizadoEn: new Date() })
+        .where(eq(tenantsQlik.id, tenantQlikId))
+        .returning();
+      return actualizado ? mapearTenantQlik(actualizado) : null;
+    });
+  }
+
+  async eliminarTenantQlik(
+    organizacionId: string,
+    tenantQlikId: string,
+  ): Promise<ResultadoEliminarTenantQlik> {
+    const tenant = await db.query.tenantsQlik.findFirst({
+      where: and(
+        eq(tenantsQlik.id, tenantQlikId),
+        eq(tenantsQlik.organizacionId, organizacionId),
+      ),
+    });
+    if (!tenant) return "NO_ENCONTRADO";
+    if (validarEliminacionTenantQlik(tenant) === "REQUIERE_REEMPLAZO") {
+      return "REQUIERE_REEMPLAZO";
+    }
+    await db.delete(tenantsQlik).where(eq(tenantsQlik.id, tenantQlikId));
+    return "ELIMINADO";
+  }
+}
+
+function mapearTenantQlik(
+  fila: typeof tenantsQlik.$inferSelect,
+): TenantQlikAdministrable {
+  return {
+    ...fila,
+    estado: fila.estado as EstadoTenantQlik,
+  };
+}
+
+function normalizarHostQlik(host: string): string {
+  const valor = /^https?:\/\//i.test(host) ? host : `https://${host}`;
+  const url = new URL(valor);
+  if (url.protocol !== "https:" || url.pathname !== "/") {
+    throw new Error("El host Qlik debe ser HTTPS y no contener ruta");
+  }
+  return url.host.toLowerCase();
 }

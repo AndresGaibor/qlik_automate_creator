@@ -1,37 +1,53 @@
 import type { PuertoOAuthQlik } from "./puertos/puerto-oauth-qlik.js";
 import type { RepositorioAutenticacion } from "./puertos/repositorio-autenticacion.js";
 
+export type FabricaOAuthQlik = (hostTenant: string) => PuertoOAuthQlik;
+
 export class ServicioAutenticacionQlik {
   constructor(
-    private readonly oauth: PuertoOAuthQlik,
+    private readonly crearOAuth: FabricaOAuthQlik,
     private readonly repositorio: RepositorioAutenticacion,
-    private readonly hostTenant: string,
   ) {}
 
-  async iniciar() {
-    const estado = this.oauth.generarEstado();
-    const verificador = this.oauth.generarVerificadorPkce();
-    const desafio = await this.oauth.generarDesafioPkce(verificador);
+  async iniciar(hostTenant: string) {
+    const tenant = await this.repositorio.obtenerTenantPorHost(hostTenant);
+    if (!tenant || tenant.estado !== "activo") {
+      throw new Error("Tenant Qlik no registrado o inactivo");
+    }
+    const oauth = this.crearOAuth(tenant.host);
+    const estado = oauth.generarEstado();
+    const verificador = oauth.generarVerificadorPkce();
+    const desafio = await oauth.generarDesafioPkce(verificador);
     return {
+      tenantQlikId: tenant.id,
       estado,
       verificador,
-      url: this.oauth.obtenerUrlAutorizacion(estado, desafio),
+      url: oauth.obtenerUrlAutorizacion(estado, desafio),
     };
   }
 
   async completar(entrada: {
+    tenantQlikId: string;
     codigo: string;
     verificador: string;
     ip: string;
     agenteUsuario: string;
   }) {
-    const tokens = await this.oauth.intercambiarCodigo(
+    const tenant = await this.repositorio.obtenerTenantPorId(
+      entrada.tenantQlikId,
+    );
+    if (!tenant || tenant.estado !== "activo") {
+      throw new Error("Tenant Qlik no registrado o inactivo");
+    }
+    const oauth = this.crearOAuth(tenant.host);
+    const tokens = await oauth.intercambiarCodigo(
       entrada.codigo,
       entrada.verificador,
     );
-    const usuarioQlik = await this.oauth.obtenerUsuario(tokens.tokenAcceso);
+    const usuarioQlik = await oauth.obtenerUsuario(tokens.tokenAcceso);
     return this.repositorio.guardarAcceso({
-      hostTenant: this.hostTenant,
+      tenantQlikId: tenant.id,
+      hostTenant: tenant.host,
       usuarioQlik,
       tokens,
       ip: entrada.ip,

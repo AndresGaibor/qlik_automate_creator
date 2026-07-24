@@ -15,8 +15,12 @@ import {
   actualizarTenant,
   actualizarUsuarioTenant,
   agregarUsuarioTenant,
+  crearTenantQlik,
+  eliminarTenantQlik,
   eliminarUsuarioTenant,
+  marcarTenantQlikPrincipal,
   obtenerDetalleTenant,
+  obtenerTenantsQlik,
 } from "./api";
 
 interface Props {
@@ -32,10 +36,18 @@ export function PaginaDetalleTenant({ tenantId }: Props) {
   const [rolUsuario, setRolUsuario] = useState<"admin" | "usuario">("usuario");
   const [editandoNombre, setEditandoNombre] = useState(false);
   const [nombreEditado, setNombreEditado] = useState("");
+  const [hostQlik, setHostQlik] = useState("");
+  const [tenantIdQlik, setTenantIdQlik] = useState("");
+  const [nombreTenantQlik, setNombreTenantQlik] = useState("");
 
   const { data: tenant, isLoading } = useQuery<DetalleTenant>({
     queryKey: ["admin-tenant", tenantId],
     queryFn: () => obtenerDetalleTenant(tenantId),
+  });
+
+  const { data: tenantsQlik = [] } = useQuery({
+    queryKey: ["admin-tenants-qlik", tenantId],
+    queryFn: () => obtenerTenantsQlik(tenantId),
   });
 
   const actualizar = useMutation({
@@ -83,6 +95,47 @@ export function PaginaDetalleTenant({ tenantId }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenant", tenantId] });
       mostrarExito("Usuario eliminado");
+    },
+    onError: (error: Error) => mostrarError(error.message),
+  });
+
+  const crearQlik = useMutation({
+    mutationFn: () =>
+      crearTenantQlik(tenantId, {
+        host: hostQlik,
+        tenantIdQlik,
+        ...(nombreTenantQlik.trim() ? { nombre: nombreTenantQlik.trim() } : {}),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-tenants-qlik", tenantId],
+      });
+      setHostQlik("");
+      setTenantIdQlik("");
+      setNombreTenantQlik("");
+      mostrarExito("Tenant Qlik registrado");
+    },
+    onError: (error: Error) => mostrarError(error.message),
+  });
+
+  const hacerPrincipal = useMutation({
+    mutationFn: (id: string) => marcarTenantQlikPrincipal(tenantId, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-tenants-qlik", tenantId],
+      });
+      mostrarExito("Tenant principal actualizado");
+    },
+    onError: (error: Error) => mostrarError(error.message),
+  });
+
+  const eliminarQlik = useMutation({
+    mutationFn: (id: string) => eliminarTenantQlik(tenantId, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-tenants-qlik", tenantId],
+      });
+      mostrarExito("Tenant Qlik eliminado");
     },
     onError: (error: Error) => mostrarError(error.message),
   });
@@ -158,6 +211,86 @@ export function PaginaDetalleTenant({ tenantId }: Props) {
               </Button>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Tenants Qlik de la organización</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-5 grid gap-3 md:grid-cols-4">
+            <input
+              value={nombreTenantQlik}
+              onChange={(evento) => setNombreTenantQlik(evento.target.value)}
+              placeholder="Nombre visible"
+              className="rounded border px-3 py-2"
+            />
+            <input
+              value={hostQlik}
+              onChange={(evento) => setHostQlik(evento.target.value)}
+              placeholder="empresa.eu.qlikcloud.com"
+              className="rounded border px-3 py-2"
+            />
+            <input
+              value={tenantIdQlik}
+              onChange={(evento) => setTenantIdQlik(evento.target.value)}
+              placeholder="ID del tenant en Qlik"
+              className="rounded border px-3 py-2"
+            />
+            <Button
+              disabled={
+                !hostQlik.trim() || !tenantIdQlik.trim() || crearQlik.isPending
+              }
+              onClick={() => crearQlik.mutate()}
+            >
+              Registrar tenant Qlik
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {tenantsQlik.map((tenantQlik) => (
+              <div
+                key={tenantQlik.id}
+                className="flex flex-col justify-between gap-3 rounded border p-4 md:flex-row md:items-center"
+              >
+                <div>
+                  <p className="font-semibold">
+                    {tenantQlik.nombre || tenantQlik.host}
+                    {tenantQlik.esPrincipal ? " · Principal" : ""}
+                  </p>
+                  <p className="text-sm text-gray-500">{tenantQlik.host}</p>
+                  <p className="text-xs text-gray-500">
+                    Qlik ID: {tenantQlik.tenantIdQlik}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {!tenantQlik.esPrincipal && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => hacerPrincipal.mutate(tenantQlik.id)}
+                    >
+                      Hacer principal
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-600"
+                    onClick={() => eliminarQlik.mutate(tenantQlik.id)}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {tenantsQlik.length === 0 && (
+              <p className="text-sm text-gray-500">
+                Esta organización todavía no tiene tenants Qlik registrados.
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

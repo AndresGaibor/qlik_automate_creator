@@ -4,7 +4,9 @@ import type {
   ActualizarUsuario,
   AgregarUsuario,
   CrearTenant,
+  CrearTenantQlik,
   DetalleTenant,
+  TenantQlik,
   TenantResumen,
 } from "@qlik/contratos/admin";
 
@@ -17,6 +19,8 @@ export type {
   DetalleTenant,
   TenantResumen,
   ActualizarUsuario,
+  TenantQlik,
+  CrearTenantQlik,
 };
 
 export function obtenerTenants() {
@@ -76,5 +80,39 @@ export function actualizarUsuarioTenant(
 export function eliminarUsuarioTenant(id: string, usuarioId: string) {
   return clienteApi.delete<{ eliminado: boolean }>(
     `${RUTA}/${encodeURIComponent(id)}/usuarios/${encodeURIComponent(usuarioId)}`,
+  );
+}
+
+export function obtenerTenantsQlik(organizacionId: string) {
+  return clienteApi.get<TenantQlik[]>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik`,
+  );
+}
+
+export function crearTenantQlik(
+  organizacionId: string,
+  entrada: CrearTenantQlik,
+) {
+  return clienteApi.post<TenantQlik>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik`,
+    entrada,
+  );
+}
+
+export function marcarTenantQlikPrincipal(
+  organizacionId: string,
+  tenantQlikId: string,
+) {
+  return clienteApi.put<TenantQlik>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/principal`,
+  );
+}
+
+export function eliminarTenantQlik(
+  organizacionId: string,
+  tenantQlikId: string,
+) {
+  return clienteApi.delete<{ eliminado: boolean }>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}`,
   );
 }

@@ -10,7 +10,7 @@ const esquemaEntorno = z.object({
   QLIK_CLIENT_ID: z.string().min(1),
   QLIK_CLIENT_SECRET: z.string().min(1),
   QLIK_REDIRECT_URI: z.string().url(),
-  QLIK_TENANT_HOST: z.string().min(1).transform(normalizarHostQlik),
+  QLIK_TENANT_HOST: z.string().min(1).transform(normalizarHostQlik).optional(),
   QLIK_OAUTH_SCOPES: z.string().min(1).optional(),
   CIFRADO_CLAVE_PRINCIPAL: z.string().min(1),
   REMOTE_API_URL: z.string().url().optional(),

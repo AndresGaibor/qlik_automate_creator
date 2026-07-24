@@ -50,3 +50,23 @@ export type CrearTenant = z.infer<typeof esquemaCrearTenant>;
 export type ActualizarTenant = z.infer<typeof esquemaActualizarTenant>;
 export type AgregarUsuario = z.infer<typeof esquemaAgregarUsuario>;
 export type ActualizarUsuario = z.infer<typeof esquemaActualizarUsuario>;
+
+export const esquemaTenantQlik = z.object({
+  id: z.string(),
+  organizacionId: z.string(),
+  tenantIdQlik: z.string(),
+  host: z.string(),
+  nombre: z.string().nullable(),
+  estado: z.enum(["activo", "desconectado", "suspendido"]),
+  esPrincipal: z.boolean(),
+  creadoEn: z.string(),
+});
+
+export const esquemaCrearTenantQlik = z.object({
+  tenantIdQlik: z.string().min(1).max(255),
+  host: z.string().min(1).max(255),
+  nombre: z.string().min(1).max(255).optional(),
+});
+
+export type TenantQlik = z.infer<typeof esquemaTenantQlik>;
+export type CrearTenantQlik = z.infer<typeof esquemaCrearTenantQlik>;

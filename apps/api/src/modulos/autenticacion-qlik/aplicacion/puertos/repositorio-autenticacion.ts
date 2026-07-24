@@ -6,7 +6,14 @@ import type {
   UsuarioOAuthQlik,
 } from "../../dominio/modelos.js";
 
+export interface TenantQlikAutenticable {
+  id: string;
+  host: string;
+  estado: "activo" | "desconectado" | "suspendido";
+}
+
 export interface DatosNuevaSesion {
+  tenantQlikId: string;
   hostTenant: string;
   usuarioQlik: UsuarioOAuthQlik;
   tokens: TokensQlik;
@@ -15,6 +22,8 @@ export interface DatosNuevaSesion {
 }
 
 export interface RepositorioAutenticacion {
+  obtenerTenantPorHost(host: string): Promise<TenantQlikAutenticable | null>;
+  obtenerTenantPorId(id: string): Promise<TenantQlikAutenticable | null>;
   guardarAcceso(datos: DatosNuevaSesion): Promise<{ tokenSesion: string }>;
   consultarSesion(tokenSesion: string): Promise<SesionPublica | null>;
   obtenerInfoSesion(tokenSesion: string): Promise<InfoSesion | null>;

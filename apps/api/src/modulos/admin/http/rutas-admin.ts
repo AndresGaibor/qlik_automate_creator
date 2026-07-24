@@ -3,6 +3,7 @@ import {
   esquemaActualizarUsuario,
   esquemaAgregarUsuario,
   esquemaCrearTenant,
+  esquemaCrearTenantQlik,
 } from "@qlik/contratos/admin";
 import { type Context, Hono } from "hono";
 import {
@@ -15,6 +16,12 @@ import { agregarUsuario } from "../aplicacion/casos-de-uso/agregar-usuario.js";
 import { crearTenant } from "../aplicacion/casos-de-uso/crear-tenant.js";
 import { eliminarTenant } from "../aplicacion/casos-de-uso/eliminar-tenant.js";
 import { eliminarUsuario } from "../aplicacion/casos-de-uso/eliminar-usuario.js";
+import {
+  crearTenantQlik,
+  eliminarTenantQlik,
+  listarTenantsQlik,
+  marcarTenantQlikPrincipal,
+} from "../aplicacion/casos-de-uso/gestionar-tenants-qlik.js";
 import { listarTenants } from "../aplicacion/casos-de-uso/listar-tenants.js";
 import { obtenerDetalleTenant } from "../aplicacion/casos-de-uso/obtener-detalle-tenant.js";
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
@@ -344,5 +351,128 @@ export function crearRutasAdmin({
     }
   });
 
+  rutas.get("/organizaciones/:id/tenants-qlik", async (c) => {
+    try {
+      const organizacionId = c.req.param("id");
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, organizacionId);
+      const tenants = await listarTenantsQlik(repositorio, organizacionId);
+      return responderExito(
+        c,
+        tenants.map((tenant) => ({
+          ...tenant,
+          creadoEn: tenant.creadoEn.toISOString(),
+        })),
+      );
+    } catch (error) {
+      return responderErrorAdmin(c, error);
+    }
+  });
+
+  rutas.post("/organizaciones/:id/tenants-qlik", async (c) => {
+    try {
+      const organizacionId = c.req.param("id");
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, organizacionId);
+      const entrada = esquemaCrearTenantQlik.parse(await c.req.json());
+      const tenant = await crearTenantQlik(repositorio, {
+        organizacionId,
+        ...entrada,
+      });
+      if (!tenant) {
+        return responderError(c, "Organización no encontrada", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+      return responderExito(
+        c,
+        { ...tenant, creadoEn: tenant.creadoEn.toISOString() },
+        201,
+      );
+    } catch (error) {
+      return responderErrorAdmin(c, error);
+    }
+  });
+
+  rutas.put(
+    "/organizaciones/:id/tenants-qlik/:tenantQlikId/principal",
+    async (c) => {
+      try {
+        const organizacionId = c.req.param("id");
+        const tenantQlikId = c.req.param("tenantQlikId");
+        const contexto = await resolverContexto(c);
+        exigirAccesoOrganizacion(contexto, organizacionId);
+        const tenant = await marcarTenantQlikPrincipal(
+          repositorio,
+          organizacionId,
+          tenantQlikId,
+        );
+        if (!tenant) {
+          return responderError(c, "Tenant Qlik no encontrado", 404, {
+            codigo: "NO_ENCONTRADO",
+          });
+        }
+        return responderExito(c, {
+          ...tenant,
+          creadoEn: tenant.creadoEn.toISOString(),
+        });
+      } catch (error) {
+        return responderErrorAdmin(c, error);
+      }
+    },
+  );
+
+  rutas.delete("/organizaciones/:id/tenants-qlik/:tenantQlikId", async (c) => {
+    try {
+      const organizacionId = c.req.param("id");
+      const tenantQlikId = c.req.param("tenantQlikId");
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, organizacionId);
+      const resultado = await eliminarTenantQlik(
+        repositorio,
+        organizacionId,
+        tenantQlikId,
+      );
+      if (resultado === "NO_ENCONTRADO") {
+        return responderError(c, "Tenant Qlik no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+      if (resultado === "REQUIERE_REEMPLAZO") {
+        return responderError(
+          c,
+          "Designa otro tenant principal antes de eliminar este tenant",
+          409,
+          { codigo: "TENANT_PRINCIPAL_REQUIERE_REEMPLAZO" },
+        );
+      }
+      return responderExito(c, { eliminado: true });
+    } catch (error) {
+      return responderErrorAdmin(c, error);
+    }
+  });
+
   return rutas;
+}
+
+function responderErrorAdmin(c: Context, error: unknown) {
+  if (error instanceof Error && error.message === "No hay sesión") {
+    return responderError(c, "Sesión requerida", 401, {
+      codigo: "SESION_REQUERIDA",
+    });
+  }
+  if (error instanceof Error && error.message === "Sesión inválida") {
+    return responderError(c, "Sesión inválida", 401, {
+      codigo: "SESION_INVALIDA",
+    });
+  }
+  if (error instanceof Error && error.message.includes("permisos")) {
+    return responderError(c, error.message, 403, { codigo: "NO_AUTORIZADO" });
+  }
+  if (error instanceof Error && error.name === "ZodError") {
+    return responderError(c, "Datos inválidos", 400, {
+      codigo: "DATOS_INVALIDOS",
+    });
+  }
+  return responderError(c, "Error interno", 500);
 }
