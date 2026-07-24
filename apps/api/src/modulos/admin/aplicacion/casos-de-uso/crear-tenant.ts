@@ -1,11 +1,9 @@
-import { eq } from "drizzle-orm";
-import { db } from "../../../../plataforma/persistencia/conexion.js";
-import { organizaciones } from "../../../../plataforma/persistencia/esquema.js";
+import { generarSlugOrganizacion } from "../../dominio/slug-organizacion.js";
+import type { RepositorioAdministracion } from "../puertos/repositorio-administracion.js";
 
 export interface CrearTenantEntrada {
   nombre: string;
 }
-
 export interface CrearTenantResultado {
   id: string;
   nombre: string;
@@ -14,37 +12,16 @@ export interface CrearTenantResultado {
   creadoEn: string;
 }
 
-function generarSlug(nombre: string): string {
-  return nombre
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 export async function crearTenant(
+  repositorio: RepositorioAdministracion,
   entrada: CrearTenantEntrada,
 ): Promise<CrearTenantResultado> {
-  const slug = generarSlug(entrada.nombre);
-
-  const [organizacion] = await db
-    .insert(organizaciones)
-    .values({
-      nombre: entrada.nombre,
-      estado: "activa",
-    })
-    .returning();
-
-  if (!organizacion) {
-    throw new Error("No se pudo crear la organización");
-  }
-
+  const organizacion = await repositorio.crearOrganizacion(entrada.nombre);
   return {
     id: organizacion.id,
     nombre: organizacion.nombre,
-    slug,
-    estado: organizacion.estado as string,
-    creadoEn: new Date().toISOString(),
+    slug: generarSlugOrganizacion(organizacion.nombre),
+    estado: organizacion.estado,
+    creadoEn: organizacion.creadoEn.toISOString(),
   };
 }

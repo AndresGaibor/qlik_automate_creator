@@ -20,7 +20,9 @@ import { eliminarTenant } from "../aplicacion/casos-de-uso/eliminar-tenant.js";
 import { eliminarUsuario } from "../aplicacion/casos-de-uso/eliminar-usuario.js";
 import { listarTenants } from "../aplicacion/casos-de-uso/listar-tenants.js";
 import { obtenerDetalleTenant } from "../aplicacion/casos-de-uso/obtener-detalle-tenant.js";
+import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
 import { ServicioAdmin } from "../aplicacion/servicio-admin.js";
+import { RepositorioAdministracionPostgres } from "../infraestructura/repositorio-administracion-postgres.js";
 
 const servicioAdmin = new ServicioAdmin();
 
@@ -54,7 +56,9 @@ async function verificarSesionYRol(token: string, organizacionId?: string) {
   return contexto;
 }
 
-export function crearRutasAdmin() {
+export function crearRutasAdmin(
+  repositorio: RepositorioAdministracion = new RepositorioAdministracionPostgres(),
+) {
   const rutas = new Hono();
 
   rutas.get("/tenants", async (c) => {
@@ -73,7 +77,7 @@ export function crearRutasAdmin() {
         );
       }
 
-      const tenants = await listarTenants();
+      const tenants = await listarTenants(repositorio);
       return responderExito(c, tenants);
     } catch (error) {
       if (error instanceof Error && error.message === "No hay sesión") {
@@ -103,7 +107,7 @@ export function crearRutasAdmin() {
 
       const cuerpo = await c.req.json();
       const entrada = esquemaCrearTenant.parse(cuerpo);
-      const tenant = await crearTenant(entrada);
+      const tenant = await crearTenant(repositorio, entrada);
       return responderExito(c, tenant, 201);
     } catch (error) {
       if (error instanceof Error && error.message === "No hay sesión") {
@@ -131,7 +135,7 @@ export function crearRutasAdmin() {
       const id = c.req.param("id");
       await verificarSesionYRol(token, id);
 
-      const tenant = await obtenerDetalleTenant(id);
+      const tenant = await obtenerDetalleTenant(repositorio, id);
       if (!tenant) {
         return responderError(c, "Tenant no encontrado", 404, {
           codigo: "NO_ENCONTRADO",
@@ -168,7 +172,7 @@ export function crearRutasAdmin() {
       const cuerpo = await c.req.json();
       const entrada = esquemaActualizarTenant.parse(cuerpo);
 
-      const tenant = await actualizarTenant(id, entrada);
+      const tenant = await actualizarTenant(repositorio, id, entrada);
       if (!tenant) {
         return responderError(c, "Tenant no encontrado", 404, {
           codigo: "NO_ENCONTRADO",
@@ -200,14 +204,9 @@ export function crearRutasAdmin() {
     try {
       const token = obtenerContextoSesion(c);
       const id = c.req.param("id");
-      await verificarSesionYRol(token, id);
+      const contexto = await verificarSesionYRol(token, id);
 
-      if (
-        !servicioAdmin.puedeEliminar(
-          { esSuperadmin: false, membresias: [] },
-          id,
-        )
-      ) {
+      if (!servicioAdmin.puedeEliminar(contexto, id)) {
         return responderError(
           c,
           "No tienes permisos para eliminar este tenant",
@@ -218,7 +217,7 @@ export function crearRutasAdmin() {
         );
       }
 
-      const resultado = await eliminarTenant(id);
+      const resultado = await eliminarTenant(repositorio, id);
       if (!resultado.eliminado) {
         return responderError(c, "Tenant no encontrado", 404, {
           codigo: "NO_ENCONTRADO",
@@ -255,7 +254,7 @@ export function crearRutasAdmin() {
       const cuerpo = await c.req.json();
       const entrada = esquemaAgregarUsuario.parse(cuerpo);
 
-      const resultado = await agregarUsuario(id, entrada);
+      const resultado = await agregarUsuario(repositorio, id, entrada);
       if (!resultado) {
         return responderError(c, "Tenant no encontrado", 404, {
           codigo: "NO_ENCONTRADO",
@@ -293,7 +292,12 @@ export function crearRutasAdmin() {
       const cuerpo = await c.req.json();
       const entrada = esquemaActualizarUsuario.parse(cuerpo);
 
-      const resultado = await actualizarUsuario(id, usuarioId, entrada);
+      const resultado = await actualizarUsuario(
+        repositorio,
+        id,
+        usuarioId,
+        entrada,
+      );
       if (!resultado) {
         return responderError(c, "Usuario no encontrado", 404, {
           codigo: "NO_ENCONTRADO",
@@ -328,7 +332,7 @@ export function crearRutasAdmin() {
       const usuarioId = c.req.param("usuarioId");
       await verificarSesionYRol(token, id);
 
-      const resultado = await eliminarUsuario(id, usuarioId);
+      const resultado = await eliminarUsuario(repositorio, id, usuarioId);
       if (!resultado.eliminado) {
         return responderError(c, "Usuario no encontrado", 404, {
           codigo: "NO_ENCONTRADO",

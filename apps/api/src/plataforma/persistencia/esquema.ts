@@ -19,6 +19,8 @@ export const organizaciones = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     nombre: text("nombre").notNull(),
     estado: text("estado").notNull().default("activa"),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },
   (t) => ({
     ckEstado: check(

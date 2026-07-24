@@ -34,6 +34,8 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("id");
     expect(cols).toContain("nombre");
     expect(cols).toContain("estado");
+    expect(cols).toContain("creado_en");
+    expect(cols).toContain("actualizado_en");
   });
 
   it("usuarios tiene las columnas esperadas", () => {
