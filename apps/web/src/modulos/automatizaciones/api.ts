@@ -9,6 +9,15 @@ import type {
 
 const RUTA = "/automatizaciones";
 
+export interface ConfiguracionTenant {
+  automatizacionBaseIdQlik: string | null;
+  automatizacionBaseNombre: string | null;
+}
+
+export function obtenerConfiguracionTenant(): Promise<ConfiguracionTenant> {
+  return clienteApi.get<ConfiguracionTenant>(`${RUTA}/configuracion-tenant`);
+}
+
 export type {
   CrearDesdePlantilla,
   DetalleAutomatizacion,
@@ -54,7 +63,7 @@ export function detenerEjecucion(id: string, ejecucionId: string) {
 }
 
 export function crearAutomatizacionDesdePlantilla(
-  entrada: CrearDesdePlantilla,
+  entrada: Omit<CrearDesdePlantilla, "plantillaIdQlik"> & { plantillaIdQlik?: string },
 ) {
   const clave = entrada.claveIdempotencia ?? crypto.randomUUID();
   return clienteApi.post<ResultadoCrearDesdePlantilla>(
@@ -68,13 +77,14 @@ export interface TablaImpala {
   nombre: string;
 }
 
-export async function obtenerTablasImpala(): Promise<TablaImpala[]> {
-  try {
-    return await clienteApi.get<TablaImpala[]>("/destinos/bases-datos/default/tablas");
-  } catch {
-    const data = await clienteApi.get<{ tableName: string }[]>(
-      "https://apiqd.andresgaibor.com/api/v1/impala/databases/default/tables",
-    );
-    return data.map((t) => ({ nombre: t.tableName }));
-  }
+/** Trae las tablas Impala del tenant activo (configuración en admin) */
+export function obtenerTablasImpala(): Promise<TablaImpala[]> {
+  // El backend resuelve la BD configurada para el tenant autenticado
+  return clienteApi.get<TablaImpala[]>("/destinos/bases-datos/default/tablas");
+}
+
+export function obtenerFlujosConFiltros(espacioId?: string) {
+  return clienteApi.get<import("@qlik/contratos").ResumenFlujo[]>("/flujos", {
+    parametros: espacioId ? { espacioId } : undefined,
+  });
 }

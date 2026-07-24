@@ -23,7 +23,7 @@ function persistirEspacio(espacioId: string) {
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-export function useFiltroEspacioPersistente() {
+export function useFiltroEspacioConPersistencia() {
   const [espacioId, setEspacioId] = useState(obtenerEspacioInicial);
 
   useEffect(() => {

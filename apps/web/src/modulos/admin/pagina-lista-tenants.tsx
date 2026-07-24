@@ -1,11 +1,16 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
+import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
+import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
+import { PageHeader } from "@/compartido/componentes/ui/page-header";
+import { PageLayout } from "@/compartido/componentes/ui/page-layout";
+import { ModalCrearOrganizacion } from "./componentes/modal-crear-organizacion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -21,7 +26,11 @@ export function PaginaListaTenants() {
   const { mostrarExito, mostrarError } = useNotificaciones();
   const queryClient = useQueryClient();
   const [modalCrear, setModalCrear] = useState(false);
-  const [nombreNuevo, setNombreNuevo] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    mensaje: string;
+    onConfirm: () => void;
+  }>({ open: false, mensaje: "", onConfirm: () => {} });
 
   const { data: tenants, isLoading } = useQuery<TenantResumen[]>({
     queryKey: ["admin-tenants"],
@@ -33,7 +42,6 @@ export function PaginaListaTenants() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenants"] });
       setModalCrear(false);
-      setNombreNuevo("");
       mostrarExito("Organización creada exitosamente");
     },
     onError: (error: Error) => mostrarError(error.message),
@@ -48,38 +56,24 @@ export function PaginaListaTenants() {
     onError: (error: Error) => mostrarError(error.message),
   });
 
-  const handleCrear = () => {
-    if (nombreNuevo.trim()) {
-      crear.mutate({ nombre: nombreNuevo.trim() });
-    }
-  };
-
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <p className="text-gray-500 animate-pulse">Cargando organizaciones...</p>
-      </div>
-    );
+    return <EstadoCarga mensaje="Cargando organizaciones..." />;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Administración de Organizaciones
-          </h2>
-          <p className="text-sm text-gray-500">
-            Gestiona los grupos de trabajo, conexiones con Qlik Cloud y usuarios autorizados.
-          </p>
-        </div>
-        <Button
-          onClick={() => setModalCrear(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
-        >
-          + Nueva Organización
-        </Button>
-      </div>
+    <PageLayout>
+      <PageHeader
+        title="Administración de Organizaciones"
+        description="Gestiona los grupos de trabajo, conexiones con Qlik Cloud y usuarios autorizados."
+        actions={
+          <Button
+            onClick={() => setModalCrear(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+          >
+            + Nueva Organización
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {tenants?.map((tenant) => (
@@ -143,13 +137,11 @@ export function PaginaListaTenants() {
                       size="sm"
                       className="text-red-600 hover:bg-red-50"
                       onClick={() => {
-                        if (
-                          confirm(
-                            `¿Estás seguro de eliminar la organización "${tenant.nombre}"? esta acción no se puede deshacer.`,
-                          )
-                        ) {
-                          eliminar.mutate(tenant.id);
-                        }
+                        setConfirmDialog({
+                          open: true,
+                          mensaje: `¿Estás seguro de eliminar la organización "${tenant.nombre}"? esta acción no se puede deshacer.`,
+                          onConfirm: () => eliminar.mutate(tenant.id),
+                        });
                       }}
                     >
                       Eliminar
@@ -176,48 +168,25 @@ export function PaginaListaTenants() {
         )}
       </div>
 
-      {modalCrear && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl border">
-            <h3 className="text-xl font-bold text-gray-900 mb-1">
-              Nueva Organización
-            </h3>
-            <p className="text-xs text-gray-500 mb-4">
-              Registra un nombre descriptivo para la empresa o área de trabajo.
-            </p>
-            <div className="mb-4">
-              <label
-                htmlFor="nombre-tenant"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Nombre de la Empresa / Organización
-              </label>
-              <input
-                id="nombre-tenant"
-                type="text"
-                value={nombreNuevo}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setNombreNuevo(e.target.value)
-                }
-                className="w-full border rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                placeholder="ej: Bancolombia - Finanzas"
-              />
-            </div>
-            <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={() => setModalCrear(false)}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleCrear}
-                disabled={!nombreNuevo.trim() || crear.isPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {crear.isPending ? "Guardando..." : "Crear Organización"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <ModalCrearOrganizacion
+        open={modalCrear}
+        onClose={() => setModalCrear(false)}
+        onCrear={(nombre) => crear.mutate({ nombre })}
+        isPending={crear.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        mensaje={confirmDialog.mensaje}
+        titulo="Eliminar organización"
+        confirmText="Eliminar"
+        variant="danger"
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog({ ...confirmDialog, open: false });
+        }}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      />
+    </PageLayout>
   );
 }

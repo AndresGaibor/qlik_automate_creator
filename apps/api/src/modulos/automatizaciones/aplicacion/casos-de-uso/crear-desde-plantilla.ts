@@ -7,9 +7,16 @@ import type { PuertoOutbox } from "../../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
 import {
   ErrorAplicacion,
-  ErrorConflicto,
 } from "../../../../nucleo/errores/error-aplicacion.js";
-import type { PuertoQlik } from "../../../qlik/publico.js";
+import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
+import crypto from "node:crypto";
+import {
+  verificarIdempotencia,
+  completarIdempotencia,
+  fallarIdempotencia,
+} from "../servicios/servicio-idempotencia.js";
+import { copiarAutomatizacion } from "../servicios/servicio-copia-automatizacion.js";
+import { hashCanonico } from "../servicios/utilidades-automatizacion.js";
 
 export interface ContextoCreacionAutomatizacion {
   tenantId: string;
@@ -37,92 +44,64 @@ export class CrearAutomatizacionDesdePlantilla {
     const clave = entrada.claveIdempotencia;
 
     if (clave) {
-      const existente = await this.idempotencia.obtener(
-        contexto.organizacionId,
-        alcance,
-        clave,
+      const { esNuevo, resultadoPrevio } = await verificarIdempotencia(
+        this.idempotencia,
+        { organizacionId: contexto.organizacionId, alcance, clave, hashSolicitud },
       );
-      if (existente) {
-        if (existente.hashSolicitud !== hashSolicitud) {
-          throw new ErrorConflicto(
-            "La clave de idempotencia ya fue usada con otra solicitud",
-          );
-        }
-        if (existente.estado === "completada") {
-          return existente.respuesta as ResultadoCrearDesdePlantilla;
-        }
-        throw new ErrorConflicto(
-          "La solicitud con esta clave todavía está en curso o falló",
-        );
-      }
-      const inicio = await this.idempotencia.iniciar(
-        {
-          organizacionId: contexto.organizacionId,
-          alcance,
-          clave,
-          hashSolicitud,
-        },
-        new Date(Date.now() + 24 * 60 * 60 * 1000),
-      );
-      if (inicio === "existente") {
-        const concurrente = await this.idempotencia.obtener(
-          contexto.organizacionId,
-          alcance,
-          clave,
-        );
-        if (concurrente?.hashSolicitud !== hashSolicitud) {
-          throw new ErrorConflicto(
-            "La clave de idempotencia ya fue usada con otra solicitud",
-          );
-        }
-        if (concurrente?.estado === "completada") {
-          return concurrente.respuesta as ResultadoCrearDesdePlantilla;
-        }
-        throw new ErrorConflicto(
-          "La solicitud con esta clave ya está siendo procesada",
-        );
+      if (!esNuevo && resultadoPrevio) {
+        return resultadoPrevio;
       }
     }
 
     let copiaId: string | undefined;
+    const resultadoCopia = await copiarAutomatizacion(this.qlik, entrada);
+    copiaId = resultadoCopia.id;
+
+    if (resultadoCopia.error) {
+      await this.qlik.eliminarAutomatizacion(copiaId).catch(() => undefined);
+      const mensaje =
+        resultadoCopia.error instanceof Error
+          ? resultadoCopia.error.message
+          : "Error desconocido";
+      await this.auditoria
+        .registrar({
+          organizacionId: contexto.organizacionId,
+          usuarioId: contexto.usuarioId,
+          accion: "automatizacion.crear-desde-plantilla",
+          entidadTipo: "automatizacion-qlik",
+          entidadId: copiaId,
+          resultado: "error",
+          mensajeError: mensaje,
+          idSolicitud: contexto.idSolicitud,
+          ip: contexto.ip,
+          agenteUsuario: contexto.agenteUsuario,
+        })
+        .catch(() => undefined);
+      if (clave) {
+        await fallarIdempotencia(
+          this.idempotencia,
+          { organizacionId: contexto.organizacionId, alcance, clave },
+          estadoHttpDelError(resultadoCopia.error),
+          { mensaje },
+        ).catch(() => undefined);
+      }
+      throw resultadoCopia.error;
+    }
+
+    const resultado: ResultadoCrearDesdePlantilla = {
+      id: resultadoCopia.id,
+      nombre: resultadoCopia.nombre,
+      plantillaIdQlik: resultadoCopia.plantillaIdQlik,
+    };
+
     try {
-      const copia = await this.qlik.copiarAutomatizacion(
-        entrada.plantillaIdQlik,
-        entrada.nombre,
-      );
-      copiaId = copia.id;
-
-      if (entrada.espacioIdQlik) {
-        await this.qlik.cambiarEspacioAutomatizacion(
-          copia.id,
-          entrada.espacioIdQlik,
-        );
-      }
-      if (entrada.reemplazosWorkspace.length > 0) {
-        await this.aplicarReemplazos(copia.id, entrada.reemplazosWorkspace);
-      }
-      // Cambiar el propietario al final: Qlik puede retirar al usuario actual
-      // el acceso necesario para leer/actualizar el workspace de la copia.
-      if (entrada.propietarioIdQlik) {
-        await this.qlik.cambiarPropietarioAutomatizacion(
-          copia.id,
-          entrada.propietarioIdQlik,
-        );
-      }
-
-      const resultado: ResultadoCrearDesdePlantilla = {
-        id: copia.id,
-        nombre: entrada.nombre,
-        plantillaIdQlik: entrada.plantillaIdQlik,
-      };
-
       await Promise.all([
         this.outbox.guardar([
           {
             id: crypto.randomUUID(),
             tipo: "automatizaciones.automatizacion-creada-desde-plantilla.v1",
             agregadoTipo: "automatizacion-qlik",
-            agregadoId: copia.id,
+            agregadoId: resultado.id,
             version: 1,
             ocurridoEn: new Date(),
             datos: resultado,
@@ -138,7 +117,7 @@ export class CrearAutomatizacionDesdePlantilla {
           usuarioId: contexto.usuarioId,
           accion: "automatizacion.crear-desde-plantilla",
           entidadTipo: "automatizacion-qlik",
-          entidadId: copia.id,
+          entidadId: resultado.id,
           resultado: "exito",
           datosNuevos: resultado,
           idSolicitud: contexto.idSolicitud,
@@ -148,19 +127,15 @@ export class CrearAutomatizacionDesdePlantilla {
       ]);
 
       if (clave) {
-        await this.idempotencia.completar(
-          contexto.organizacionId,
-          alcance,
-          clave,
+        await completarIdempotencia(
+          this.idempotencia,
+          { organizacionId: contexto.organizacionId, alcance, clave },
           201,
           resultado,
         );
       }
       return resultado;
     } catch (error) {
-      if (copiaId) {
-        await this.qlik.eliminarAutomatizacion(copiaId).catch(() => undefined);
-      }
       const mensaje =
         error instanceof Error ? error.message : "Error desconocido";
       await this.auditoria
@@ -178,37 +153,15 @@ export class CrearAutomatizacionDesdePlantilla {
         })
         .catch(() => undefined);
       if (clave) {
-        await this.idempotencia
-          .fallar(
-            contexto.organizacionId,
-            alcance,
-            clave,
-            estadoHttpDelError(error),
-            { mensaje },
-          )
-          .catch(() => undefined);
+        await fallarIdempotencia(
+          this.idempotencia,
+          { organizacionId: contexto.organizacionId, alcance, clave },
+          estadoHttpDelError(error),
+          { mensaje },
+        ).catch(() => undefined);
       }
       throw error;
     }
-  }
-
-  private async aplicarReemplazos(
-    automatizacionId: string,
-    reemplazos: CrearDesdePlantilla["reemplazosWorkspace"],
-  ): Promise<void> {
-    const automatizacion =
-      await this.qlik.obtenerAutomatizacion(automatizacionId);
-    const workspace = structuredClone(automatizacion.workspace ?? {});
-    for (const reemplazo of reemplazos) {
-      reemplazarValorExistente(workspace, reemplazo.ruta, reemplazo.valor);
-    }
-    await this.qlik.actualizarAutomatizacion(automatizacionId, {
-      name: automatizacion.name,
-      schedules: automatizacion.schedules ?? [],
-      workspace,
-      description: automatizacion.description ?? "",
-      maxConcurrentRuns: automatizacion.maxConcurrentRuns ?? 1,
-    });
   }
 }
 
@@ -222,51 +175,4 @@ function estadoHttpDelError(error: unknown): number {
     return (error as { estadoHttp: number }).estadoHttp;
   }
   return 500;
-}
-
-function reemplazarValorExistente(
-  raiz: Record<string, unknown>,
-  ruta: string,
-  valor: unknown,
-): void {
-  const segmentos = ruta
-    .slice(1)
-    .split("/")
-    .map((segmento) => segmento.replace(/~1/g, "/").replace(/~0/g, "~"));
-  let actual: unknown = raiz;
-  for (const segmento of segmentos.slice(0, -1)) {
-    if (!actual || typeof actual !== "object" || !(segmento in actual)) {
-      throw new Error(
-        `La ruta ${ruta} no existe en el workspace de la plantilla`,
-      );
-    }
-    actual = (actual as Record<string, unknown>)[segmento];
-  }
-  const ultimo = segmentos.at(-1);
-  if (!ultimo || !actual || typeof actual !== "object" || !(ultimo in actual)) {
-    throw new Error(
-      `La ruta ${ruta} no existe en el workspace de la plantilla`,
-    );
-  }
-  (actual as Record<string, unknown>)[ultimo] = valor;
-}
-
-async function hashCanonico(valor: unknown): Promise<string> {
-  const bytes = new TextEncoder().encode(JSON.stringify(ordenar(valor)));
-  const resumen = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(resumen), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
-}
-
-function ordenar(valor: unknown): unknown {
-  if (Array.isArray(valor)) return valor.map(ordenar);
-  if (valor && typeof valor === "object") {
-    return Object.fromEntries(
-      Object.entries(valor as Record<string, unknown>)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([clave, contenido]) => [clave, ordenar(contenido)]),
-    );
-  }
-  return valor;
 }

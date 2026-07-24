@@ -31,7 +31,8 @@ export function crearRutasDestinos(resolver: ResolverCatalogoDestinos) {
   rutas.get("/bases-datos/:baseDatos/tablas", async (c) => {
     const catalogo = await obtenerCatalogo(resolver, c);
     const baseDatos = parametroNombre.parse(c.req.param("baseDatos"));
-    return responderExito(c, await new ConsultarDestinos(catalogo).listarTablas(baseDatos));
+    const nombres = await new ConsultarDestinos(catalogo).listarTablas(baseDatos);
+    return responderExito(c, nombres.map((nombre) => ({ nombre })));
   });
 
   rutas.get("/bases-datos/:baseDatos/tablas/:tabla/columnas", async (c) => {

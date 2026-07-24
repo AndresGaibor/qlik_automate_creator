@@ -4,6 +4,14 @@ import type {
   FlujoDatosDestino,
 } from "../dominio/modelos.js";
 
+// hive-driver implementa el protocolo Thrift HiveServer2 que usa Impala en el puerto 21050
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const hive = require("hive-driver") as typeof import("hive-driver");
+const { TCLIService, TCLIService_types } = hive.thrift;
+
+// Impala usa FETCH_NEXT en la primera llamada; no soporta FETCH_FIRST sin result cache.
+const FETCH_NEXT = 1;
+
 export interface OpcionesImpala {
   host: string;
   port?: number;
@@ -19,7 +27,7 @@ export class ClienteImpalaDirecto implements PuertoCatalogoDestinos {
   private readonly authMechanism: string;
   private readonly user?: string;
   private readonly password?: string;
-  private readonly defaultDatabase: string;
+  readonly defaultDatabase: string;
 
   constructor(opciones: OpcionesImpala) {
     if (!opciones.host?.trim()) {
@@ -28,70 +36,140 @@ export class ClienteImpalaDirecto implements PuertoCatalogoDestinos {
     this.host = opciones.host.trim();
     this.port = opciones.port ?? 21050;
     this.authMechanism = opciones.authMechanism ?? "NOSASL";
-    this.user = opciones.user;
-    this.password = opciones.password;
+    this.user = opciones.user ?? undefined;
+    this.password = opciones.password ?? undefined;
     this.defaultDatabase = opciones.database?.trim() || "default";
   }
 
-  async listarBasesDatos(): Promise<string[]> {
+  // ── Autenticación ─────────────────────────────────────────────────────────
+  private crearAuth() {
+    const mecanismo = this.authMechanism.toUpperCase();
+    if (
+      (mecanismo === "PLAIN" || mecanismo === "LDAP") &&
+      this.user &&
+      this.password
+    ) {
+      return new hive.auth.PlainTcpAuthentication({
+        username: this.user,
+        password: this.password,
+      });
+    }
+    return new hive.auth.NoSaslAuthentication();
+  }
+
+  // ── Extraer columna 0 del resultado columnar de HiveServer2 ───────────────
+  private extraerColumna0(data: unknown[]): string[] {
+    if (!data || data.length === 0) return [];
+    const rowSet = data[0] as {
+      columns?: {
+        stringVal?: { values?: string[]; nulls?: Buffer | Uint8Array | string | null };
+      }[];
+      rows?: { colVals?: { stringVal?: { value?: string } }[] }[];
+    };
+
+    if (rowSet.columns && rowSet.columns.length > 0) {
+      const col = rowSet.columns[0];
+      const valores: string[] = col.stringVal?.values ?? [];
+
+      // nulls puede llegar como Buffer, Uint8Array o string según el runtime
+      const rawNulls = col.stringVal?.nulls;
+      let nullBytes: Uint8Array;
+      if (!rawNulls) {
+        nullBytes = new Uint8Array(0);
+      } else if (rawNulls instanceof Uint8Array) {
+        nullBytes = rawNulls;
+      } else if (Buffer.isBuffer(rawNulls)) {
+        nullBytes = new Uint8Array(rawNulls);
+      } else {
+        // string — convertir char por char
+        nullBytes = new Uint8Array(rawNulls.length);
+        for (let i = 0; i < rawNulls.length; i++) {
+          nullBytes[i] = rawNulls.charCodeAt(i);
+        }
+      }
+
+      return valores.filter((_, i) => {
+        const byte = nullBytes[Math.floor(i / 8)] ?? 0;
+        return !(byte & (1 << i % 8));
+      });
+    }
+
+    // Formato row-based (fallback)
+    return (
+      rowSet.rows
+        ?.map((r) => r.colVals?.[0]?.stringVal?.value ?? "")
+        .filter(Boolean) ?? []
+    );
+  }
+
+
+  // ── Ejecutar consulta SQL vía Thrift HiveServer2 ──────────────────────────
+  private async ejecutarConsulta(sql: string): Promise<string[]> {
+    const client = new hive.HiveClient(TCLIService, TCLIService_types);
+    const conexion = await client.connect(
+      { host: this.host, port: this.port },
+      new hive.connections.TcpConnection(),
+      this.crearAuth(),
+    );
+    const session = await conexion.openSession({
+      client_protocol:
+        TCLIService_types.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V10,
+    });
     try {
-      const filas = await this.ejecutarConsultaImpala("SHOW DATABASES");
-      return filas.map((r) => r[0]).filter(Boolean);
-    } catch {
-      // Si el servidor de Impala aún no responde o es entorno local de prueba
-      return [this.defaultDatabase, "ventas", "finanzas", "analitica"];
+      const utils = new hive.HiveUtils(TCLIService_types);
+      const op = await session.executeStatement(sql, {
+        runAsync: false,
+        queryTimeout: 30 as unknown as Buffer,
+      });
+      await utils.waitUntilReady(op, false, () => {});
+
+      // Impala no soporta FETCH_FIRST sin result-cache, usar FETCH_NEXT directamente
+      op.setMaxRows(10_000);
+      await op.fetch(FETCH_NEXT);
+      const data = op.getData();
+      await op.close();
+      return this.extraerColumna0(data);
+    } finally {
+      await session.close().catch(() => {});
     }
   }
 
+  // ── PuertoCatalogoDestinos ─────────────────────────────────────────────────
+
+  async listarBasesDatos(): Promise<string[]> {
+    return this.ejecutarConsulta("SHOW DATABASES");
+  }
+
   async listarTablas(baseDatos: string): Promise<string[]> {
-    const bd = this.validarIdentificador(baseDatos || this.defaultDatabase);
-    try {
-      const filas = await this.ejecutarConsultaImpala(`SHOW TABLES IN \`${bd}\``);
-      return filas.map((r) => r[0]).filter(Boolean);
-    } catch {
-      // Datos representativos por defecto si el servidor físico no responde
-      return [
-        `tabla_${bd}_resumen_diario`,
-        `tabla_${bd}_transacciones`,
-        `tabla_${bd}_maestro_clientes`,
-      ];
-    }
+    const bd = baseDatos.trim() || this.defaultDatabase;
+    return this.ejecutarConsulta(`SHOW TABLES IN \`${bd}\``);
   }
 
   async obtenerEsquemaTabla(
     baseDatos: string,
     tabla: string,
   ): Promise<EsquemaTablaDestino> {
-    const bd = this.validarIdentificador(baseDatos || this.defaultDatabase);
-    const tb = this.validarIdentificador(tabla);
+    const bd = baseDatos.trim() || this.defaultDatabase;
+    const tb = tabla.trim();
     try {
-      const filas = await this.ejecutarConsultaImpala(`DESCRIBE \`${bd}\`.\`${tb}\``);
+      const filas = await this.ejecutarConsulta(
+        `DESCRIBE \`${bd}\`.\`${tb}\``,
+      );
+      // DESCRIBE devuelve "nombre\ttipo\tcomentario"
       const columnas = filas
-        .filter((r) => r[0] && r[1])
-        .map((r) => ({ nombre: r[0], tipo: r[1] }));
-      const especificacionEsquema = columnas
-        .map((c) => `${c.nombre}:${c.tipo}`)
-        .join("|");
-
+        .map((linea) => {
+          const partes = linea.split("\t");
+          return { nombre: partes[0]?.trim() ?? "", tipo: partes[1]?.trim() ?? "" };
+        })
+        .filter((c) => c.nombre && c.tipo);
       return {
         baseDatos: bd,
         tabla: tb,
         columnas,
-        especificacionEsquema,
+        especificacionEsquema: columnas.map((c) => `${c.nombre}:${c.tipo}`).join("|"),
       };
     } catch {
-      const columnasFallback = [
-        { nombre: "id", tipo: "bigint" },
-        { nombre: "fecha", tipo: "timestamp" },
-        { nombre: "monto", tipo: "decimal(18,2)" },
-        { nombre: "estado", tipo: "string" },
-      ];
-      return {
-        baseDatos: bd,
-        tabla: tb,
-        columnas: columnasFallback,
-        especificacionEsquema: "id:bigint|fecha:timestamp|monto:decimal(18,2)|estado:string",
-      };
+      return { baseDatos: bd, tabla: tb, columnas: [], especificacionEsquema: "" };
     }
   }
 
@@ -100,43 +178,6 @@ export class ClienteImpalaDirecto implements PuertoCatalogoDestinos {
   }
 
   async obtenerFlujoDatos(id: string): Promise<FlujoDatosDestino> {
-    return {
-      id,
-      nombre: `Flujo ${id}`,
-    };
-  }
-
-  private validarIdentificador(valor: string): string {
-    const limpio = valor.trim();
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(limpio)) {
-      throw new Error(`Identificador Impala inválido: ${valor}`);
-    }
-    return limpio;
-  }
-
-  private async ejecutarConsultaImpala(query: string): Promise<string[][]> {
-    // Protocolo Thrift / HTTP HiveServer2 para Impala direct queries
-    const url = `http://${this.host}:${this.port}/cliservice`;
-    const headers: Record<string, string> = {
-      "Content-Type": "application/x-www-form-urlencoded",
-    };
-    if (this.user && this.password) {
-      headers["Authorization"] = `Basic ${Buffer.from(`${this.user}:${this.password}`).toString("base64")}`;
-    }
-
-    const respuesta = await fetch(url, {
-      method: "POST",
-      headers,
-      body: query,
-    });
-
-    if (!respuesta.ok) {
-      throw new Error(`Consulta Impala falló con estado ${respuesta.status}`);
-    }
-    const texto = await respuesta.text();
-    return texto
-      .split("\n")
-      .filter(Boolean)
-      .map((linea) => linea.split("\t"));
+    return { id, nombre: `Flujo ${id}` };
   }
 }

@@ -78,7 +78,7 @@ export interface RepositorioAdministracion {
   listarTenantsQlik(organizacionId: string): Promise<TenantQlikAdministrable[]>;
   crearTenantQlik(entrada: {
     organizacionId: string;
-    tenantIdQlik: string;
+    tenantIdQlik?: string;
     host: string;
     nombre?: string;
   }): Promise<TenantQlikAdministrable | null>;

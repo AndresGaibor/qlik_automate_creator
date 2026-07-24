@@ -1,13 +1,18 @@
 import { sql } from "drizzle-orm";
-import { db } from "../../../plataforma/persistencia/conexion.js";
 import type { PuertoBloqueoEjecucion } from "../aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 
+type DbType = {
+  transaction<T>(fn: (tx: any) => Promise<T>): Promise<T>;
+};
+
 export class BloqueoEjecucionPostgres implements PuertoBloqueoEjecucion {
+  constructor(private readonly db: DbType) {}
+
   async ejecutarExclusivo<T>(
     clave: string,
     tarea: () => Promise<T>,
   ): Promise<T | undefined> {
-    return db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => {
       const [fila] = await tx.execute(
         sql`SELECT pg_try_advisory_xact_lock(hashtext(${clave})) AS adquirido`,
       );

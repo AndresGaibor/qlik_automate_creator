@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { ErrorAplicacion } from "../../plataforma/errores/error-aplicacion.js";
+import { ErrorAplicacion } from "../errores/error-aplicacion.js";
 
 export async function leerJson<T = unknown>(c: Context): Promise<T> {
   const tipoContenido = c.req.header("content-type")?.toLowerCase() ?? "";

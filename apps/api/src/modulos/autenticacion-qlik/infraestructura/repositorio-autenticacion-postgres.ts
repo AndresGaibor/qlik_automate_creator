@@ -1,6 +1,5 @@
 import crypto from "node:crypto";
-import { and, eq, isNull, sql } from "drizzle-orm";
-import { db } from "../../../plataforma/persistencia/conexion.js";
+import { and, eq, sql } from "drizzle-orm";
 import {
   credencialesQlik,
   identidadesQlik,
@@ -10,113 +9,42 @@ import {
   tenantsQlik,
   usuarios,
 } from "../../../plataforma/persistencia/esquema.js";
-import { servicioCifrado } from "../../../plataforma/seguridad/servicio-cifrado.js";
 import type {
+  ConexionDb,
   DatosNuevaSesion,
   RepositorioAutenticacion,
+  ServicioCifradoPuerto,
 } from "../aplicacion/puertos/repositorio-autenticacion.js";
 import type {
   CredencialesQlik,
   InfoSesion,
   SesionPublica,
 } from "../dominio/modelos.js";
+import { validarYNormalizarHost } from "../dominio/validador-host-qlik.js";
+import { hash } from "./hashing-postgres.js";
+import { buscarSesionValida, revocarSesion as revocarSesionHelper } from "./consulta-sesion-postgres.js";
+import { obtenerTenantPorHost, obtenerTenantPorId, obtenerTenantPorCorreoUsuario } from "./consulta-identidad-postgres.js";
+import { obtenerCredenciales as obtenerCredencialesHelper } from "./consulta-credenciales-postgres.js";
 
 export class RepositorioAutenticacionPostgres
   implements RepositorioAutenticacion
 {
-  constructor(private readonly superadminMail?: string) {}
+  constructor(
+    private readonly db: ConexionDb,
+    private readonly cifrado: ServicioCifradoPuerto,
+    private readonly superadminMail?: string,
+  ) {}
 
   async obtenerTenantPorHost(host: string) {
-    const tenant = await db.query.tenantsQlik.findFirst({
-      where: eq(tenantsQlik.host, normalizarHost(host)),
-    });
-    return tenant
-      ? {
-          id: tenant.id,
-          host: tenant.host,
-          estado: tenant.estado as "activo" | "desconectado" | "suspendido",
-        }
-      : null;
+    return obtenerTenantPorHost(this.db, host);
   }
 
   async obtenerTenantPorId(id: string) {
-    const tenant = await db.query.tenantsQlik.findFirst({
-      where: eq(tenantsQlik.id, id),
-    });
-    return tenant
-      ? {
-          id: tenant.id,
-          host: tenant.host,
-          estado: tenant.estado as "activo" | "desconectado" | "suspendido",
-        }
-      : null;
+    return obtenerTenantPorId(this.db, id);
   }
 
   async obtenerTenantPorCorreoUsuario(correo: string) {
-    const correoNormalizado = correo.trim().toLowerCase();
-
-    // 1. Buscar usuario en la base de datos local
-    const usuario = await db.query.usuarios.findFirst({
-      where: eq(usuarios.correo, correoNormalizado),
-    });
-
-    let organizacionId: string | null = null;
-
-    if (usuario) {
-      const membresia = await db.query.membresiasOrganizacion.findFirst({
-        where: eq(membresiasOrganizacion.usuarioId, usuario.id),
-      });
-      if (membresia) {
-        organizacionId = membresia.organizacionId;
-      }
-    }
-
-    if (organizacionId) {
-      const org = await db.query.organizaciones.findFirst({
-        where: eq(organizaciones.id, organizacionId),
-      });
-
-      if (org && org.estado === "activa") {
-        const tenantObj = await db.query.tenantsQlik.findFirst({
-          where: and(
-            eq(tenantsQlik.organizacionId, organizacionId),
-            eq(tenantsQlik.estado, "activo"),
-          ),
-        });
-        if (tenantObj) {
-          return {
-            id: tenantObj.id,
-            host: tenantObj.host,
-            estado: tenantObj.estado as "activo" | "desconectado" | "suspendido",
-          };
-        }
-      }
-    }
-
-    // 2. Verificar lista de correos superadmin (separados por coma)
-    const superadmins = (this.superadminMail ?? process.env.SUPERADMINMAIL ?? process.env.SUPERADMIN_EMAIL ?? "")
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-
-    const esSuperadmin = superadmins.includes(correoNormalizado);
-
-    // 3. Si es superadmin explícito, le asigna el tenant principal activo del sistema
-    if (esSuperadmin) {
-      const tenantPrincipal = await db.query.tenantsQlik.findFirst({
-        where: eq(tenantsQlik.estado, "activo"),
-      });
-      if (tenantPrincipal) {
-        return {
-          id: tenantPrincipal.id,
-          host: tenantPrincipal.host,
-          estado: tenantPrincipal.estado as "activo" | "desconectado" | "suspendido",
-        };
-      }
-    }
-
-    // 4. Si no está en usuarios ni es superadmin, se rechaza la autenticación
-    return null;
+    return obtenerTenantPorCorreoUsuario(this.db, correo, this.superadminMail);
   }
 
   async guardarAcceso(
@@ -129,11 +57,11 @@ export class RepositorioAutenticacionPostgres
       Date.now() + datos.tokens.expiraEnSegundos * 1000,
     );
 
-    await db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const tenant = await tx.query.tenantsQlik.findFirst({
         where: and(
           eq(tenantsQlik.id, datos.tenantQlikId),
-          eq(tenantsQlik.host, normalizarHost(datos.hostTenant)),
+          eq(tenantsQlik.host, validarYNormalizarHost(datos.hostTenant)),
         ),
       });
       if (!tenant || tenant.estado !== "activo") {
@@ -249,10 +177,10 @@ export class RepositorioAutenticacionPostgres
       }
 
       const accesoCifrado = JSON.stringify(
-        servicioCifrado.cifrar(datos.tokens.tokenAcceso),
+        this.cifrado.cifrar(datos.tokens.tokenAcceso),
       );
       const refrescoCifrado = datos.tokens.tokenRefresco
-        ? JSON.stringify(servicioCifrado.cifrar(datos.tokens.tokenRefresco))
+        ? JSON.stringify(this.cifrado.cifrar(datos.tokens.tokenRefresco))
         : null;
       const credencial = await tx.query.credencialesQlik.findFirst({
         where: eq(credencialesQlik.identidadQlikId, identidad.id),
@@ -295,11 +223,11 @@ export class RepositorioAutenticacionPostgres
   }
 
   async consultarSesion(tokenSesion: string): Promise<SesionPublica | null> {
-    const sesion = await this.buscarSesionValida(tokenSesion);
+    const sesion = await buscarSesionValida(this.db, tokenSesion);
     if (!sesion) return null;
     const [usuario, identidad] = await Promise.all([
-      db.query.usuarios.findFirst({ where: eq(usuarios.id, sesion.usuarioId) }),
-      db.query.identidadesQlik.findFirst({
+      this.db.query.usuarios.findFirst({ where: eq(usuarios.id, sesion.usuarioId) }),
+      this.db.query.identidadesQlik.findFirst({
         where: and(
           eq(identidadesQlik.usuarioId, sesion.usuarioId),
           eq(identidadesQlik.tenantQlikId, sesion.tenantQlikActivoId),
@@ -307,7 +235,7 @@ export class RepositorioAutenticacionPostgres
       }),
     ]);
     if (!identidad) return null;
-    const tenant = await db.query.tenantsQlik.findFirst({
+    const tenant = await this.db.query.tenantsQlik.findFirst({
       where: eq(tenantsQlik.id, identidad.tenantQlikId),
     });
     if (!tenant) return null;
@@ -321,18 +249,18 @@ export class RepositorioAutenticacionPostgres
 
     if (usuario?.correo && usuario.correo === this.superadminMail) {
       esSuperadmin = true;
-      const todasOrg = await db.query.organizaciones.findMany();
+      const todasOrg = await this.db.query.organizaciones.findMany();
       membresias = todasOrg.map((org) => ({
         organizacionId: org.id,
         organizacionNombre: org.nombre,
         rol: "admin" as const,
       }));
     } else {
-      const membresiasRaw = await db.query.membresiasOrganizacion.findMany({
+      const membresiasRaw = await this.db.query.membresiasOrganizacion.findMany({
         where: eq(membresiasOrganizacion.usuarioId, sesion.usuarioId),
       });
       for (const m of membresiasRaw) {
-        const org = await db.query.organizaciones.findFirst({
+        const org = await this.db.query.organizaciones.findFirst({
           where: eq(organizaciones.id, m.organizacionId),
         });
         if (org) {
@@ -376,16 +304,16 @@ export class RepositorioAutenticacionPostgres
   }
 
   async obtenerInfoSesion(tokenSesion: string): Promise<InfoSesion | null> {
-    const sesion = await this.buscarSesionValida(tokenSesion);
+    const sesion = await buscarSesionValida(this.db, tokenSesion);
     if (!sesion) return null;
-    const identidad = await db.query.identidadesQlik.findFirst({
+    const identidad = await this.db.query.identidadesQlik.findFirst({
       where: and(
         eq(identidadesQlik.usuarioId, sesion.usuarioId),
         eq(identidadesQlik.tenantQlikId, sesion.tenantQlikActivoId),
       ),
     });
     if (!identidad) return null;
-    const tenant = await db.query.tenantsQlik.findFirst({
+    const tenant = await this.db.query.tenantsQlik.findFirst({
       where: eq(tenantsQlik.id, identidad.tenantQlikId),
     });
     if (!tenant) return null;
@@ -402,47 +330,25 @@ export class RepositorioAutenticacionPostgres
   async obtenerCredenciales(
     infoSesion: InfoSesion,
   ): Promise<CredencialesQlik | null> {
-    const credencial = await db.query.credencialesQlik.findFirst({
-      where: eq(credencialesQlik.identidadQlikId, infoSesion.identidadQlikId),
-    });
-    if (
-      !credencial ||
-      credencial.estado !== "activa" ||
-      credencial.tokenExpiraEn <= new Date()
-    ) {
-      return null;
-    }
-    try {
-      const datos = JSON.parse(credencial.tokenAccesoCifrado) as {
-        cifrado: string;
-        iv: string;
-        tag: string;
-      };
-      return {
-        host: infoSesion.tenantHost,
-        token: servicioCifrado.descifrar(datos.cifrado, datos.iv, datos.tag),
-      };
-    } catch {
-      return null;
-    }
+    return obtenerCredencialesHelper(this.db, this.cifrado, infoSesion);
   }
 
   async listarTenantsDisponibles(tokenSesion: string) {
-    const sesion = await this.buscarSesionValida(tokenSesion);
+    const sesion = await buscarSesionValida(this.db, tokenSesion);
     if (!sesion) return [];
-    const identidades = await db.query.identidadesQlik.findMany({
+    const identidades = await this.db.query.identidadesQlik.findMany({
       where: eq(identidadesQlik.usuarioId, sesion.usuarioId),
     });
     const resultado = [];
     for (const identidad of identidades) {
-      const tenant = await db.query.tenantsQlik.findFirst({
+      const tenant = await this.db.query.tenantsQlik.findFirst({
         where: and(
           eq(tenantsQlik.id, identidad.tenantQlikId),
           eq(tenantsQlik.estado, "activo"),
         ),
       });
       if (!tenant) continue;
-      const organizacion = await db.query.organizaciones.findFirst({
+      const organizacion = await this.db.query.organizaciones.findFirst({
         where: eq(organizaciones.id, tenant.organizacionId),
       });
       if (!organizacion || organizacion.estado !== "activa") continue;
@@ -459,26 +365,26 @@ export class RepositorioAutenticacionPostgres
   }
 
   async cambiarTenantActivo(tokenSesion: string, tenantQlikId: string) {
-    const sesion = await this.buscarSesionValida(tokenSesion);
+    const sesion = await buscarSesionValida(this.db, tokenSesion);
     if (!sesion) return false;
-    const identidad = await db.query.identidadesQlik.findFirst({
+    const identidad = await this.db.query.identidadesQlik.findFirst({
       where: and(
         eq(identidadesQlik.usuarioId, sesion.usuarioId),
         eq(identidadesQlik.tenantQlikId, tenantQlikId),
       ),
     });
-    const tenant = await db.query.tenantsQlik.findFirst({
+    const tenant = await this.db.query.tenantsQlik.findFirst({
       where: and(
         eq(tenantsQlik.id, tenantQlikId),
         eq(tenantsQlik.estado, "activo"),
       ),
     });
     if (!identidad || !tenant) return false;
-    const credencial = await db.query.credencialesQlik.findFirst({
+    const credencial = await this.db.query.credencialesQlik.findFirst({
       where: eq(credencialesQlik.identidadQlikId, identidad.id),
     });
     if (!credencial || credencial.estado !== "activa") return false;
-    await db
+    await this.db
       .update(sesionesUsuario)
       .set({
         tenantQlikActivoId: tenant.id,
@@ -489,32 +395,6 @@ export class RepositorioAutenticacionPostgres
   }
 
   async revocarSesion(tokenSesion: string): Promise<void> {
-    await db
-      .update(sesionesUsuario)
-      .set({ revocadaEn: new Date() })
-      .where(eq(sesionesUsuario.tokenSesionHash, hash(tokenSesion)));
+    return revocarSesionHelper(this.db, tokenSesion);
   }
-
-  private buscarSesionValida(tokenSesion: string) {
-    return db.query.sesionesUsuario.findFirst({
-      where: and(
-        eq(sesionesUsuario.tokenSesionHash, hash(tokenSesion)),
-        sql`${sesionesUsuario.expiraEn} > NOW()`,
-        isNull(sesionesUsuario.revocadaEn),
-      ),
-    });
-  }
-}
-
-function hash(valor: string): string {
-  return crypto.createHash("sha256").update(valor).digest("hex");
-}
-
-function normalizarHost(host: string): string {
-  const valor = /^https?:\/\//i.test(host) ? host : `https://${host}`;
-  const url = new URL(valor);
-  if (url.protocol !== "https:" || url.pathname !== "/") {
-    throw new Error("El host Qlik debe ser HTTPS y no contener ruta");
-  }
-  return url.host.toLowerCase();
 }

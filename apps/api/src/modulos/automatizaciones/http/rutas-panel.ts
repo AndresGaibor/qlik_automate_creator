@@ -8,6 +8,7 @@ import { obtenerContextoSolicitud } from "../../../plataforma/contexto/contexto-
 import { leerJson } from "../../../nucleo/http/leer-json.js";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
 import type { ServicioQlik } from "../../qlik/publico.js";
+import type { PuertoConsultaTenantQlik } from "../aplicacion/puertos/puerto-consulta-tenant-qlik.js";
 import { ConsultarPanelAutomatizaciones } from "../aplicacion/casos-de-uso/consultar-panel.js";
 import { CrearAutomatizacionDesdePlantilla } from "../aplicacion/casos-de-uso/crear-desde-plantilla.js";
 import { EjecutarAutomatizacion } from "../aplicacion/casos-de-uso/ejecutar-automatizacion.js";
@@ -22,6 +23,7 @@ interface ContextoSesion {
 export interface DependenciasRutasPanel {
   resolverQlik(c: Context): Promise<ServicioQlik>;
   resolverSesion(c: Context): Promise<ContextoSesion>;
+  consultaTenant: PuertoConsultaTenantQlik;
   bloqueos: PuertoBloqueoEjecucion;
   idempotencia: PuertoIdempotencia;
   outbox: PuertoOutbox;
@@ -62,18 +64,53 @@ export function crearRutasPanelAutomatizaciones(
     );
   });
 
+  /** Devuelve la configuración de automatización base del tenant activo */
+  rutas.get("/configuracion-tenant", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const tenant = await dependencias.consultaTenant.obtenerTenant(sesion.tenantId);
+    return responderExito(c, {
+      automatizacionBaseIdQlik: tenant?.automatizacionBaseIdQlik ?? null,
+      automatizacionBaseNombre: tenant?.automatizacionBaseNombre ?? null,
+    });
+  });
+
   // Debe declararse antes de /:id para evitar que "desde-plantilla" sea un id.
   rutas.post("/desde-plantilla", async (c) => {
     const cuerpo = await leerJson(c);
     const claveEncabezado = c.req.header("idempotency-key")?.trim();
-    const entrada = esquemaCrearDesdePlantilla.parse({
-      ...(typeof cuerpo === "object" && cuerpo !== null ? cuerpo : {}),
-      ...(claveEncabezado ? { claveIdempotencia: claveEncabezado } : {}),
-    });
+
     const [qlik, sesion] = await Promise.all([
       dependencias.resolverQlik(c),
       dependencias.resolverSesion(c),
     ]);
+
+    // ── Resolver plantilla base desde el tenant ──────────────────────────────
+    const tenant = await dependencias.consultaTenant.obtenerTenant(sesion.tenantId);
+
+    if (!tenant?.automatizacionBaseIdQlik) {
+      return c.json(
+        {
+          exito: false,
+          error: {
+            mensaje:
+              "El tenant no tiene configurada una automatización base. Configúrala en Administración → Tenants.",
+            codigo: "SIN_AUTOMATIZACION_BASE",
+          },
+        },
+        422,
+      );
+    }
+
+    const cuerpoObj =
+      typeof cuerpo === "object" && cuerpo !== null ? cuerpo : {};
+
+    const entrada = esquemaCrearDesdePlantilla.parse({
+      ...cuerpoObj,
+      // El backend inyecta la plantilla real; lo que mande el cliente se ignora
+      plantillaIdQlik: tenant.automatizacionBaseIdQlik,
+      ...(claveEncabezado ? { claveIdempotencia: claveEncabezado } : {}),
+    });
+
     const contextoSolicitud = obtenerContextoSolicitud(c);
     const resultado = await new CrearAutomatizacionDesdePlantilla(
       qlik,

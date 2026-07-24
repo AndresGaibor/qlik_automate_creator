@@ -1,0 +1,9 @@
+import type { ReactNode } from "react";
+
+interface PageLayoutProps {
+  children: ReactNode;
+}
+
+export function PageLayout({ children }: PageLayoutProps) {
+  return <div className="space-y-6">{children}</div>;
+}

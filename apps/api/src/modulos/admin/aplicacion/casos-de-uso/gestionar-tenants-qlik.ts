@@ -9,7 +9,7 @@ export const crearTenantQlik = (
   repositorio: RepositorioAdministracion,
   entrada: {
     organizacionId: string;
-    tenantIdQlik: string;
+    tenantIdQlik?: string;
     host: string;
     nombre?: string;
   },

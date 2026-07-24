@@ -5,7 +5,7 @@ import type {
   PuertoIdempotencia,
   RegistroIdempotencia,
 } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
-import type { ServicioQlik } from "../../../qlik/publico.js";
+import type { ServicioQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { CrearAutomatizacionDesdePlantilla } from "./crear-desde-plantilla.js";
 
 function crearQlik() {

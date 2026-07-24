@@ -87,6 +87,8 @@ describe("API", () => {
           creadoEn: new Date(),
         }),
         eliminarTenantQlik: async () => "ELIMINADO",
+        configurarDestinoTenant: async () => null,
+        configurarImpalaTenant: async () => null,
       },
     });
 

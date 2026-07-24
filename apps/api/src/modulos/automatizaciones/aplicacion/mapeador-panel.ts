@@ -9,7 +9,7 @@ import type {
   EjecucionQlik,
   EspacioQlik,
   UsuarioQlik,
-} from "../../qlik/publico.js";
+} from "../../qlik/dominio/modelos-qlik.js";
 import { estaEjecucionEnCurso } from "../dominio/estado-ejecucion.js";
 
 export const normalizarTexto = (

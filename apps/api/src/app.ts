@@ -5,36 +5,35 @@ import { getCookie } from "hono/cookie";
 import {
   type ContextoSesion,
   type RepositorioAdministracion,
-  RepositorioAdministracionPostgres,
   type ResolverContextoAdmin,
   crearRutasAdmin,
 } from "./modulos/admin/publico.js";
+import { RepositorioAdministracionPostgres } from "./modulos/admin/infraestructura/publico.js";
 import {
-  ClienteOAuthQlik,
   type RepositorioAutenticacion,
-  RepositorioAutenticacionPostgres,
   ServicioAutenticacionQlik,
   crearRutasAutenticacionQlik,
 } from "./modulos/autenticacion-qlik/publico.js";
 import {
-  BloqueoEjecucionPostgres,
-  crearRutasPanelAutomatizaciones,
-} from "./modulos/automatizaciones/publico.js";
+  ClienteOAuthQlik,
+  RepositorioAutenticacionPostgres,
+} from "./modulos/autenticacion-qlik/infraestructura/publico.js";
+import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
+import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
+import { ConsultaTenantQlikPostgres } from "./modulos/automatizaciones/infraestructura/consulta-tenant-qlik-postgres.js";
 import {
-  ClienteDestinos,
-  ClienteImpalaDirecto,
   type PuertoCatalogoDestinos,
   crearRutasDestinos,
 } from "./modulos/destinos/publico.js";
 import {
-  ConsultaFlujosQlik,
-  crearRutasFlujos,
-} from "./modulos/flujos/publico.js";
+  ClienteImpalaDirecto,
+} from "./modulos/destinos/infraestructura/publico.js";
+import { crearRutasFlujos } from "./modulos/flujos/publico.js";
+import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/publico.js";
+import { type ServicioQlik, crearRutasProxyQlik } from "./modulos/qlik/publico.js";
 import {
   ClienteHttpQlik,
-  type ServicioQlik,
-  crearRutasProxyQlik,
-} from "./modulos/qlik/publico.js";
+} from "./modulos/qlik/infraestructura/publico.js";
 import type { PuertoAuditoria } from "./nucleo/auditoria/puerto-auditoria.js";
 import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "./nucleo/idempotencia/puerto-idempotencia.js";
@@ -60,6 +59,7 @@ import { db } from "./plataforma/persistencia/conexion.js";
 import { tenantsQlik } from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
 import { OutboxPostgres } from "./plataforma/persistencia/outbox-postgres.js";
+import { servicioCifrado } from "./plataforma/seguridad/servicio-cifrado.js";
 
 export interface DependenciasAplicacion {
   configuracion?: ConfiguracionAplicacion;
@@ -87,7 +87,7 @@ export function crearAplicacion(
   const registrador = dependencias.registrador ?? registradorConsola;
   const repositorioAutenticacion =
     dependencias.repositorioAutenticacion ??
-    new RepositorioAutenticacionPostgres(configuracion?.SUPERADMINMAIL);
+    new RepositorioAutenticacionPostgres(db, servicioCifrado, configuracion?.SUPERADMINMAIL);
   const servicioAutenticacion =
     dependencias.servicioAutenticacion ??
     crearServicioAutenticacionDiferido(repositorioAutenticacion, configuracion);
@@ -125,38 +125,39 @@ export function crearAplicacion(
     c: Context,
   ): Promise<PuertoCatalogoDestinos> => {
     if (dependencias.catalogoDestinos) return dependencias.catalogoDestinos;
-    try {
-      const contexto = await resolverContextoSolicitud(c);
-      const tenant = await db.query.tenantsQlik.findFirst({
-        where: eq(tenantsQlik.id, contexto.tenantQlikId),
-      });
 
-      if (tenant?.impalaHost) {
-        return new ClienteImpalaDirecto({
-          host: tenant.impalaHost,
-          port: tenant.impalaPort ?? 21050,
-          authMechanism: tenant.impalaAuthMechanism ?? "NOSASL",
-          user: tenant.impalaUser ?? undefined,
-          password: tenant.impalaPassword ?? undefined,
-          database: tenant.impalaDatabase ?? "default",
-        });
-      }
+    const contexto = await resolverContextoSolicitud(c);
+    const tenant = await db.query.tenantsQlik.findFirst({
+      where: eq(tenantsQlik.id, contexto.tenantQlikId),
+    });
 
-      if (tenant?.destinoApiUrl && tenant?.destinoApiKey) {
-        return new ClienteDestinos(tenant.destinoApiUrl, tenant.destinoApiKey);
-      }
-    } catch {
-      // fallback
+    if (!tenant) {
+      throw new Error("Tenant no encontrado");
     }
-    return new ClienteImpalaDirecto({ host: process.env.IMPALA_HOST ?? "localhost" });
+
+    if (tenant.impalaHost) {
+      return new ClienteImpalaDirecto({
+        host: tenant.impalaHost,
+        port: tenant.impalaPort ?? 21050,
+        authMechanism: tenant.impalaAuthMechanism ?? "NOSASL",
+        user: tenant.impalaUser ?? undefined,
+        password: tenant.impalaPassword ?? undefined,
+        database: tenant.impalaDatabase ?? "default",
+      });
+    }
+
+    throw new Error(
+      "El tenant no tiene configurado un servidor Impala. Configúralo en la sección de administración.",
+    );
   };
+
 
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
   const outbox = dependencias.outbox ?? new OutboxPostgres();
   const auditoria = dependencias.auditoria ?? new AuditoriaPostgres();
   const repositorioAdministracion =
     dependencias.repositorioAdministracion ??
-    new RepositorioAdministracionPostgres();
+    new RepositorioAdministracionPostgres(db);
   const resolverContextoAdmin =
     dependencias.resolverContextoAdmin ??
     (async (c) => {
@@ -209,7 +210,8 @@ export function crearAplicacion(
     crearRutasPanelAutomatizaciones({
       resolverQlik,
       resolverSesion,
-      bloqueos: new BloqueoEjecucionPostgres(),
+      consultaTenant: new ConsultaTenantQlikPostgres(),
+      bloqueos: new BloqueoEjecucionPostgres(db),
       idempotencia,
       outbox,
       auditoria,
@@ -238,22 +240,7 @@ export function crearAplicacion(
   return aplicacion;
 }
 
-function crearCatalogoDestinosDiferido(): PuertoCatalogoDestinos {
-  const crear = () =>
-    new ClienteDestinos(
-      exigirEntorno("REMOTE_API_URL"),
-      exigirEntorno("REMOTE_API_KEY"),
-    );
 
-  return {
-    listarBasesDatos: () => crear().listarBasesDatos(),
-    listarTablas: (baseDatos) => crear().listarTablas(baseDatos),
-    obtenerEsquemaTabla: (baseDatos, tabla) =>
-      crear().obtenerEsquemaTabla(baseDatos, tabla),
-    listarFlujosDatos: () => crear().listarFlujosDatos(),
-    obtenerFlujoDatos: (id) => crear().obtenerFlujoDatos(id),
-  };
-}
 
 function crearServicioAutenticacionDiferido(
   repositorio: RepositorioAutenticacion,

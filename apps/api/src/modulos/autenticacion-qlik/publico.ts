@@ -6,5 +6,3 @@ export type {
   SesionPublica,
 } from "./dominio/modelos.js";
 export { crearRutasAutenticacionQlik } from "./http/rutas.js";
-export { ClienteOAuthQlik } from "./infraestructura/cliente-oauth-qlik.js";
-export { RepositorioAutenticacionPostgres } from "./infraestructura/repositorio-autenticacion-postgres.js";

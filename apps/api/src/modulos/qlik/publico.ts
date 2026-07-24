@@ -11,6 +11,4 @@ export type {
   FlujoQlik,
   UsuarioQlik,
 } from "./dominio/modelos-qlik.js";
-export { ClienteHttpQlik } from "./infraestructura/cliente-http-qlik.js";
-export { ErrorApiQlik } from "./infraestructura/error-api-qlik.js";
 export { crearRutasProxyQlik } from "./http/rutas-proxy-qlik.js";
