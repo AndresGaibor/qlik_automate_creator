@@ -1,15 +1,21 @@
-import { EstadoError } from "@/componentes/feedback/estado-error";
-import { useNotificaciones } from "@/componentes/feedback/notificaciones";
-import { Button } from "@/componentes/ui/button";
+import { clienteApi } from "@/compartido/api/cliente";
+import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
+import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { Button } from "@/compartido/componentes/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/componentes/ui/card";
-import type { ResumenAutomatizacion } from "@/modulos/automatizaciones/api";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+} from "@/compartido/componentes/ui/card";
+import { useFiltroEspacioPersistente } from "@/compartido/hooks/use-filtro-espacio-persistente";
+import {
+  type ResumenAutomatizacion,
+  ejecutarAutomatizacion,
+} from "@/modulos/automatizaciones/api";
+import type { EspacioDisponible } from "@qlik/contratos/automatizaciones";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 
 function formatearFechaSeguro(iso: string | undefined | null): string {
   if (!iso) return "—";
@@ -24,11 +30,33 @@ function formatearFechaSeguro(iso: string | undefined | null): string {
 
 function estadoVisual(auto: ResumenAutomatizacion): string {
   if (auto.ejecucionActiva) return "En ejecución";
-  return auto.isEnabled ? "Activa" : "Inactiva";
+  return auto.activa ? "Activa" : "Inactiva";
+}
+
+function claseEstado(auto: ResumenAutomatizacion): string {
+  if (auto.ejecucionActiva) {
+    return "bg-amber-100 text-amber-800";
+  }
+  if (auto.activa) {
+    return "bg-emerald-100 text-emerald-800";
+  }
+  return "bg-slate-100 text-slate-700";
+}
+
+const claseSelector =
+  "mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200";
+
+function sufijoBusqueda(espacioId?: string): string {
+  return espacioId ? `?espacioId=${encodeURIComponent(espacioId)}` : "";
 }
 
 export function PaginaAutomatizaciones() {
-  const { mostrarError } = useNotificaciones();
+  const { mostrarError, mostrarExito } = useNotificaciones();
+  const queryClient = useQueryClient();
+  const { espacioId, establecerEspacioId } = useFiltroEspacioPersistente();
+  const espacioFiltrado = espacioId.trim() || undefined;
+  const [idEjecutando, setIdEjecutando] = useState<string | null>(null);
+
   const {
     data: automatizaciones,
     isLoading,
@@ -36,24 +64,40 @@ export function PaginaAutomatizaciones() {
     error,
     refetch,
   } = useQuery<ResumenAutomatizacion[]>({
-    queryKey: ["automatizaciones"],
-    queryFn: async () => {
-      const res = await fetch("/api/qlik/automatizaciones");
-      let json: { success?: boolean; error?: string; data?: ResumenAutomatizacion[] };
-      try {
-        json = await res.json();
-      } catch {
-        throw new Error("Error al cargar automatizaciones");
-      }
-      if (!res.ok)
-        throw new Error(json?.error ?? "Error al cargar automatizaciones");
-      if (typeof json !== "object" || json === null)
-        throw new Error("Error al cargar automatizaciones");
-      if (!json.success)
-        throw new Error(json?.error ?? "Error al cargar automatizaciones");
-      return (json.data as ResumenAutomatizacion[]) ?? [];
-    },
+    queryKey: espacioFiltrado
+      ? ["automatizaciones", espacioFiltrado]
+      : ["automatizaciones"],
+    queryFn: () =>
+      clienteApi.get<ResumenAutomatizacion[]>("/automatizaciones", {
+        parametros: espacioFiltrado
+          ? { espacioId: espacioFiltrado }
+          : undefined,
+      }),
     retry: false,
+  });
+
+  const espacios = useQuery<EspacioDisponible[]>({
+    queryKey: ["automatizaciones", "espacios"],
+    queryFn: () =>
+      clienteApi.get<EspacioDisponible[]>("/automatizaciones/espacios"),
+    retry: false,
+  });
+
+  const ejecutar = useMutation({
+    mutationFn: ejecutarAutomatizacion,
+    onMutate: (id: string) => {
+      setIdEjecutando(id);
+    },
+    onSuccess: async (_resultado, id) => {
+      mostrarExito(`Automatización ejecutada: ${id}`);
+      await queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
+    },
+    onError: (err: Error) => {
+      mostrarError(err.message);
+    },
+    onSettled: () => {
+      setIdEjecutando(null);
+    },
   });
 
   const errorMsgRef = useRef<string | null>(null);
@@ -77,50 +121,87 @@ export function PaginaAutomatizaciones() {
   }
 
   const lista = automatizaciones ?? [];
+  const busqueda = sufijoBusqueda(espacioFiltrado);
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Automatizaciones</h2>
-        <Button asChild>
-          <a href="/automatizaciones/nueva">Nueva automatización</a>
-        </Button>
+      <div className="mb-6 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold">Automatizaciones</h2>
+          <Button asChild>
+            <a href={`/automatizaciones/nueva${busqueda}`}>
+              Nueva automatización
+            </a>
+          </Button>
+        </div>
+
+        <label className="block max-w-md text-sm font-medium text-gray-700">
+          Filtrar por espacio
+          <select
+            className={claseSelector}
+            value={espacioId}
+            onChange={(evento) => establecerEspacioId(evento.target.value)}
+            disabled={espacios.isLoading}
+          >
+            <option value="">
+              {espacios.isLoading
+                ? "Cargando espacios..."
+                : "Todos los espacios"}
+            </option>
+            {(espacios.data ?? []).map((espacio) => (
+              <option key={espacio.id} value={espacio.id}>
+                {espacio.nombre} · {espacio.tipo}
+              </option>
+            ))}
+          </select>
+          {espacios.isError ? (
+            <span className="mt-1 block text-xs text-red-600">
+              No se pudieron cargar los espacios.
+            </span>
+          ) : null}
+        </label>
       </div>
 
       <div className="space-y-4">
         {lista.length === 0 ? (
           <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
             <p className="text-gray-500">
-              No hay automatizaciones para mostrar.
+              {espacioFiltrado
+                ? "No hay automatizaciones para mostrar en este espacio."
+                : "No hay automatizaciones para mostrar."}
             </p>
           </div>
         ) : (
           lista.map((auto) => (
             <Card key={auto.id}>
               <CardHeader>
-                <CardTitle>
-                  <a
-                    href={`/automatizaciones/${auto.id}`}
-                    className="text-blue-600 hover:underline"
+                <div className="flex items-start justify-between gap-3">
+                  <CardTitle>
+                    <a
+                      href={`/automatizaciones/${auto.id}${busqueda}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {auto.nombre}
+                    </a>
+                  </CardTitle>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${claseEstado(auto)}`}
                   >
-                    {auto.name}
-                  </a>
-                </CardTitle>
+                    {estadoVisual(auto)}
+                  </span>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500">
-                      Estado: {estadoVisual(auto)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Disparador: {auto.triggerType || "Manual"}
+                      Disparador: {auto.modoEjecucion || "Manual"}
                     </p>
                     <p className="text-sm text-gray-500">
                       Espacio: {auto.espacioNombre}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Propietario: {auto.ownerNombre}
+                      Propietario: {auto.propietarioNombre}
                     </p>
                     <p className="text-sm text-gray-500">
                       Creado: {formatearFechaSeguro(auto.creadoEn)}
@@ -133,11 +214,20 @@ export function PaginaAutomatizaciones() {
                     <Button
                       variant="outline"
                       data-accion="ejecutar"
-                      disabled={!auto.puedeEjecutar}
+                      disabled={!auto.puedeEjecutar || idEjecutando === auto.id}
+                      onClick={() => ejecutar.mutate(auto.id)}
                     >
-                      {auto.ejecucionActiva ? "En ejecución" : "Ejecutar"}
+                      {idEjecutando === auto.id
+                        ? "Ejecutando…"
+                        : auto.ejecucionActiva
+                          ? "En ejecución"
+                          : "Ejecutar"}
                     </Button>
-                    <Button variant="outline">Editar</Button>
+                    <Button variant="outline" asChild>
+                      <a href={`/automatizaciones/${auto.id}${busqueda}`}>
+                        Editar
+                      </a>
+                    </Button>
                   </div>
                 </div>
               </CardContent>

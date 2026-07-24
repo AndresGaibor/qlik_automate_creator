@@ -3,22 +3,24 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --env-file=../../.env run src/entrada-bun.ts",
-    "build": "bun build src/entrada-node.ts --target=node --outdir=dist",
-    "start": "node dist/entrada-node.js",
+    "dev": "bun --env-file=../../.env run src/entradas/bun.ts",
+    "build": "bun build src/entradas/node.ts --target=node --outdir=dist",
+    "build:worker": "bun build src/entradas/worker.ts --target=node --outdir=dist/worker",
+    "start": "node dist/node.js",
+    "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",
-    "hono": "^4.5.0",
-    "@prisma/client": "^5.17.0",
+    "@qlik/contratos": "workspace:*",
     "drizzle-orm": "^0.33.0",
-    "postgres": "^3.4.4",
-    "zod": "^3.23.8",
+    "hono": "^4.5.0",
     "pino": "^9.3.0",
-    "pino-pretty": "^11.2.0"
+    "pino-pretty": "^11.2.0",
+    "postgres": "^3.4.4",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

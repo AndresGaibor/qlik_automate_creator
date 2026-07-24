@@ -1,14 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
-interface ProveedoresProps {
-  children: ReactNode;
-}
+const clienteConsultas = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 60_000, retry: false },
+    mutations: { retry: false },
+  },
+});
 
-export function Proveedores({ children }: ProveedoresProps) {
-  const queryClient = new QueryClient();
-
+export function Proveedores({ children }: { children: ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={clienteConsultas}>
+      {children}
+    </QueryClientProvider>
   );
 }

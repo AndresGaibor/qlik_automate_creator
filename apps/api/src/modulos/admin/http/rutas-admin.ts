@@ -1,0 +1,360 @@
+import {
+  esquemaActualizarTenant,
+  esquemaActualizarUsuario,
+  esquemaAgregarUsuario,
+  esquemaCrearTenant,
+} from "@qlik/contratos/admin";
+import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
+import { type Context, Hono } from "hono";
+import { getCookie } from "hono/cookie";
+import {
+  responderError,
+  responderExito,
+} from "../../../plataforma/http/respuestas.js";
+import { RepositorioAutenticacionPostgres } from "../../autenticacion-qlik/infraestructura/repositorio-autenticacion-postgres.js";
+import { actualizarTenant } from "../aplicacion/casos-de-uso/actualizar-tenant.js";
+import { actualizarUsuario } from "../aplicacion/casos-de-uso/actualizar-usuario.js";
+import { agregarUsuario } from "../aplicacion/casos-de-uso/agregar-usuario.js";
+import { crearTenant } from "../aplicacion/casos-de-uso/crear-tenant.js";
+import { eliminarTenant } from "../aplicacion/casos-de-uso/eliminar-tenant.js";
+import { eliminarUsuario } from "../aplicacion/casos-de-uso/eliminar-usuario.js";
+import { listarTenants } from "../aplicacion/casos-de-uso/listar-tenants.js";
+import { obtenerDetalleTenant } from "../aplicacion/casos-de-uso/obtener-detalle-tenant.js";
+import { ServicioAdmin } from "../aplicacion/servicio-admin.js";
+
+const servicioAdmin = new ServicioAdmin();
+
+function obtenerContextoSesion(c: Context) {
+  const token = getCookie(c, "sesion_usuario");
+  if (!token) {
+    throw new Error("No hay sesión");
+  }
+  return token;
+}
+
+async function verificarSesionYRol(token: string, organizacionId?: string) {
+  const repositorio = new RepositorioAutenticacionPostgres();
+  const sesion = await repositorio.consultarSesion(token);
+  if (!sesion) {
+    throw new Error("Sesión inválida");
+  }
+
+  const sesionParseada = esquemaSesionPublica.parse(sesion);
+  const contexto = {
+    esSuperadmin: sesionParseada.esSuperadmin,
+    membresias: sesionParseada.membresias,
+  };
+
+  if (organizacionId) {
+    if (!servicioAdmin.puedeAcceder(contexto, organizacionId)) {
+      throw new Error("No tienes permisos para acceder a este tenant");
+    }
+  }
+
+  return contexto;
+}
+
+export function crearRutasAdmin() {
+  const rutas = new Hono();
+
+  rutas.get("/tenants", async (c) => {
+    try {
+      const token = obtenerContextoSesion(c);
+      const contexto = await verificarSesionYRol(token);
+
+      if (!servicioAdmin.puedeListar(contexto)) {
+        return responderError(
+          c,
+          "No tienes permisos para listar tenants",
+          403,
+          {
+            codigo: "NO_AUTORIZADO",
+          },
+        );
+      }
+
+      const tenants = await listarTenants();
+      return responderExito(c, tenants);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión") {
+        return responderError(c, "Sesión requerida", 401, {
+          codigo: "SESION_REQUERIDA",
+        });
+      }
+      if (error instanceof Error && error.message === "Sesión inválida") {
+        return responderError(c, "Sesión inválida", 401, {
+          codigo: "SESION_INVALIDA",
+        });
+      }
+      return responderError(c, "Error interno", 500);
+    }
+  });
+
+  rutas.post("/tenants", async (c) => {
+    try {
+      const token = obtenerContextoSesion(c);
+      const contexto = await verificarSesionYRol(token);
+
+      if (!servicioAdmin.puedeCrear(contexto)) {
+        return responderError(c, "No tienes permisos para crear tenants", 403, {
+          codigo: "NO_AUTORIZADO",
+        });
+      }
+
+      const cuerpo = await c.req.json();
+      const entrada = esquemaCrearTenant.parse(cuerpo);
+      const tenant = await crearTenant(entrada);
+      return responderExito(c, tenant, 201);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión") {
+        return responderError(c, "Sesión requerida", 401, {
+          codigo: "SESION_REQUERIDA",
+        });
+      }
+      if (error instanceof Error && error.message === "Sesión inválida") {
+        return responderError(c, "Sesión inválida", 401, {
+          codigo: "SESION_INVALIDA",
+        });
+      }
+      if (error instanceof Error && error.message.includes("ZodError")) {
+        return responderError(c, "Datos inválidos", 400, {
+          codigo: "DATOS_INVALIDOS",
+        });
+      }
+      return responderError(c, "Error interno", 500);
+    }
+  });
+
+  rutas.get("/tenants/:id", async (c) => {
+    try {
+      const token = obtenerContextoSesion(c);
+      const id = c.req.param("id");
+      await verificarSesionYRol(token, id);
+
+      const tenant = await obtenerDetalleTenant(id);
+      if (!tenant) {
+        return responderError(c, "Tenant no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, tenant);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión") {
+        return responderError(c, "Sesión requerida", 401, {
+          codigo: "SESION_REQUERIDA",
+        });
+      }
+      if (error instanceof Error && error.message === "Sesión inválida") {
+        return responderError(c, "Sesión inválida", 401, {
+          codigo: "SESION_INVALIDA",
+        });
+      }
+      if (error instanceof Error && error.message.includes("permisos")) {
+        return responderError(c, error.message, 403, {
+          codigo: "NO_AUTORIZADO",
+        });
+      }
+      return responderError(c, "Error interno", 500);
+    }
+  });
+
+  rutas.patch("/tenants/:id", async (c) => {
+    try {
+      const token = obtenerContextoSesion(c);
+      const id = c.req.param("id");
+      await verificarSesionYRol(token, id);
+
+      const cuerpo = await c.req.json();
+      const entrada = esquemaActualizarTenant.parse(cuerpo);
+
+      const tenant = await actualizarTenant(id, entrada);
+      if (!tenant) {
+        return responderError(c, "Tenant no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, tenant);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión") {
+        return responderError(c, "Sesión requerida", 401, {
+          codigo: "SESION_REQUERIDA",
+        });
+      }
+      if (error instanceof Error && error.message === "Sesión inválida") {
+        return responderError(c, "Sesión inválida", 401, {
+          codigo: "SESION_INVALIDA",
+        });
+      }
+      if (error instanceof Error && error.message.includes("permisos")) {
+        return responderError(c, error.message, 403, {
+          codigo: "NO_AUTORIZADO",
+        });
+      }
+      return responderError(c, "Error interno", 500);
+    }
+  });
+
+  rutas.delete("/tenants/:id", async (c) => {
+    try {
+      const token = obtenerContextoSesion(c);
+      const id = c.req.param("id");
+      await verificarSesionYRol(token, id);
+
+      if (
+        !servicioAdmin.puedeEliminar(
+          { esSuperadmin: false, membresias: [] },
+          id,
+        )
+      ) {
+        return responderError(
+          c,
+          "No tienes permisos para eliminar este tenant",
+          403,
+          {
+            codigo: "NO_AUTORIZADO",
+          },
+        );
+      }
+
+      const resultado = await eliminarTenant(id);
+      if (!resultado.eliminado) {
+        return responderError(c, "Tenant no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, resultado);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión") {
+        return responderError(c, "Sesión requerida", 401, {
+          codigo: "SESION_REQUERIDA",
+        });
+      }
+      if (error instanceof Error && error.message === "Sesión inválida") {
+        return responderError(c, "Sesión inválida", 401, {
+          codigo: "SESION_INVALIDA",
+        });
+      }
+      if (error instanceof Error && error.message.includes("permisos")) {
+        return responderError(c, error.message, 403, {
+          codigo: "NO_AUTORIZADO",
+        });
+      }
+      return responderError(c, "Error interno", 500);
+    }
+  });
+
+  rutas.post("/tenants/:id/usuarios", async (c) => {
+    try {
+      const token = obtenerContextoSesion(c);
+      const id = c.req.param("id");
+      await verificarSesionYRol(token, id);
+
+      const cuerpo = await c.req.json();
+      const entrada = esquemaAgregarUsuario.parse(cuerpo);
+
+      const resultado = await agregarUsuario(id, entrada);
+      if (!resultado) {
+        return responderError(c, "Tenant no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, resultado, 201);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión") {
+        return responderError(c, "Sesión requerida", 401, {
+          codigo: "SESION_REQUERIDA",
+        });
+      }
+      if (error instanceof Error && error.message === "Sesión inválida") {
+        return responderError(c, "Sesión inválida", 401, {
+          codigo: "SESION_INVALIDA",
+        });
+      }
+      if (error instanceof Error && error.message.includes("permisos")) {
+        return responderError(c, error.message, 403, {
+          codigo: "NO_AUTORIZADO",
+        });
+      }
+      return responderError(c, "Error interno", 500);
+    }
+  });
+
+  rutas.patch("/tenants/:id/usuarios/:usuarioId", async (c) => {
+    try {
+      const token = obtenerContextoSesion(c);
+      const id = c.req.param("id");
+      const usuarioId = c.req.param("usuarioId");
+      await verificarSesionYRol(token, id);
+
+      const cuerpo = await c.req.json();
+      const entrada = esquemaActualizarUsuario.parse(cuerpo);
+
+      const resultado = await actualizarUsuario(id, usuarioId, entrada);
+      if (!resultado) {
+        return responderError(c, "Usuario no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, resultado);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión") {
+        return responderError(c, "Sesión requerida", 401, {
+          codigo: "SESION_REQUERIDA",
+        });
+      }
+      if (error instanceof Error && error.message === "Sesión inválida") {
+        return responderError(c, "Sesión inválida", 401, {
+          codigo: "SESION_INVALIDA",
+        });
+      }
+      if (error instanceof Error && error.message.includes("permisos")) {
+        return responderError(c, error.message, 403, {
+          codigo: "NO_AUTORIZADO",
+        });
+      }
+      return responderError(c, "Error interno", 500);
+    }
+  });
+
+  rutas.delete("/tenants/:id/usuarios/:usuarioId", async (c) => {
+    try {
+      const token = obtenerContextoSesion(c);
+      const id = c.req.param("id");
+      const usuarioId = c.req.param("usuarioId");
+      await verificarSesionYRol(token, id);
+
+      const resultado = await eliminarUsuario(id, usuarioId);
+      if (!resultado.eliminado) {
+        return responderError(c, "Usuario no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+
+      return responderExito(c, resultado);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión") {
+        return responderError(c, "Sesión requerida", 401, {
+          codigo: "SESION_REQUERIDA",
+        });
+      }
+      if (error instanceof Error && error.message === "Sesión inválida") {
+        return responderError(c, "Sesión inválida", 401, {
+          codigo: "SESION_INVALIDA",
+        });
+      }
+      if (error instanceof Error && error.message.includes("permisos")) {
+        return responderError(c, error.message, 403, {
+          codigo: "NO_AUTORIZADO",
+        });
+      }
+      return responderError(c, "Error interno", 500);
+    }
+  });
+
+  return rutas;
+}

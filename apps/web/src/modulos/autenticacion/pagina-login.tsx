@@ -1,11 +1,11 @@
-import { useNotificaciones } from "@/componentes/feedback/notificaciones";
-import { Button } from "@/componentes/ui/button";
+import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { Button } from "@/compartido/componentes/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/componentes/ui/card";
+} from "@/compartido/componentes/ui/card";
 import { useEffect, useState } from "react";
 
 // Mensajes seguros permitidos (mapeo de errores del backend)

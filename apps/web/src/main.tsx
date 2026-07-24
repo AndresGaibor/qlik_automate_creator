@@ -1,30 +1,20 @@
 import "@/index.css";
-import { NotificacionesProvider } from "@/componentes/feedback/notificaciones";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Proveedores } from "@/app/proveedores";
+import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { router } from "./app/router";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      retry: false,
-    },
-  },
-});
+const raiz = document.getElementById("root");
+if (!raiz) throw new Error("No se encontró el elemento #root");
 
-const rootElement = document.getElementById("root");
-if (!rootElement) {
-  throw new Error("Root element not found");
-}
-ReactDOM.createRoot(rootElement).render(
+ReactDOM.createRoot(raiz).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <Proveedores>
       <NotificacionesProvider>
         <RouterProvider router={router} />
       </NotificacionesProvider>
-    </QueryClientProvider>
+    </Proveedores>
   </React.StrictMode>,
 );

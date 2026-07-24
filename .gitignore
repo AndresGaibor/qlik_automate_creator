@@ -35,9 +35,10 @@ coverage/
 apps/web/dist/
 apps/web/node_modules/
 
-# Drizzle
-drizzle/
-apps/api/drizzle/
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Las migraciones de Drizzle se versionan en apps/api/drizzle/.
 
 # Superpowers
 .superpowers/

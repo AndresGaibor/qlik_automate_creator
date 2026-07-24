@@ -1,0 +1,1 @@
+export { crearRutasInicio } from "./rutas";

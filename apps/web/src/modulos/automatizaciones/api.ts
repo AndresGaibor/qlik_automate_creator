@@ -1,85 +1,56 @@
-const BASE_URL = "/api/qlik/automatizaciones";
+import { clienteApi } from "@/compartido/api/cliente";
+import type {
+  CrearDesdePlantilla,
+  DetalleAutomatizacion,
+  EspacioDisponible,
+  ResultadoCrearDesdePlantilla,
+  ResumenAutomatizacion,
+} from "@qlik/contratos/automatizaciones";
 
-export interface ResumenAutomatizacion {
-  id: string;
-  name: string;
-  spaceId?: string;
-  espacioNombre: string;
-  ownerNombre: string;
-  isEnabled: boolean;
-  triggerType: string;
-  ejecucionActiva: boolean;
-  puedeEjecutar: boolean;
-  creadoEn: string;
-  modificadoEn: string;
+const RUTA = "/automatizaciones";
+
+export type {
+  CrearDesdePlantilla,
+  DetalleAutomatizacion,
+  EspacioDisponible,
+  ResumenAutomatizacion,
+  ResultadoCrearDesdePlantilla,
+};
+export type EjecucionResumen = DetalleAutomatizacion["ejecuciones"][number];
+
+export function obtenerAutomatizaciones() {
+  return clienteApi.get<ResumenAutomatizacion[]>(RUTA);
 }
 
-export interface EjecucionResumen {
-  id: string;
-  automationId: string;
-  status: string;
-  startTime: string;
-  endTime?: string;
-  error?: string;
+export function obtenerDetalleAutomatizacion(id: string) {
+  return clienteApi.get<DetalleAutomatizacion>(
+    `${RUTA}/${encodeURIComponent(id)}`,
+  );
 }
 
-export interface DetalleAutomatizacion {
-  automatizacion: ResumenAutomatizacion;
-  ejecuciones: EjecucionResumen[];
+export function obtenerEspacios() {
+  return clienteApi.get<EspacioDisponible[]>(`${RUTA}/espacios`);
 }
 
-export interface RespuestaApi<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
+export function ejecutarAutomatizacion(id: string) {
+  return clienteApi.post<{ runId: string }>(
+    `${RUTA}/${encodeURIComponent(id)}/ejecuciones`,
+  );
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  let json: RespuestaApi<T>;
-  try {
-    json = await res.json();
-  } catch {
-    throw new Error("Error al cargar datos");
-  }
-  if (!res.ok)
-    throw new Error(json?.error ?? "Error al cargar datos");
-  if (typeof json !== "object" || json === null)
-    throw new Error("Error al cargar datos");
-  if (!json.success)
-    throw new Error(json?.error ?? "Error al cargar datos");
-  return (json.data as T) ?? ([] as unknown as T);
+export function detenerEjecucion(id: string, ejecucionId: string) {
+  return clienteApi.post<{ detenida: true }>(
+    `${RUTA}/${encodeURIComponent(id)}/ejecuciones/${encodeURIComponent(ejecucionId)}/detener`,
+  );
 }
 
-export async function obtenerAutomatizaciones(): Promise<ResumenAutomatizacion[]> {
-  return fetchJson<ResumenAutomatizacion[]>(BASE_URL);
-}
-
-export async function obtenerDetalleAutomatizacion(
-  id: string,
-): Promise<DetalleAutomatizacion> {
-  return fetchJson<DetalleAutomatizacion>(`${BASE_URL}/${id}`);
-}
-
-export async function ejecutarAutomatizacion(
-  id: string,
-): Promise<void> {
-  const res = await fetch(`${BASE_URL}/${id}/run`, { method: "POST" });
-  if (!res.ok) {
-    const json = await res.json().catch(() => ({}));
-    throw new Error(json?.error ?? "Error al ejecutar");
-  }
-}
-
-export async function detenerEjecucion(
-  id: string,
-  runId: string,
-): Promise<void> {
-  const res = await fetch(`${BASE_URL}/${id}/runs/${runId}/stop`, {
-    method: "POST",
-  });
-  if (!res.ok) {
-    const json = await res.json().catch(() => ({}));
-    throw new Error(json?.error ?? "Error al detener");
-  }
+export function crearAutomatizacionDesdePlantilla(
+  entrada: CrearDesdePlantilla,
+) {
+  const clave = entrada.claveIdempotencia ?? crypto.randomUUID();
+  return clienteApi.post<ResultadoCrearDesdePlantilla>(
+    `${RUTA}/desde-plantilla`,
+    { ...entrada, claveIdempotencia: clave },
+    { headers: { "idempotency-key": clave } },
+  );
 }

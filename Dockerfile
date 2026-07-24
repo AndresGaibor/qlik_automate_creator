@@ -1,16 +1,17 @@
-FROM oven/bun:1 AS builder
+FROM oven/bun:1 AS compilador
 WORKDIR /app
-COPY package.json bun.lock ./
-COPY apps/api ./apps/api
-COPY apps/web ./apps/web
-COPY packages ./packages
+COPY package.json bun.lock tsconfig.base.json ./
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/contratos/package.json ./packages/contratos/package.json
 RUN bun install --frozen-lockfile
-RUN bun run --cwd apps/api build
+COPY apps/api ./apps/api
+COPY packages/contratos ./packages/contratos
+RUN bun --cwd apps/api run build
 
-FROM oven/bun:1 AS runtime
+FROM node:22-alpine AS ejecucion
 WORKDIR /app
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/package.json ./
-RUN bun install --production
+ENV NODE_ENV=production
+COPY --from=compilador /app/apps/api/dist ./dist
 EXPOSE 3000
-CMD ["bun", "run", "dist/entrada-node.js"]
+CMD ["node", "dist/node.js"]

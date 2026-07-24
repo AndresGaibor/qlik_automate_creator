@@ -7,6 +7,7 @@ import {
   credencialesQlik,
   destinosCache,
   espaciosQlikCache,
+  eventosOutbox,
   flujosQlikCache,
   identidadesQlik,
   intentosOauthQlik,
@@ -14,9 +15,10 @@ import {
   organizaciones,
   programacionesAutomatizacion,
   sesionesUsuario,
+  solicitudesIdempotentes,
   tenantsQlik,
   usuarios,
-} from "./infraestructura/base-datos/esquema.js";
+} from "./plataforma/persistencia/esquema.js";
 
 function colNames(table: ReturnType<typeof getTableConfig>) {
   return table.columns.map((c) => c.name);
@@ -54,6 +56,10 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("tenant_id_qlik");
     expect(cols).toContain("host");
     expect(cols).toContain("estado");
+    expect(cols).toContain("es_principal");
+    expect(idxNames(getTableConfig(tenantsQlik))).toContain(
+      "uq_tenant_principal_por_organizacion",
+    );
   });
 
   it("identidadesQlik tiene las columnas esperadas", () => {
@@ -119,6 +125,20 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("nombre");
     expect(cols).toContain("estado");
     expect(cols).toContain("ultimo_estado_ejecucion");
+  });
+
+  it("solicitudesIdempotentes conserva clave, hash y respuesta", () => {
+    const cols = colNames(getTableConfig(solicitudesIdempotentes));
+    expect(cols).toContain("clave");
+    expect(cols).toContain("hash_solicitud");
+    expect(cols).toContain("respuesta");
+  });
+
+  it("eventosOutbox conserva agregado, payload y publicación", () => {
+    const cols = colNames(getTableConfig(eventosOutbox));
+    expect(cols).toContain("agregado_tipo");
+    expect(cols).toContain("datos");
+    expect(cols).toContain("publicado_en");
   });
 
   it("intentosOauthQlik tiene indice en expiraEn", () => {

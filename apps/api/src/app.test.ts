@@ -1,34 +1,56 @@
 import { describe, expect, it } from "bun:test";
-import { app } from "./app";
+import { crearAplicacion } from "./app.js";
+import type { Registrador } from "./plataforma/observabilidad/registrador.js";
 
-app.get("/api/__test-error-handler", () => {
-  throw new Error("error de prueba");
-});
+function crearRegistradorPrueba(): Registrador {
+  return {
+    info: () => undefined,
+    advertencia: () => undefined,
+    error: () => undefined,
+  };
+}
 
-describe("API Salud", () => {
-  it("GET /api/salud devuelve success true y estado ok", async () => {
-    const res = await app.request("/api/salud");
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.data.estado).toBe("ok");
-    expect(body.data.fecha).toBeDefined();
+describe("API", () => {
+  it("expone el estado de salud con el contrato común", async () => {
+    const app = crearAplicacion({ registrador: crearRegistradorPrueba() });
+    const respuesta = await app.request("/api/salud");
+    const cuerpo = await respuesta.json();
+
+    expect(respuesta.status).toBe(200);
+    expect(cuerpo.exito).toBe(true);
+    expect(cuerpo.datos.estado).toBe("ok");
+    expect(cuerpo.datos.arquitectura).toBe("monolito-modular");
+    expect(cuerpo.datos.fecha).toBeDefined();
   });
 
-  it("GET /api/inexistente devuelve 404 con success false", async () => {
-    const res = await app.request("/api/inexistente");
-    expect(res.status).toBe(404);
-    const body = await res.json();
-    expect(body.success).toBe(false);
-    expect(body.error).toBe("No encontrado");
-  });
+  it("normaliza rutas inexistentes", async () => {
+    const app = crearAplicacion({ registrador: crearRegistradorPrueba() });
+    const respuesta = await app.request("/api/inexistente");
+    const cuerpo = await respuesta.json();
 
-  it("maneja errores internos sin romper el contexto de Hono", async () => {
-    const res = await app.request("/api/__test-error-handler");
-    expect(res.status).toBe(500);
-    expect(await res.json()).toEqual({
-      success: false,
-      error: "Error interno",
+    expect(respuesta.status).toBe(404);
+    expect(cuerpo).toMatchObject({
+      exito: false,
+      error: {
+        codigo: "RUTA_NO_ENCONTRADA",
+        mensaje: "Ruta no encontrada",
+      },
     });
+  });
+
+  it("mapea errores no controlados sin exponer detalles", async () => {
+    const app = crearAplicacion({ registrador: crearRegistradorPrueba() });
+    app.get("/api/__prueba-error", () => {
+      throw new Error("secreto interno");
+    });
+
+    const respuesta = await app.request("/api/__prueba-error");
+    const cuerpo = await respuesta.json();
+
+    expect(respuesta.status).toBe(500);
+    expect(cuerpo.exito).toBe(false);
+    expect(cuerpo.error.codigo).toBe("INTERNO");
+    expect(cuerpo.error.mensaje).toBe("Error interno del servidor");
+    expect(JSON.stringify(cuerpo)).not.toContain("secreto interno");
   });
 });

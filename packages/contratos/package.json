@@ -1,0 +1,24 @@
+{
+  "name": "@qlik/contratos",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./comun": "./src/comun/index.ts",
+    "./automatizaciones": "./src/automatizaciones/index.ts",
+    "./qlik": "./src/qlik/index.ts",
+    "./autenticacion": "./src/autenticacion/index.ts",
+    "./flujos": "./src/flujos/index.ts",
+    "./admin": "./src/admin/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

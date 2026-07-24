@@ -1,12 +1,13 @@
-import { EstadoError } from "@/componentes/feedback/estado-error";
-import { useNotificaciones } from "@/componentes/feedback/notificaciones";
-import { Button } from "@/componentes/ui/button";
+import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
+import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { Button } from "@/compartido/componentes/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/componentes/ui/card";
+} from "@/compartido/componentes/ui/card";
+import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type DetalleAutomatizacion,
   type EjecucionResumen,
@@ -31,9 +32,20 @@ function formatearFechaSeguro(iso: string | undefined | null): string {
   }
 }
 
+function estaEnCurso(estado: string): boolean {
+  return ["running", "starting", "queued", "must stop"].includes(estado);
+}
+
 export function PaginaDetalleAutomatizacion({ id }: Props) {
   const { mostrarError } = useNotificaciones();
   const queryClient = useQueryClient();
+
+  const { data: sesion } = useQuery({
+    queryKey: ["sesion"],
+    queryFn: obtenerSesion,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const {
     data: detalle,
@@ -44,6 +56,20 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     queryKey: ["automatizacion", id],
     queryFn: () => obtenerDetalleAutomatizacion(id),
     retry: false,
+    refetchInterval: (consulta) => {
+      const detalleActual = consulta.state.data as
+        | DetalleAutomatizacion
+        | undefined;
+      const automatizacionActual = detalleActual?.automatizacion;
+      const ejecucionActiva =
+        automatizacionActual?.ejecucionActiva ||
+        detalleActual?.ejecuciones.some((ejecucion) =>
+          estaEnCurso(ejecucion.estado),
+        ) ||
+        false;
+      return ejecucionActiva ? 3000 : false;
+    },
+    refetchIntervalInBackground: true,
   });
 
   const auto = detalle?.automatizacion;
@@ -84,19 +110,30 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
 
   if (!auto) return null;
 
-  const ejecutandoActiva = ejecuciones?.find(
-    (e: EjecucionResumen) => e.status === "running",
+  const ejecutandoActiva = ejecuciones?.find((e: EjecucionResumen) =>
+    estaEnCurso(e.estado),
   );
+  const hostQlik = sesion?.tenantHost?.trim();
+  const urlQlik = hostQlik
+    ? new URL(`/automations/${id}`, `https://${hostQlik}`).toString()
+    : null;
 
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">{auto.name}</h2>
+        <h2 className="text-2xl font-bold">{auto.nombre}</h2>
       </div>
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Detalles</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Detalles</CardTitle>
+            {auto.ejecucionActiva ? (
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
+                Actualización automática activa
+              </span>
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-1 gap-2 text-sm text-gray-600 sm:grid-cols-2">
@@ -105,7 +142,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
               <dd>
                 {auto.ejecucionActiva
                   ? "En ejecución"
-                  : auto.isEnabled
+                  : auto.activa
                     ? "Activa"
                     : "Inactiva"}
               </dd>
@@ -116,12 +153,12 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
             </div>
             <div>
               <dt className="font-medium text-gray-900">Propietario</dt>
-              <dd>{auto.ownerNombre}</dd>
+              <dd>{auto.propietarioNombre}</dd>
             </div>
-            {auto.triggerType && (
+            {auto.modoEjecucion && (
               <div>
                 <dt className="font-medium text-gray-900">Disparador</dt>
-                <dd>{auto.triggerType}</dd>
+                <dd>{auto.modoEjecucion}</dd>
               </div>
             )}
             <div>
@@ -151,6 +188,13 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
                 Detener
               </Button>
             )}
+            {urlQlik ? (
+              <Button variant="outline" asChild>
+                <a href={urlQlik} target="_blank" rel="noopener noreferrer">
+                  Abrir en Qlik Cloud
+                </a>
+              </Button>
+            ) : null}
           </div>
         </CardContent>
       </Card>
@@ -178,13 +222,13 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
                 {ejecuciones.map((ejecucion: EjecucionResumen) => (
                   <tr key={ejecucion.id} className="border-b last:border-0">
                     <td className="py-2">{ejecucion.id}</td>
-                    <td className="py-2">{ejecucion.status}</td>
+                    <td className="py-2">{ejecucion.estado}</td>
                     <td className="py-2">
-                      {formatearFechaSeguro(ejecucion.startTime)}
+                      {formatearFechaSeguro(ejecucion.iniciadoEn)}
                     </td>
                     <td className="py-2">
-                      {ejecucion.endTime
-                        ? formatearFechaSeguro(ejecucion.endTime)
+                      {ejecucion.finalizadoEn
+                        ? formatearFechaSeguro(ejecucion.finalizadoEn)
                         : "—"}
                     </td>
                   </tr>
