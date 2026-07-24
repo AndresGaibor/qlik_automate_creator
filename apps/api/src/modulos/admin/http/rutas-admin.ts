@@ -4,14 +4,11 @@ import {
   esquemaAgregarUsuario,
   esquemaCrearTenant,
 } from "@qlik/contratos/admin";
-import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
 import { type Context, Hono } from "hono";
-import { getCookie } from "hono/cookie";
 import {
   responderError,
   responderExito,
 } from "../../../plataforma/http/respuestas.js";
-import { RepositorioAutenticacionPostgres } from "../../autenticacion-qlik/infraestructura/repositorio-autenticacion-postgres.js";
 import { actualizarTenant } from "../aplicacion/casos-de-uso/actualizar-tenant.js";
 import { actualizarUsuario } from "../aplicacion/casos-de-uso/actualizar-usuario.js";
 import { agregarUsuario } from "../aplicacion/casos-de-uso/agregar-usuario.js";
@@ -21,50 +18,38 @@ import { eliminarUsuario } from "../aplicacion/casos-de-uso/eliminar-usuario.js"
 import { listarTenants } from "../aplicacion/casos-de-uso/listar-tenants.js";
 import { obtenerDetalleTenant } from "../aplicacion/casos-de-uso/obtener-detalle-tenant.js";
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
-import { ServicioAdmin } from "../aplicacion/servicio-admin.js";
-import { RepositorioAdministracionPostgres } from "../infraestructura/repositorio-administracion-postgres.js";
+import {
+  type ContextoSesion,
+  ServicioAdmin,
+} from "../aplicacion/servicio-admin.js";
 
 const servicioAdmin = new ServicioAdmin();
 
-function obtenerContextoSesion(c: Context) {
-  const token = getCookie(c, "sesion_usuario");
-  if (!token) {
-    throw new Error("No hay sesión");
-  }
-  return token;
+export type ResolverContextoAdmin = (c: Context) => Promise<ContextoSesion>;
+
+export interface DependenciasRutasAdmin {
+  repositorio: RepositorioAdministracion;
+  resolverContexto: ResolverContextoAdmin;
 }
 
-async function verificarSesionYRol(token: string, organizacionId?: string) {
-  const repositorio = new RepositorioAutenticacionPostgres();
-  const sesion = await repositorio.consultarSesion(token);
-  if (!sesion) {
-    throw new Error("Sesión inválida");
+function exigirAccesoOrganizacion(
+  contexto: ContextoSesion,
+  organizacionId: string,
+): void {
+  if (!servicioAdmin.puedeAcceder(contexto, organizacionId)) {
+    throw new Error("No tienes permisos para acceder a este tenant");
   }
-
-  const sesionParseada = esquemaSesionPublica.parse(sesion);
-  const contexto = {
-    esSuperadmin: sesionParseada.esSuperadmin,
-    membresias: sesionParseada.membresias,
-  };
-
-  if (organizacionId) {
-    if (!servicioAdmin.puedeAcceder(contexto, organizacionId)) {
-      throw new Error("No tienes permisos para acceder a este tenant");
-    }
-  }
-
-  return contexto;
 }
 
-export function crearRutasAdmin(
-  repositorio: RepositorioAdministracion = new RepositorioAdministracionPostgres(),
-) {
+export function crearRutasAdmin({
+  repositorio,
+  resolverContexto,
+}: DependenciasRutasAdmin) {
   const rutas = new Hono();
 
   rutas.get("/tenants", async (c) => {
     try {
-      const token = obtenerContextoSesion(c);
-      const contexto = await verificarSesionYRol(token);
+      const contexto = await resolverContexto(c);
 
       if (!servicioAdmin.puedeListar(contexto)) {
         return responderError(
@@ -96,8 +81,7 @@ export function crearRutasAdmin(
 
   rutas.post("/tenants", async (c) => {
     try {
-      const token = obtenerContextoSesion(c);
-      const contexto = await verificarSesionYRol(token);
+      const contexto = await resolverContexto(c);
 
       if (!servicioAdmin.puedeCrear(contexto)) {
         return responderError(c, "No tienes permisos para crear tenants", 403, {
@@ -131,9 +115,9 @@ export function crearRutasAdmin(
 
   rutas.get("/tenants/:id", async (c) => {
     try {
-      const token = obtenerContextoSesion(c);
       const id = c.req.param("id");
-      await verificarSesionYRol(token, id);
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, id);
 
       const tenant = await obtenerDetalleTenant(repositorio, id);
       if (!tenant) {
@@ -165,9 +149,9 @@ export function crearRutasAdmin(
 
   rutas.patch("/tenants/:id", async (c) => {
     try {
-      const token = obtenerContextoSesion(c);
       const id = c.req.param("id");
-      await verificarSesionYRol(token, id);
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, id);
 
       const cuerpo = await c.req.json();
       const entrada = esquemaActualizarTenant.parse(cuerpo);
@@ -202,9 +186,9 @@ export function crearRutasAdmin(
 
   rutas.delete("/tenants/:id", async (c) => {
     try {
-      const token = obtenerContextoSesion(c);
       const id = c.req.param("id");
-      const contexto = await verificarSesionYRol(token, id);
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, id);
 
       if (!servicioAdmin.puedeEliminar(contexto, id)) {
         return responderError(
@@ -247,9 +231,9 @@ export function crearRutasAdmin(
 
   rutas.post("/tenants/:id/usuarios", async (c) => {
     try {
-      const token = obtenerContextoSesion(c);
       const id = c.req.param("id");
-      await verificarSesionYRol(token, id);
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, id);
 
       const cuerpo = await c.req.json();
       const entrada = esquemaAgregarUsuario.parse(cuerpo);
@@ -284,10 +268,10 @@ export function crearRutasAdmin(
 
   rutas.patch("/tenants/:id/usuarios/:usuarioId", async (c) => {
     try {
-      const token = obtenerContextoSesion(c);
       const id = c.req.param("id");
       const usuarioId = c.req.param("usuarioId");
-      await verificarSesionYRol(token, id);
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, id);
 
       const cuerpo = await c.req.json();
       const entrada = esquemaActualizarUsuario.parse(cuerpo);
@@ -327,10 +311,10 @@ export function crearRutasAdmin(
 
   rutas.delete("/tenants/:id/usuarios/:usuarioId", async (c) => {
     try {
-      const token = obtenerContextoSesion(c);
       const id = c.req.param("id");
       const usuarioId = c.req.param("usuarioId");
-      await verificarSesionYRol(token, id);
+      const contexto = await resolverContexto(c);
+      exigirAccesoOrganizacion(contexto, id);
 
       const resultado = await eliminarUsuario(repositorio, id, usuarioId);
       if (!resultado.eliminado) {

@@ -15,6 +15,19 @@ async function archivosTypeScript(ruta: string): Promise<string[]> {
 }
 
 describe("límites arquitectónicos", () => {
+  it("admin/http no construye adaptadores de infraestructura", async () => {
+    const raiz = join(import.meta.dir, "modulos/admin/http");
+    const archivos = await archivosTypeScript(raiz);
+    const violaciones: string[] = [];
+    for (const archivo of archivos) {
+      const contenido = await Bun.file(archivo).text();
+      if (/from ["\'][^"\']*infraestructura/.test(contenido)) {
+        violaciones.push(archivo.replace(`${import.meta.dir}/`, ""));
+      }
+    }
+    expect(violaciones).toEqual([]);
+  });
+
   it("admin/aplicacion no depende de plataforma, Drizzle ni infraestructura", async () => {
     const raiz = join(import.meta.dir, "modulos/admin/aplicacion");
     const archivos = await archivosTypeScript(raiz);

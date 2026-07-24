@@ -1,6 +1,13 @@
+import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
-import { crearRutasAdmin } from "./modulos/admin/publico.js";
+import {
+  type ContextoSesion,
+  type RepositorioAdministracion,
+  RepositorioAdministracionPostgres,
+  type ResolverContextoAdmin,
+  crearRutasAdmin,
+} from "./modulos/admin/publico.js";
 import {
   ClienteOAuthQlik,
   type RepositorioAutenticacion,
@@ -61,6 +68,8 @@ export interface DependenciasAplicacion {
   idempotencia?: PuertoIdempotencia;
   outbox?: PuertoOutbox;
   auditoria?: PuertoAuditoria;
+  repositorioAdministracion?: RepositorioAdministracion;
+  resolverContextoAdmin?: ResolverContextoAdmin;
 }
 
 export function crearAplicacion(
@@ -85,6 +94,12 @@ export function crearAplicacion(
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
   const outbox = dependencias.outbox ?? new OutboxPostgres();
   const auditoria = dependencias.auditoria ?? new AuditoriaPostgres();
+  const repositorioAdministracion =
+    dependencias.repositorioAdministracion ??
+    new RepositorioAdministracionPostgres();
+  const resolverContextoAdmin =
+    dependencias.resolverContextoAdmin ??
+    crearResolverContextoAdminPredeterminado(repositorioAutenticacion);
 
   const aplicacion = new Hono();
   const frontendUrl =
@@ -132,7 +147,13 @@ export function crearAplicacion(
   );
   aplicacion.route("/api/destinos", crearRutasDestinos(catalogoDestinos));
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));
-  aplicacion.route("/api/admin", crearRutasAdmin());
+  aplicacion.route(
+    "/api/admin",
+    crearRutasAdmin({
+      repositorio: repositorioAdministracion,
+      resolverContexto: resolverContextoAdmin,
+    }),
+  );
 
   aplicacion.notFound((c) =>
     responderError(c, "Ruta no encontrada", 404, {
@@ -185,6 +206,22 @@ function crearServicioAutenticacionDiferido(
     consultarSesion: (token) => crear().consultarSesion(token),
     cerrarSesion: (token) => crear().cerrarSesion(token),
   } as ServicioAutenticacionQlik;
+}
+
+function crearResolverContextoAdminPredeterminado(
+  repositorio: RepositorioAutenticacion,
+): ResolverContextoAdmin {
+  return async (c: Context): Promise<ContextoSesion> => {
+    const token = getCookie(c, "sesion_usuario");
+    if (!token) throw new Error("No hay sesión");
+    const sesion = await repositorio.consultarSesion(token);
+    if (!sesion) throw new Error("Sesión inválida");
+    const sesionParseada = esquemaSesionPublica.parse(sesion);
+    return {
+      esSuperadmin: sesionParseada.esSuperadmin,
+      membresias: sesionParseada.membresias,
+    };
+  };
 }
 
 function crearResolverSesionPredeterminado(
