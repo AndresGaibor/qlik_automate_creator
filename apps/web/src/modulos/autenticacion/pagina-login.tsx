@@ -88,10 +88,10 @@ export function PaginaLogin() {
       <Card className="w-full max-w-md shadow-lg border-gray-200">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-900">
-            Qlik Automatizaciones
+            Iniciar sesión
           </CardTitle>
           <p className="text-sm text-gray-500 mt-1">
-            Ingresa tu correo institucional para autenticarte con tu tenant de Qlik Cloud.
+            Usa tu correo corporativo y te redirigiremos automáticamente a tu entorno de Qlik Cloud.
           </p>
         </CardHeader>
         <CardContent>
@@ -100,7 +100,7 @@ export function PaginaLogin() {
               role="alert"
               className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm"
             >
-              <p className="font-medium">Error de autenticación</p>
+              <p className="font-medium">No pudimos iniciar sesión</p>
               <p>{errorOAuth}</p>
             </div>
           )}
@@ -130,7 +130,7 @@ export function PaginaLogin() {
                   htmlFor="host-tenant-qlik"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Host del Tenant Qlik (Avanzado)
+                  Dirección del entorno Qlik Cloud
                 </label>
                 <input
                   id="host-tenant-qlik"
@@ -138,7 +138,7 @@ export function PaginaLogin() {
                   required
                   value={hostManual}
                   onChange={(evento) => setHostManual(evento.target.value)}
-                  placeholder="empresa.eu.qlikcloud.com"
+                  placeholder="empresa.eu.qlikcloud.com (ej: miempresa.us.qlikcloud.com)"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
@@ -151,7 +151,7 @@ export function PaginaLogin() {
                 cargando || (modoAvanzado ? !hostManual.trim() : !correo.trim())
               }
             >
-              {cargando ? "Verificando..." : "Continuar con Qlik Cloud"}
+              {cargando ? "Redirigiendo a Qlik Cloud…" : "Continuar con Qlik Cloud →"}
             </Button>
 
             <div className="pt-2 text-center">
@@ -161,8 +161,8 @@ export function PaginaLogin() {
                 className="text-xs text-gray-500 hover:text-gray-700 underline"
               >
                 {modoAvanzado
-                  ? "← Ingresar por correo electrónico"
-                  : "Ingresar especificando host del tenant"}
+                  ? "← Volver a ingresar con correo"
+                  : "¿Conoces la dirección de tu entorno Qlik? Ingrésala directamente"}
               </button>
             </div>
           </form>

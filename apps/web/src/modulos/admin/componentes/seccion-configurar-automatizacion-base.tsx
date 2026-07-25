@@ -63,10 +63,11 @@ export function SeccionConfigurarAutomatizacionBase({
   }));
 
   return (
-    <div className="pt-2 border-t mt-3">
+    <div>
       <SelectBuscable
-        etiqueta="Designar o Cambiar Automatización Base"
-        placeholder="Busca y selecciona la automatización plantilla..."
+        placeholder="Busca y selecciona la automatización plantilla…"
+        searchPlaceholder="Escribe el nombre para filtrar…"
+        emptyText="No encontramos automatizaciones. Asegúrate de estar conectado al entorno correcto."
         opciones={opciones}
         valorSeleccionado={baseIdSeleccionado}
         onSeleccionar={handleSeleccionar}

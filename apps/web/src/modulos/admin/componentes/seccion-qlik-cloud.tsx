@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
 import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import {
   Card,
   CardContent,
@@ -40,131 +41,144 @@ export function SeccionQlikCloud({
 
   return (
     <>
-      <Card className="border-gray-200">
-      <CardHeader className="border-b bg-gray-50/50 pb-4">
-        <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-          ☁️ Conexión con Qlik Cloud
-        </CardTitle>
-        <p className="text-xs text-gray-500">
-          Ingresa la dirección web (Host) de tu entorno Qlik Cloud. No se
-          requieren IDs técnicos complejos.
-        </p>
-      </CardHeader>
-      <CardContent className="pt-6 space-y-6">
-        <div className="bg-gray-50 p-4 rounded-lg border grid gap-3 sm:grid-cols-3 items-end">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Host / Dominio Qlik Cloud{" "}
-              <span className="text-red-500">*</span>
-            </label>
-            <input
-              value={hostQlik}
-              onChange={(evento) => setHostQlik(evento.target.value)}
-              placeholder="ej: miempresa.us.qlikcloud.com"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Nombre de la Conexión (Opcional)
-            </label>
-            <input
-              value={nombreTenantQlik}
-              onChange={(evento) => setNombreTenantQlik(evento.target.value)}
-              placeholder="ej: Entorno Producción"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            />
-          </div>
-          <Button
-            disabled={!hostQlik.trim() || crear.isPending}
-            onClick={() => {
-              onCrear({
-                host: hostQlik.trim(),
-                ...(nombreTenantQlik.trim() ? { nombre: nombreTenantQlik.trim() } : {}),
-              });
-              setHostQlik("");
-              setNombreTenantQlik("");
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-full"
-          >
-            {crear.isPending ? "Conectando..." : "+ Agregar Conexión Qlik"}
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-gray-800">
-            Conexiones Registradas
-          </h4>
-          {tenantsQlik.map((tQlik) => (
-            <div
-              key={tQlik.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border bg-white hover:border-gray-300 transition"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">
-                    {tQlik.nombre || tQlik.host}
-                  </span>
-                  {tQlik.esPrincipal ? (
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded font-medium">
-                      ⭐ Conexión Principal
-                    </span>
-                  ) : null}
-                </div>
-                <p className="text-xs text-gray-500 font-mono">{tQlik.host}</p>
-              </div>
-              <div className="flex gap-2">
-                {!tQlik.esPrincipal && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onHacerPrincipal(tQlik.id)}
-                    disabled={hacerPrincipal.isPending}
-                    className="text-xs"
-                  >
-                    ⭐ Usar como Principal
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-red-600 text-xs hover:bg-red-50"
-                  onClick={() => {
-                    setConfirmDialog({
-                      open: true,
-                      mensaje: "¿Estás seguro de eliminar esta conexión de Qlik?",
-                      onConfirm: () => onEliminar(tQlik.id),
-                    });
-                  }}
-                  disabled={eliminar.isPending}
-                >
-                  Eliminar
-                </Button>
-              </div>
+      <Card className="border-line-200 bg-surface shadow-card">
+        <CardHeader className="border-b border-line-200 bg-app/30 pb-4">
+          <CardTitle className="font-display text-lg font-semibold text-ink-900 flex items-center gap-2">
+            <Icon name="cloud" className="text-obj-600" />
+            Conexión con Qlik Cloud
+          </CardTitle>
+          <p className="text-xs text-ink-500 mt-1">
+            Agrega la dirección web de tu entorno Qlik Cloud (ej: <code>miempresa.us.qlikcloud.com</code>). Puedes conectar varios entornos a la misma organización.
+          </p>
+        </CardHeader>
+        <CardContent className="pt-6 space-y-6">
+          <div className="bg-app/50 p-4 rounded-lg border border-line-200 grid gap-3 sm:grid-cols-3 items-end">
+            <div>
+              <label className="block text-xs font-semibold text-ink-700 mb-1">
+                Dirección del entorno Qlik Cloud <span className="text-danger-600">*</span>
+              </label>
+              <input
+                value={hostQlik}
+                onChange={(evento) => setHostQlik(evento.target.value)}
+                placeholder="ej: miempresa.us.qlikcloud.com"
+                className="w-full rounded-md border border-line-200 bg-surface px-3 py-2 text-sm text-ink-900 focus:border-brand-600 focus:outline-none"
+              />
             </div>
-          ))}
-          {tenantsQlik.length === 0 && (
-            <p className="text-xs text-gray-400 italic">
-              Aún no has agregado la dirección de Qlik Cloud para esta
-              organización.
-            </p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <div>
+              <label className="block text-xs font-semibold text-ink-700 mb-1">
+                Alias o nombre descriptivo (opcional)
+              </label>
+              <input
+                value={nombreTenantQlik}
+                onChange={(evento) => setNombreTenantQlik(evento.target.value)}
+                placeholder="ej: Producción, Pruebas, BanCol"
+                className="w-full rounded-md border border-line-200 bg-surface px-3 py-2 text-sm text-ink-900 focus:border-brand-600 focus:outline-none"
+              />
+            </div>
+            <Button
+              disabled={!hostQlik.trim() || crear.isPending}
+              onClick={() => {
+                onCrear({
+                  host: hostQlik.trim(),
+                  nombre: nombreTenantQlik.trim() || undefined,
+                });
+                setHostQlik("");
+                setNombreTenantQlik("");
+              }}
+              className="gap-1.5"
+            >
+              <Icon name="plus" size="sm" />
+              Agregar este entorno Qlik
+            </Button>
+          </div>
 
-    <ConfirmDialog
-      open={confirmDialog.open}
-      mensaje={confirmDialog.mensaje}
-      titulo="Eliminar conexión Qlik"
-      confirmText="Eliminar"
-      variant="danger"
-      onConfirm={() => {
-        confirmDialog.onConfirm();
-        setConfirmDialog({ ...confirmDialog, open: false });
-      }}
-      onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
-    />
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-500 mb-3">
+              Entornos conectados
+            </h4>
+            {tenantsQlik.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-line-300 bg-app/30 p-6 text-center">
+                <div className="flex h-10 w-10 mx-auto items-center justify-center rounded-full bg-line-200 text-ink-400 mb-3">
+                  <Icon name="cloud" className="text-ink-400" size="sm" />
+                </div>
+                <p className="text-sm font-medium text-ink-600 mb-1">
+                  Aún no tienes entornos Qlik conectados
+                </p>
+                <p className="text-xs text-ink-400">
+                  Agrega el host de tu tenant usando el formulario de arriba.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tenantsQlik.map((tQlik) => (
+                  <div
+                    key={tQlik.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-line-200 bg-surface hover:border-line-300 transition-colors"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-ink-900 text-sm">
+                          {tQlik.nombre || "Tenant Qlik"}
+                        </span>
+                        {tQlik.esPrincipal && (
+                          <span className="inline-flex items-center gap-1 rounded bg-brand-50 border border-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+                            <Icon name="star" size="sm" className="text-brand-600" />
+                            Conexión Principal
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-mono text-xs text-ink-500 block mt-0.5">
+                        {tQlik.host}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {!tQlik.esPrincipal && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={hacerPrincipal.isPending}
+                          onClick={() => onHacerPrincipal(tQlik.id)}
+                          className="text-xs gap-1"
+                        >
+                          <Icon name="star" size="sm" />
+                          Hacer Principal
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={eliminar.isPending}
+                        className="text-danger-600 hover:bg-red-50 text-xs"
+                        onClick={() =>
+                          setConfirmDialog({
+                            open: true,
+                            mensaje: `¿Eliminar la conexión con "${tQlik.nombre || tQlik.host}"? Esta acción no se puede deshacer.`,
+                            onConfirm: () => onEliminar(tQlik.id),
+                          })
+                        }
+                      >
+                        Eliminar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+        }}
+        titulo="Eliminar Conexión Qlik Cloud"
+        mensaje={confirmDialog.mensaje}
+      />
     </>
   );
 }

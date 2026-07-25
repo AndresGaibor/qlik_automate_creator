@@ -1,4 +1,5 @@
 import { Button } from "@/compartido/componentes/ui/button";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
 import { sufijoBusqueda } from "@/compartido/utiles/automatizaciones";
@@ -29,12 +30,12 @@ export function BarraFiltrosAutomatizaciones({
   return (
     <>
       <PageHeader
-        title="Automatizaciones de Qlik"
-        description="Crea, administra, busca y ejecuta las automatizaciones que orquestan tus tareas Impala/Dataflow."
+        title="Automatizaciones"
+        description="Aquí encuentras todas tus automatizaciones activas. Puedes buscarlas por nombre, filtrarlas por espacio o crear una nueva en segundos."
         actions={
-          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white font-medium">
+          <Button asChild font-medium>
             <a href={`/automatizaciones/nueva${busqueda}`}>
-              + Nueva Automatización
+              + Crear automatización
             </a>
           </Button>
         }
@@ -42,10 +43,10 @@ export function BarraFiltrosAutomatizaciones({
 
       <div className="bg-white p-4 rounded-lg border shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
         <SelectBuscable
-          etiqueta="Filtrar por Espacio de Qlik Cloud"
-          placeholder="Todos los Espacios"
-          searchPlaceholder="Buscar espacio por nombre..."
-          emptyText="No se encontraron espacios con ese nombre"
+          etiqueta="Filtrar por espacio"
+          placeholder="Todos los espacios"
+          searchPlaceholder="Escribe el nombre del espacio…"
+          emptyText="No encontramos ese espacio. Intenta con otro nombre."
           allowClear
           opciones={espacios}
           valorSeleccionado={espacioFiltrado ?? ""}
@@ -54,7 +55,7 @@ export function BarraFiltrosAutomatizaciones({
 
         <form onSubmit={buscar}>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Buscar Automatización por Nombre
+            Buscar por nombre
           </label>
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -62,24 +63,26 @@ export function BarraFiltrosAutomatizaciones({
                 type="text"
                 value={busquedaTemp}
                 onChange={(e) => setBusquedaTemp(e.target.value)}
-                placeholder="Escribe el nombre de la automatización..."
-                className="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none shadow-sm"
+                placeholder="Ej: Auto - Ventas, Dataflow Clientes…"
+                className="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:border-brand-600 focus:outline-none shadow-sm"
               />
               {busquedaTemp && (
                 <button
                   type="button"
                   onClick={limpiar}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 text-xs"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                 >
-                  ✕
+                  <Icon name="x" size="sm" />
                 </button>
               )}
             </div>
             <Button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4"
+              size="sm"
+              className="text-xs px-4 gap-1.5"
             >
-              🔍 Buscar
+              <Icon name="search" size="sm" />
+              Buscar
             </Button>
           </div>
         </form>

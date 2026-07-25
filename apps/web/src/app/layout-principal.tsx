@@ -1,4 +1,7 @@
 import { ErrorClienteApi } from "@/compartido/api/cliente";
+import { Avatar, inicialesDe } from "@/compartido/componentes/ui/avatar";
+import { ContextSwitcher } from "@/compartido/componentes/ui/context-switcher";
+import { Icon, IconSprite, type IconName } from "@/compartido/componentes/ui/icon";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
 import {
@@ -7,57 +10,69 @@ import {
   obtenerSesion,
 } from "@/modulos/autenticacion/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+
+// Rutas de primer nivel. Subconjunto explícito de tu routeTree → tipa sin `any`.
+type RutaNav = "/" | "/flujos" | "/automatizaciones" | "/admin/tenants";
+
+const NAVEGACION: readonly { to: RutaNav; etiqueta: string; icono: IconName; admin?: boolean }[] = [
+  { to: "/", etiqueta: "Inicio", icono: "home" },
+  { to: "/flujos", etiqueta: "Flujos", icono: "flow" },
+  { to: "/automatizaciones", etiqueta: "Automatizaciones", icono: "zap" },
+  { to: "/admin/tenants", etiqueta: "Administración", icono: "admin", admin: true },
+] as const;
+
+function HeaderLink({ to, etiqueta, icono }: { to: RutaNav; etiqueta: string; icono: IconName }) {
+  const { pathname } = useLocation();
+  const activo = to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
+  return (
+    <Link
+      to={to}
+      className={[
+        "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ease-soft font-medium",
+        activo ? "bg-brand-50 text-brand-700 font-semibold" : "text-ink-700 hover:bg-hover hover:text-ink-900",
+      ].join(" ")}
+    >
+      <Icon name={icono} size="sm" className={activo ? "text-brand-600" : "text-ink-500"} />
+      <span>{etiqueta}</span>
+    </Link>
+  );
+}
 
 export function LayoutPrincipal() {
   const navegar = useNavigate();
   const queryClient = useQueryClient();
   const ubicacion = useLocation();
   const { mostrarError } = useNotificaciones();
-  const esLogin = ubicacion.pathname === "/login";
 
-  const consulta = useQuery({
-    queryKey: ["sesion"],
-    queryFn: obtenerSesion,
-    retry: false,
-    enabled: !esLogin,
-  });
+  const esLogin = ubicacion.pathname === "/login";
+  const consulta = useQuery({ queryKey: ["sesion"], queryFn: obtenerSesion, retry: false, enabled: !esLogin });
 
   useEffect(() => {
     if (!esLogin && consulta.error instanceof ErrorClienteApi) {
-      if (consulta.error.estado === 401) {
-        navegar({ to: "/login", replace: true });
-      } else {
-        mostrarError(consulta.error.message);
-      }
+      if (consulta.error.estado === 401) navegar({ to: "/login", replace: true });
+      else mostrarError(consulta.error.message);
     }
   }, [consulta.error, esLogin, mostrarError, navegar]);
 
   const cambiarTenant = useMutation({
     mutationFn: cambiarTenantActivo,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries();
-    },
+    onSuccess: async () => { await queryClient.invalidateQueries(); },
     onError: (error: Error) => mostrarError(error.message),
   });
-
   const cerrar = useMutation({
     mutationFn: cerrarSesion,
-    onSuccess: async () => {
-      queryClient.clear();
-      navegar({ to: "/login", replace: true });
-    },
+    onSuccess: async () => { queryClient.clear(); navegar({ to: "/login", replace: true }); },
     onError: (error: Error) => mostrarError(error.message),
   });
 
   if (esLogin) return <Outlet />;
+
   if (consulta.isLoading || !consulta.data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <p className="text-gray-500" aria-live="polite">
-          Verificando sesión...
-        </p>
+      <div className="ambient flex min-h-screen items-center justify-center bg-app px-4">
+        <p className="text-ink-500" aria-live="polite">Verificando sesión…</p>
       </div>
     );
   }
@@ -69,64 +84,54 @@ export function LayoutPrincipal() {
     sesion.tenantsDisponibles.some(
       (t) => (t as { rol?: string }).rol === "admin" || (t as { rolAdministracion?: string }).rolAdministracion === "admin",
     );
+  const nombre = sesion.usuario?.nombre?.trim() || "Usuario Qlik";
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <h1 className="text-xl font-bold">Qlik Automatizaciones</h1>
-          <nav
-            className="flex items-center gap-4"
-            aria-label="Navegación principal"
-          >
+    <div className="ambient min-h-screen bg-app text-ink-900">
+      <IconSprite />
+      <div className="flex min-h-screen flex-col">
+        {/* ── Topbar / Header completo ── */}
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-8 border-b border-line-200 bg-surface/95 backdrop-blur px-8 shadow-sm">
+          {/* Logo / Marca */}
+          <div className="flex items-center gap-3 shrink-0 pr-4 border-r border-line-200">
+            <Icon name="brand" className="text-brand-600" size="lg" />
+            <span className="font-display text-[18px] font-semibold tracking-tight text-ink-900">Automatizaciones</span>
+          </div>
+
+          {/* Navegación horizontal centrada / limpia */}
+          <nav className="flex items-center gap-1.5" aria-label="Navegación principal">
+            {NAVEGACION.filter((item) => !item.admin || esAdmin).map((item) => (
+              <HeaderLink key={item.to} {...item} />
+            ))}
+          </nav>
+
+          {/* Acciones del extremo derecho (Tenant selector + usuario + logout) */}
+          <div className="ml-auto flex items-center gap-4">
             {sesion.tenantsDisponibles.length > 1 && (
-              <label className="text-sm">
-                <span className="sr-only">Tenant Qlik activo</span>
-                <select
-                  className="rounded-md border border-gray-300 bg-white px-3 py-2"
-                  value={sesion.tenantActivoId}
-                  disabled={cambiarTenant.isPending}
-                  onChange={(event) => cambiarTenant.mutate(event.target.value)}
-                >
-                  {sesion.tenantsDisponibles.map((tenant) => (
-                    <option key={tenant.id} value={tenant.id}>
-                      {tenant.nombre ?? tenant.host} ·{" "}
-                      {tenant.organizacionNombre}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <ContextSwitcher
+                tenants={sesion.tenantsDisponibles}
+                activoId={sesion.tenantActivoId}
+                cargando={cambiarTenant.isPending}
+                onCambiar={(id) => cambiarTenant.mutate(id)}
+              />
             )}
-            {esAdmin && (
-              <Button
-                variant="ghost"
-                onClick={() => navegar({ to: "/admin/tenants" })}
-              >
-                Administración
-              </Button>
-            )}
-            <Button variant="ghost" onClick={() => navegar({ to: "/flujos" })}>
-              Flujos
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navegar({ to: "/automatizaciones" })}
-            >
-              Automatizaciones
-            </Button>
-            <Button
-              variant="outline"
-              data-accion="cerrar-sesion"
-              onClick={() => cerrar.mutate()}
-            >
+
+            <div className="flex items-center gap-2.5 border-l border-line-200 pl-4">
+              <Avatar iniciales={inicialesDe(nombre)} src={sesion.usuario?.avatarUrl} tam="md" />
+              <span className="hidden text-sm font-semibold text-ink-900 lg:inline-block">{nombre}</span>
+            </div>
+
+            <Button variant="outline" size="sm" data-accion="cerrar-sesion" onClick={() => cerrar.mutate()}>
               Cerrar sesión
             </Button>
-          </nav>
-        </div>
-      </header>
-      <main className="container mx-auto px-4 py-8">
-        <Outlet />
-      </main>
+          </div>
+        </header>
+
+        {/* ── Contenido Principal (Full width aprovechando la pantalla) ── */}
+        <main className="flex-1 px-8 py-10 lg:px-16 max-w-[1400px] w-full mx-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

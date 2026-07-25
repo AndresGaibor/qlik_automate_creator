@@ -41,10 +41,10 @@ export function ModalSeleccionarTenantQlik({
             🟢
           </div>
           <h3 className="text-2xl font-bold text-gray-900">
-            Seleccionar Tenant de Qlik Cloud
+            ¿En qué entorno de Qlik quieres crear el flujo?
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Tienes acceso a múltiples entornos de Qlik Cloud. Elige a cuál deseas ir para crear o gestionar tus flujos de datos.
+            Tienes acceso a múItiples entornos de Qlik Cloud. Elige uno para ser redirigido y crear tu nuevo Dataflow.
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export function ModalSeleccionarTenantQlik({
                     </div>
                     {esActivo && (
                       <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
-                        ● Tenant Activo
+                        ● Entorno activo
                       </span>
                     )}
                   </div>
@@ -92,7 +92,7 @@ export function ModalSeleccionarTenantQlik({
                     🇺🇸 Qlik Cloud
                   </span>
                   <span className="text-green-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                    Abrir ↗
+                    Ir y crear ↗
                   </span>
                 </div>
               </a>

@@ -20,10 +20,10 @@ export function Button({
     "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50";
 
   const variantStyles = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    outline: "border border-gray-300 bg-white hover:bg-gray-100",
-    ghost: "hover:bg-gray-100",
-    destructive: "bg-red-600 text-white hover:bg-red-700",
+    default: "bg-[var(--color-brand-600)] text-white hover:bg-[var(--color-brand-700)] shadow-sm",
+    outline: "border border-[var(--color-line-200)] bg-[var(--color-surface)] text-[var(--color-ink-900)] hover:bg-[var(--color-hover)] hover:border-[var(--color-line-300)]",
+    ghost: "text-[var(--color-ink-700)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink-900)]",
+    destructive: "bg-[var(--color-danger-600)] text-white hover:opacity-90",
   };
 
   const sizeStyles = {

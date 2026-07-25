@@ -7,6 +7,7 @@ import {
 } from "@/compartido/componentes/ui/card";
 import { Pagination } from "@/compartido/componentes/ui/pagination";
 import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ResumenFlujo } from "@/modulos/flujos/api";
 
 interface Props {
@@ -34,10 +35,10 @@ export function ListaFlujos({
     return (
       <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
         <p className="text-gray-500 font-medium mb-1">
-          No hay flujos de datos disponibles.
+          No encontramos flujos de datos
         </p>
         <p className="text-xs text-gray-400">
-          Prueba realizando otra búsqueda o cambiando el filtro de espacio.
+          Cambia el filtro de espacio o la búsqueda. Los Dataflows se sincronizan desde Qlik Cloud.
         </p>
       </div>
     );
@@ -77,7 +78,8 @@ export function ListaFlujos({
                     <Button
                       asChild
                       variant="outline"
-                      className="text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-medium"
+                      size="sm"
+                      className="text-xs gap-1.5"
                     >
                       <a
                         href={construirUrlVerFlujoQlik(
@@ -88,12 +90,14 @@ export function ListaFlujos({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        👁️ Ver en Qlik Cloud ↗
+                        <Icon name="ext" size="sm" />
+                        Ver en Qlik Cloud
                       </a>
                     </Button>
                   )}
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
-                    🚀 Crear Automatización desde este Flujo
+                  <Button size="sm" className="text-xs gap-1.5">
+                    <Icon name="zap" size="sm" />
+                    Automatizar este flujo
                   </Button>
                 </div>
               </div>

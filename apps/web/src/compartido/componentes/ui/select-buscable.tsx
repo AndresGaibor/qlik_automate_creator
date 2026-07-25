@@ -1,3 +1,4 @@
+import { Icon } from "@/compartido/componentes/ui/icon";
 import { useEffect, useRef, useState } from "react";
 
 export interface OpcionSelect {
@@ -66,45 +67,47 @@ export function SelectBuscable({
 
   return (
     <div className="relative w-full" ref={contenedorRef}>
-      <label className="block text-sm font-semibold text-gray-700 mb-1">
-        {etiqueta}
-      </label>
+      {etiqueta && (
+        <label className="block text-sm font-semibold text-ink-900 mb-1.5">
+          {etiqueta}
+        </label>
+      )}
 
       {/* Botón Principal del Select */}
       <div
         onClick={() => !cargando && setAbierto(!abierto)}
-        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border bg-white cursor-pointer shadow-sm text-sm transition ${
+        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-md border bg-surface cursor-pointer shadow-card text-sm transition-all duration-150 ease-soft ${
           abierto
-            ? "border-blue-500 ring-2 ring-blue-100"
-            : "border-gray-300 hover:border-gray-400"
+            ? "border-brand-600 ring-2 ring-brand-100 shadow-panel"
+            : "border-line-200 hover:border-line-300"
         } ${cargando ? "opacity-60 cursor-not-allowed" : ""}`}
       >
-        <div className="flex items-center gap-2 truncate min-w-0">
-          <span className="text-gray-400 shrink-0">🔍</span>
+        <div className="flex items-center gap-2.5 truncate min-w-0">
+          <Icon name="cloud" size="sm" className="text-obj-600 shrink-0" />
           {cargando ? (
-            <span className="text-gray-400 font-normal">Cargando...</span>
+            <span className="text-ink-400 font-normal">Cargando...</span>
           ) : opcionActual ? (
             <div className="flex items-center gap-2 truncate min-w-0">
-              <span className="font-semibold text-gray-900 truncate">
+              <span className="font-semibold text-ink-900 truncate">
                 {opcionActual.nombre}
               </span>
               {opcionActual.tipo && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono shrink-0">
+                <span className="text-xs bg-obj-50 text-obj-600 px-2 py-0.5 rounded font-mono font-medium shrink-0">
                   {opcionActual.tipo}
                 </span>
               )}
               {opcionActual.espacioNombre && !opcionActual.tipo && (
-                <span className="text-xs text-gray-400 shrink-0">
+                <span className="text-xs text-ink-400 shrink-0">
                   {opcionActual.espacioNombre}
                 </span>
               )}
             </div>
           ) : (
-            <span className="text-gray-400 font-normal">{placeholder}</span>
+            <span className="text-ink-400 font-normal">{placeholder}</span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 ml-2 shrink-0">
+        <div className="flex items-center gap-2 ml-2 shrink-0">
           {valorSeleccionado && (
             <button
               type="button"
@@ -113,33 +116,34 @@ export function SelectBuscable({
                 onSeleccionar("");
                 setBusqueda("");
               }}
-              className="text-gray-400 hover:text-gray-600 text-xs p-1 rounded-full hover:bg-gray-100"
+              className="text-ink-400 hover:text-ink-900 p-1 rounded hover:bg-hover transition-colors"
               title="Limpiar selección"
             >
-              ✕
+              <Icon name="x" size="sm" />
             </button>
           )}
-          <span className="text-gray-400 text-xs">{abierto ? "▲" : "▼"}</span>
+          <Icon name="chev" size="sm" className={`text-ink-400 transition-transform duration-150 ${abierto ? "-rotate-90" : "rotate-90"}`} />
         </div>
       </div>
 
       {/* Menú Desplegable Buscable */}
       {abierto && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in duration-100">
+        <div className="absolute z-50 mt-1.5 w-full bg-surface border border-line-200 rounded-lg shadow-panel overflow-hidden animate-in fade-in duration-100">
           {/* Input de Búsqueda */}
-          <div className="p-2 border-b bg-gray-50">
+          <div className="p-2 border-b border-line-200 bg-app/50 relative">
+            <Icon name="search" size="sm" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
             <input
               type="text"
               autoFocus
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:border-blue-500 bg-white"
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-line-200 rounded-md bg-surface text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
             />
           </div>
 
           {/* Lista de Opciones */}
-          <div className="max-h-64 overflow-y-auto py-1 divide-y divide-gray-50">
+          <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
             {/* Opción "Todos / Limpiar" sólo si allowClear=true */}
             {allowClear && (
               <div
@@ -148,12 +152,15 @@ export function SelectBuscable({
                   setAbierto(false);
                   setBusqueda("");
                 }}
-                className={`px-3 py-2 text-sm flex items-center justify-between cursor-pointer hover:bg-blue-50 transition ${
-                  !valorSeleccionado ? "bg-blue-50/70 font-semibold text-blue-900" : "text-gray-700"
+                className={`px-3 py-2 text-sm flex items-center justify-between rounded-md cursor-pointer transition-colors ${
+                  !valorSeleccionado ? "bg-brand-50 font-semibold text-brand-700" : "text-ink-700 hover:bg-hover"
                 }`}
               >
-                <span>🌐 {placeholder}</span>
-                {!valorSeleccionado && <span className="text-blue-600 text-xs">✓</span>}
+                <span className="flex items-center gap-2">
+                  <Icon name="cloud" size="sm" className="text-ink-400" />
+                  {placeholder}
+                </span>
+                {!valorSeleccionado && <Icon name="check" size="sm" className="text-brand-600" />}
               </div>
             )}
 
@@ -168,31 +175,31 @@ export function SelectBuscable({
                       setAbierto(false);
                       setBusqueda("");
                     }}
-                    className={`px-3 py-2.5 text-sm flex items-center justify-between cursor-pointer hover:bg-blue-50 transition ${
-                      esSeleccionado ? "bg-blue-50/70 font-semibold text-blue-900" : "text-gray-700"
+                    className={`px-3 py-2 text-sm flex items-center justify-between rounded-md cursor-pointer transition-colors ${
+                      esSeleccionado ? "bg-brand-50 font-semibold text-brand-700" : "text-ink-700 hover:bg-hover hover:text-ink-900"
                     }`}
                   >
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-2 truncate">
                         <span className="truncate">{opcion.nombre}</span>
                         {opcion.tipo && (
-                          <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-mono shrink-0">
+                          <span className="text-xs bg-obj-50 text-obj-600 px-1.5 py-0.5 rounded font-mono font-medium shrink-0">
                             {opcion.tipo}
                           </span>
                         )}
                       </div>
                       {opcion.espacioNombre && (
-                        <span className="text-xs text-gray-400 truncate">{opcion.espacioNombre}</span>
+                        <span className="text-xs text-ink-400 truncate">{opcion.espacioNombre}</span>
                       )}
                     </div>
                     {esSeleccionado && (
-                      <span className="text-blue-600 font-bold text-xs shrink-0 ml-2">✓</span>
+                      <Icon name="check" size="sm" className="text-brand-600 shrink-0 ml-2" />
                     )}
                   </div>
                 );
               })
             ) : (
-              <div className="px-3 py-4 text-xs text-center text-gray-400">
+              <div className="px-3 py-4 text-xs text-center text-ink-400">
                 {textoVacio}
               </div>
             )}
@@ -201,11 +208,10 @@ export function SelectBuscable({
       )}
 
       {error && (
-        <span className="mt-1 block text-xs text-red-600">
+        <span className="mt-1 block text-xs text-danger-600">
           No se pudieron cargar las opciones.
         </span>
       )}
     </div>
   );
 }
-

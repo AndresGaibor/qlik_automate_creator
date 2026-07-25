@@ -1,6 +1,9 @@
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { estaEnCurso } from "@/compartido/utiles/estados-ejecucion";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { PageHeader } from "@/compartido/componentes/ui/page-header";
+import { Icon } from "@/compartido/componentes/ui/icon";
+import { Link } from "@tanstack/react-router";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type DetalleAutomatizacion,
@@ -18,7 +21,7 @@ interface Props {
 }
 
 export function PaginaDetalleAutomatizacion({ id }: Props) {
-  const { mostrarError } = useNotificaciones();
+  const { mostrarError, mostrarExito } = useNotificaciones();
   const queryClient = useQueryClient();
 
   const { data: sesion } = useQuery({
@@ -55,6 +58,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   const mutationEjecutar = useMutation({
     mutationFn: () => ejecutarAutomatizacion(id),
     onSuccess: () => {
+      mostrarExito("Ejecución iniciada correctamente");
       queryClient.invalidateQueries({ queryKey: ["automatizacion", id] });
     },
     onError: (err: Error) => {
@@ -65,6 +69,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   const mutationDetener = useMutation({
     mutationFn: (runId: string) => detenerEjecucion(id, runId),
     onSuccess: () => {
+      mostrarExito("Ejecución detenida");
       queryClient.invalidateQueries({ queryKey: ["automatizacion", id] });
     },
     onError: (err: Error) => {
@@ -72,12 +77,18 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     },
   });
 
-  if (cargandoDetalle) return <div>Cargando automatización...</div>;
+  if (cargandoDetalle) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <p className="text-ink-500 font-medium">Cargando automatización…</p>
+      </div>
+    );
+  }
 
   if (errorDetalle) {
     return (
       <EstadoError
-        mensaje={errorDetalleMsg?.message ?? "Error al cargar"}
+        mensaje={errorDetalleMsg?.message ?? "Error al cargar el detalle de la automatización"}
         onReintentar={() =>
           queryClient.invalidateQueries({ queryKey: ["automatizacion", id] })
         }
@@ -94,10 +105,23 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     : null;
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">{auto.nombre}</h2>
+    <div className="space-y-6">
+      {/* Botón Volver */}
+      <div>
+        <Link
+          to="/automatizaciones"
+          className="inline-flex items-center gap-2 text-sm text-ink-500 hover:text-ink-900 transition-colors font-medium"
+        >
+          <Icon name="chev" size="sm" className="rotate-180" />
+          Volver a automatizaciones
+        </Link>
       </div>
+
+      {/* Encabezado con PageHeader */}
+      <PageHeader
+        title={auto.nombre}
+        description={`Orquestación configurada para el espacio ${auto.espacioNombre || "Personal"}`}
+      />
 
       <TarjetaDetalleAutomatizacion
         automatizacion={auto}

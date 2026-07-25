@@ -63,14 +63,14 @@ export function PaginaListaTenants() {
   return (
     <PageLayout>
       <PageHeader
-        title="Administración de Organizaciones"
-        description="Gestiona los grupos de trabajo, conexiones con Qlik Cloud y usuarios autorizados."
+        title="Organizaciones"
+        description="Cada organización agrupa un entorno de Qlik Cloud, sus usuarios autorizados y la configuración de Impala."
         actions={
           <Button
             onClick={() => setModalCrear(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+            font-medium
           >
-            + Nueva Organización
+            + Nueva organización
           </Button>
         }
       />
@@ -79,43 +79,44 @@ export function PaginaListaTenants() {
         {tenants?.map((tenant) => (
           <Card
             key={tenant.id}
-            className="hover:shadow-md transition border-gray-200"
+            className="hover:shadow-card transition border-[var(--color-line-200)] bg-[var(--color-surface)]"
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold text-gray-900">
+                <CardTitle className="text-base font-semibold text-[var(--color-ink-900)]">
                   {tenant.nombre}
                 </CardTitle>
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     tenant.estado === "activa"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
+                      ? "bg-[var(--color-brand-50)] text-[var(--color-brand-700)]"
+                      : "bg-red-50 text-[var(--color-danger-600)]"
                   }`}
                 >
-                  {tenant.estado === "activa" ? "● Activa" : "● Inactiva"}
+                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                  {tenant.estado === "activa" ? "Activa" : "Inactiva"}
                 </span>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="text-sm text-gray-600 grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-md">
+                <div className="text-xs text-[var(--color-ink-700)] grid grid-cols-2 gap-2 bg-[var(--color-app)] p-3 rounded-md border border-[var(--color-line-200)]">
                   <div>
-                    <span className="text-xs text-gray-400 block">Usuarios Autorizados</span>
-                    <span className="font-semibold text-gray-800">
-                      👥 {tenant.cantidadUsuarios} usuario(s)
+                    <span className="text-[11px] text-[var(--color-ink-500)] block font-sans">Usuarios Autorizados</span>
+                    <span className="font-semibold text-[var(--color-ink-900)]">
+                      {tenant.cantidadUsuarios} {tenant.cantidadUsuarios === 1 ? "usuario" : "usuarios"}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs text-gray-400 block">Identificador</span>
-                    <span className="font-mono text-xs text-gray-700">
+                    <span className="text-[11px] text-[var(--color-ink-500)] block font-sans">Identificador</span>
+                    <span className="font-mono text-xs text-[var(--color-ink-700)]">
                       {tenant.slug}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs font-mono text-[var(--color-ink-500)]">
                     Registrado: {new Date(tenant.creadoEn).toLocaleDateString()}
                   </span>
                   <div className="flex gap-2">
@@ -128,14 +129,13 @@ export function PaginaListaTenants() {
                           params: { tenantId: tenant.id },
                         })
                       }
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
-                      ⚙️ Gestionar Usuarios & Qlik
+                      Gestionar
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:bg-red-50"
+                      className="text-[var(--color-danger-600)] hover:bg-red-50"
                       onClick={() => {
                         setConfirmDialog({
                           open: true,
@@ -156,10 +156,10 @@ export function PaginaListaTenants() {
         {(!tenants || tenants.length === 0) && (
           <div className="col-span-full text-center bg-white border border-dashed border-gray-300 rounded-lg py-12">
             <p className="text-gray-500 font-medium mb-2">
-              No hay organizaciones registradas
+              Aún no has creado ninguna organización
             </p>
             <p className="text-xs text-gray-400 mb-4">
-              Crea tu primera organización para conectar un tenant de Qlik Cloud y agregar usuarios.
+              Crea tu primera organización para conectar un entorno de Qlik Cloud y agregar usuarios.
             </p>
             <Button size="sm" onClick={() => setModalCrear(true)}>
               + Crear Organización

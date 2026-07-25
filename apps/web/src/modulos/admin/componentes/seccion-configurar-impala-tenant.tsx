@@ -1,5 +1,6 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TenantQlik } from "@/modulos/admin/api";
 import { configurarImpalaTenant } from "@/modulos/admin/api";
@@ -41,118 +42,114 @@ export function SeccionConfigurarImpalaTenant({
       queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
-      mostrarExito("Conexión Directa a Impala configurada correctamente");
+      mostrarExito("Conexión a Impala guardada correctamente");
     },
     onError: (err: Error) => mostrarError(err.message),
   });
 
-  return (
-    <div className="pt-3 border-t mt-3 space-y-3 bg-blue-50/30 p-3 rounded-lg border border-blue-100">
-      <div className="flex items-center justify-between">
-        <h5 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
-          🐘 Conexión Directa Servidor Impala (Native Impala)
-        </h5>
-        {tenantQlik.impalaHost ? (
-          <span className="text-[11px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">
-            ● Host Activo: {tenantQlik.impalaHost}:
-            {tenantQlik.impalaPort || 21050}
-          </span>
-        ) : (
-          <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">
-            ● Sin Servidor Impala Registrado
-          </span>
-        )}
-      </div>
+  const necesitaCredenciales =
+    authMechanism === "PLAIN" || authMechanism === "LDAP";
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Host / IP de Impala *
+  return (
+    <div className="space-y-3">
+      {/* Fila 1: host + puerto */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="col-span-2">
+          <label className="block text-xs font-semibold text-ink-700 mb-1">
+            Host o IP del servidor{" "}
+            <span className="text-danger-600">*</span>
           </label>
           <input
             type="text"
             value={host}
             onChange={(e) => setHost(e.target.value)}
-            placeholder="ej: impala.miempresa.com o 10.0.1.50"
-            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+            placeholder="ej: impala.empresa.com o 10.0.1.50"
+            className="w-full px-3 py-1.5 text-xs border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
             required
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Puerto (ej: 21050)
+          <label className="block text-xs font-semibold text-ink-700 mb-1">
+            Puerto
           </label>
           <input
             type="number"
             value={port}
             onChange={(e) => setPort(Number(e.target.value))}
             placeholder="21050"
-            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+            className="w-full px-3 py-1.5 text-xs border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Autenticación (Auth)
-          </label>
-          <select
-            value={authMechanism}
-            onChange={(e) => setAuthMechanism(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none bg-white"
-          >
-            <option value="NOSASL">NOSASL (Sin auth)</option>
-            <option value="PLAIN">PLAIN (Usuario/Contraseña)</option>
-            <option value="LDAP">LDAP</option>
-            <option value="KERBEROS">KERBEROS</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Usuario Impala (Opcional)
-          </label>
-          <input
-            type="text"
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-            placeholder="ej: impala_user"
-            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Contraseña Impala (Opcional)
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Contraseña..."
-            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Base de Datos Impala
+          <label className="block text-xs font-semibold text-ink-700 mb-1">
+            Base de datos
           </label>
           <input
             type="text"
             value={database}
             onChange={(e) => setDatabase(e.target.value)}
-            placeholder="ej: default o ventas"
-            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+            placeholder="ej: default"
+            className="w-full px-3 py-1.5 text-xs border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
           />
         </div>
       </div>
 
-      <div className="flex justify-end">
+      {/* Fila 2: autenticación */}
+      <div>
+        <label className="block text-xs font-semibold text-ink-700 mb-1">
+          Método de autenticación
+        </label>
+        <select
+          value={authMechanism}
+          onChange={(e) => setAuthMechanism(e.target.value)}
+          className="w-full px-3 py-1.5 text-xs border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
+        >
+          <option value="NOSASL">Sin autenticación (NOSASL)</option>
+          <option value="PLAIN">Usuario / Contraseña (PLAIN)</option>
+          <option value="LDAP">LDAP</option>
+          <option value="KERBEROS">Kerberos</option>
+        </select>
+      </div>
+
+      {/* Fila 3: credenciales — solo si el método las requiere */}
+      {necesitaCredenciales && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs font-semibold text-ink-700 mb-1">
+              Usuario
+            </label>
+            <input
+              type="text"
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              placeholder="ej: impala_user"
+              className="w-full px-3 py-1.5 text-xs border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-ink-700 mb-1">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña de Impala"
+              className="w-full px-3 py-1.5 text-xs border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-end pt-1">
         <Button
           size="sm"
           disabled={!host.trim() || guardarImpala.isPending}
           onClick={() => guardarImpala.mutate()}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium"
+          className="gap-1.5 text-xs"
         >
-          {guardarImpala.isPending
-            ? "Guardando..."
-            : "💾 Guardar Conexión Directa Impala"}
+          <Icon name="check" size="sm" />
+          {guardarImpala.isPending ? "Guardando…" : "Guardar conexión Impala"}
         </Button>
       </div>
     </div>

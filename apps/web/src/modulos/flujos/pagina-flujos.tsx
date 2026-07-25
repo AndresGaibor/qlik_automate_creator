@@ -80,14 +80,12 @@ export function PaginaFlujos() {
           tenants.length > 1 ? (
             <Button
               onClick={() => setModalTenantsAbierto(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
             >
               + Crear flujo en Qlik Cloud ↗
             </Button>
           ) : targetHost ? (
             <Button
               asChild
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
             >
               <a href={targetUrlCrear} target="_blank" rel="noopener noreferrer">
                 + Crear flujo en Qlik Cloud ↗

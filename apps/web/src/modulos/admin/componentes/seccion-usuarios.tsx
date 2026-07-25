@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
 import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import {
   Card,
   CardContent,
@@ -44,49 +45,49 @@ export function SeccionUsuarios({
 
   return (
     <>
-      <Card className="border-gray-200">
-        <CardHeader className="border-b bg-gray-50/50 pb-4">
+      <Card className="border-line-200 bg-surface shadow-card">
+        <CardHeader className="border-b border-line-200 bg-app/30 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                👥 Integrantes y Permisos de la Organización
+              <CardTitle className="font-display text-lg font-semibold text-ink-900 flex items-center gap-2">
+                <Icon name="users" className="text-brand-600" />
+                Integrantes y Permisos de la Organización
               </CardTitle>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Los usuarios registrados aquí podrán ingresar mediante su
-                correo. Un usuario puede pertenecer a múltiples organizaciones
-                simultáneamente.
+              <p className="text-xs text-ink-500 mt-1">
+                Los usuarios registrados aquí podrán ingresar con su correo corporativo. Un usuario puede pertenecer a múltiples organizaciones al mismo tiempo.
               </p>
             </div>
             <Button
               size="sm"
               onClick={onAbrirModalAgregar}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              className="gap-1.5 shrink-0"
             >
-              + Autorizar Usuario
+              <Icon name="plus" size="sm" />
+              Autorizar Usuario
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b text-xs text-gray-400 uppercase bg-gray-5">
-                  <th className="p-3 font-semibold">Usuario</th>
-                  <th className="p-3 font-semibold">Correo Electrónico</th>
-                  <th className="p-3 font-semibold">Rol / Permisos</th>
-                  <th className="p-3 font-semibold text-right">Acciones</th>
+                <tr className="border-b border-line-200 text-xs text-ink-500 uppercase tracking-wider bg-app/60 font-semibold">
+                  <th className="py-3 px-4 font-semibold">Usuario</th>
+                  <th className="py-3 px-4 font-semibold">Correo Electrónico</th>
+                  <th className="py-3 px-4 font-semibold">Rol / Permisos</th>
+                  <th className="py-3 px-4 font-semibold text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-line-200">
                 {usuarios.map((usr) => (
-                  <tr key={usr.id} className="hover:bg-gray-50/50">
-                    <td className="p-3 font-medium text-gray-900">
+                  <tr key={usr.id} className="hover:bg-hover transition-colors">
+                    <td className="py-3 px-4 font-medium text-ink-900">
                       {usr.nombre}
                     </td>
-                    <td className="p-3 text-gray-600 font-mono text-xs">
+                    <td className="py-3 px-4 text-ink-600 font-mono text-xs">
                       {usr.correo || "—"}
                     </td>
-                    <td className="p-3">
+                    <td className="py-3 px-4">
                       <select
                         value={usr.rol}
                         onChange={(e) => {
@@ -98,49 +99,36 @@ export function SeccionUsuarios({
                             });
                           }
                         }}
-                        disabled={actualizar.isPending}
-                        className="rounded border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium shadow-sm focus:border-blue-500 focus:outline-none"
+                        className="rounded border border-line-200 bg-surface px-2.5 py-1 text-xs text-ink-900 focus:border-brand-600 focus:outline-none"
                       >
-                        <option value="admin">
-                          🛡️ Administrador del Tenant
-                        </option>
-                        <option value="usuario">👤 Usuario Final</option>
+                        <option value="usuario">Usuario Final</option>
+                        <option value="admin">Administrador</option>
                       </select>
                     </td>
-                    <td className="p-3 text-right">
+                    <td className="py-3 px-4 text-right">
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-red-600 hover:bg-red-50 text-xs"
-                        onClick={() => {
+                        className="text-danger-600 hover:bg-red-50 text-xs"
+                        onClick={() =>
                           setConfirmDialog({
                             open: true,
-                            mensaje: `¿Remover a ${usr.correo ?? usr.nombre} de esta organización?`,
+                            mensaje: `¿Quitar el acceso a "${usr.nombre}" (${usr.correo})? Esta persona dejará de poder iniciar sesión en esta organización.`,
                             onConfirm: () => onEliminarUsuario(usr.id),
-                          });
-                        }}
-                        disabled={eliminar.isPending}
+                          })
+                        }
                       >
                         Quitar
                       </Button>
                     </td>
                   </tr>
                 ))}
-                {usuarios.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="p-6 text-center text-gray-400 text-xs italic"
-                    >
-                      No hay usuarios autorizados todavía en esta organización.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
+
       <ModalAgregarUsuario
         open={modalAgregar.open}
         onClose={modalAgregar.onClose}
@@ -150,15 +138,13 @@ export function SeccionUsuarios({
 
       <ConfirmDialog
         open={confirmDialog.open}
-        mensaje={confirmDialog.mensaje}
-        titulo="Remover usuario"
-        confirmText="Remover"
-        variant="danger"
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
         onConfirm={() => {
           confirmDialog.onConfirm();
-          setConfirmDialog({ ...confirmDialog, open: false });
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
         }}
-        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+        titulo="Quitar acceso al usuario"
+        mensaje={confirmDialog.mensaje}
       />
     </>
   );

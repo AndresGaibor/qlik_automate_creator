@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
 
 interface Props {
@@ -16,8 +17,8 @@ export function ModalAgregarUsuario({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl border">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
+      <div className="bg-surface rounded-xl p-6 sm:p-8 w-full max-w-md shadow-panel border border-line-200">
         <AgregarUsuarioForm onAgregar={onAgregar} onClose={onClose} isPending={isPending} />
       </div>
     </div>
@@ -45,19 +46,17 @@ function AgregarUsuarioForm({
 
   return (
     <>
-      <h3 className="text-lg font-bold text-gray-900 mb-1">
+      <h3 className="font-display text-xl font-semibold text-ink-900 mb-1">
         Autorizar Usuarios
       </h3>
-      <p className="text-xs text-gray-500 mb-4">
-        Puedes ingresar uno o varios correos electrónicos separados por coma (
-        <code>,</code>) o punto y coma (<code>;</code>). El nombre real se
-        obtendrá automáticamente cuando el usuario ingrese por primera vez.
+      <p className="text-xs text-ink-500 mb-5 leading-relaxed">
+        Ingresa uno o varios correos electrónicos separados por coma (<code>,</code>) o punto y coma (<code>;</code>). El nombre real se obtendrá automáticamente al ingresar.
       </p>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Correo(s) Electrónico(s) <span className="text-red-500">*</span>
+          <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+            Correo(s) Electrónico(s) <span className="text-danger-600">*</span>
           </label>
           <textarea
             rows={3}
@@ -65,12 +64,12 @@ function AgregarUsuarioForm({
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
             placeholder="ej: usuario1@empresa.com, usuario2@empresa.com"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-md border border-line-200 bg-surface px-3 py-2 text-sm text-ink-900 focus:border-brand-600 focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label className="block text-xs font-semibold text-ink-700 mb-1.5">
             Rol en esta Organización
           </label>
           <select
@@ -78,14 +77,10 @@ function AgregarUsuarioForm({
             onChange={(e) =>
               setRol(e.target.value as "admin" | "usuario")
             }
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-md border border-line-200 bg-surface px-3 py-2 text-sm text-ink-900 focus:border-brand-600 focus:outline-none"
           >
-            <option value="usuario">
-              👤 Usuario (Crea y ejecuta automatizaciones)
-            </option>
-            <option value="admin">
-              🛡️ Administrador (Gestiona usuarios y Qlik)
-            </option>
+            <option value="usuario">Usuario (Crea y ejecuta automatizaciones)</option>
+            <option value="admin">Administrador (Gestiona usuarios y Qlik)</option>
           </select>
         </div>
       </div>
@@ -97,13 +92,10 @@ function AgregarUsuarioForm({
         <Button
           onClick={handleSubmit}
           disabled={!correo.trim() || isPending}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
-          {isPending ? "Guardando..." : "Autorizar Usuario(s)"}
+          {isPending ? "Guardando…" : "Autorizar Usuario(s)"}
         </Button>
       </div>
     </>
   );
 }
-
-import { useState } from "react";

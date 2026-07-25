@@ -13,12 +13,11 @@ export function AlertaConfiguracionTenant({ onVolver }: Props) {
         <span className="text-3xl">⚠️</span>
         <div>
           <h3 className="font-semibold text-amber-900 text-base">
-            Automatización base no configurada
+            Falta configurar la plantilla base
           </h3>
           <p className="text-sm text-amber-800 mt-0.5">
-            El tenant no tiene configurada una{" "}
-            <strong>automatización base (plantilla)</strong>. Sin ella no se
-            pueden crear nuevas automatizaciones.
+            Para poder crear automatizaciones, el administrador primero debe configurar una{" "}
+            <strong>automatización base (plantilla)</strong> en la sección de administración.
           </p>
         </div>
       </div>
@@ -27,7 +26,7 @@ export function AlertaConfiguracionTenant({ onVolver }: Props) {
           href="/admin"
           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
         >
-          ⚙️ Ir a Administración
+          ⚙️ Ir a Administración a configurarla
         </a>
         <Button variant="outline" onClick={onVolver}>
           ← Volver

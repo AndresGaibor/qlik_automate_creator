@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
 import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/compartido/componentes/ui/card";
 import type { DetalleTenant } from "../api";
 
@@ -32,81 +31,99 @@ export function SeccionInfoTenant({
 
   return (
     <>
-      <Card className="border-gray-200">
-        <CardHeader className="border-b bg-gray-50/50 pb-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-2xl font-bold text-gray-900">
-                  {tenant.nombre}
-                </CardTitle>
+      <div className="space-y-4">
+        {/* Card: datos básicos */}
+        <Card className="border-line-200 bg-surface shadow-card">
+          <CardContent className="pt-5 pb-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+              {/* Info */}
+              <div className="space-y-3">
+                {/* Nombre editable */}
+                <div>
+                  <p className="text-xs font-semibold text-ink-500 mb-1.5">
+                    Nombre de la organización
+                  </p>
+                  <NombreEditor
+                    nombre={tenant.nombre}
+                    isPending={actualizar.isPending}
+                    onActualizarNombre={onActualizarNombre}
+                  />
+                </div>
+
+                {/* Slug */}
+                <div>
+                  <p className="text-xs font-semibold text-ink-500 mb-1">
+                    Identificador interno (slug)
+                  </p>
+                  <code className="inline-block bg-app border border-line-200 px-2 py-1 rounded font-mono text-xs text-ink-700">
+                    {tenant.slug}
+                  </code>
+                </div>
+              </div>
+
+              {/* Acción de estado */}
+              <div className="flex flex-col items-start sm:items-end gap-2">
+                <p className="text-xs text-ink-500">Estado actual</p>
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mb-1 ${
                     tenant.estado === "activa"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
+                      ? "bg-brand-50 text-brand-700 border border-brand-100"
+                      : "bg-red-50 text-danger-600 border border-red-100"
                   }`}
                 >
-                  {tenant.estado === "activa" ? "● Activa" : "● Suspendida"}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      tenant.estado === "activa"
+                        ? "bg-brand-600 animate-dot-pulse"
+                        : "bg-danger-600"
+                    }`}
+                  />
+                  {tenant.estado === "activa" ? "Activa" : "Suspendida"}
                 </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={
+                    tenant.estado === "activa"
+                      ? "text-danger-600 hover:bg-red-50 border-red-200 text-xs"
+                      : "text-brand-700 hover:bg-brand-50 border-brand-200 text-xs"
+                  }
+                  onClick={() => {
+                    const nuevoEstado =
+                      tenant.estado === "activa" ? "suspendida" : "activa";
+                    setConfirmDialog({
+                      open: true,
+                      mensaje:
+                        nuevoEstado === "suspendida"
+                          ? `¿Desactivar "${tenant.nombre}"? Los usuarios no podrán iniciar sesión mientras esté suspendida.`
+                          : `¿Activar "${tenant.nombre}"? Los usuarios autorizados podrán volver a iniciar sesión.`,
+                      onConfirm: () => onActualizarEstado(nuevoEstado),
+                    });
+                  }}
+                >
+                  <Icon
+                    name={tenant.estado === "activa" ? "pause" : "play"}
+                    size="sm"
+                  />
+                  {tenant.estado === "activa"
+                    ? "Desactivar"
+                    : "Activar"}
+                </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Identificador del sistema:{" "}
-                <code className="bg-gray-100 px-1 py-0.5 rounded font-mono">
-                  {tenant.slug}
-                </code>
-              </p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className={
-                  tenant.estado === "activa"
-                    ? "text-red-700 hover:bg-red-50 border-red-200"
-                    : "text-green-700 hover:bg-green-50 border-green-200"
-                }
-                onClick={() => {
-                  const nuevoEstado =
-                    tenant.estado === "activa" ? "suspendida" : "activa";
-                  setConfirmDialog({
-                    open: true,
-                    mensaje: `¿Deseas ${
-                      nuevoEstado === "suspendida"
-                        ? "suspender/desactivar"
-                        : "activar"
-                    } esta organización?`,
-                    onConfirm: () => onActualizarEstado(nuevoEstado),
-                  });
-                }}
-              >
-                {tenant.estado === "activa"
-                  ? "⏸️ Desactivar Organización"
-                  : "▶️ Activar Organización"}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <NombreEditor
-            nombre={tenant.nombre}
-            isPending={actualizar.isPending}
-            onActualizarNombre={onActualizarNombre}
-          />
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <ConfirmDialog
         open={confirmDialog.open}
-        mensaje={confirmDialog.mensaje}
-        titulo="Confirmar cambio de estado"
-        confirmText="Confirmar"
-        variant="default"
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
         onConfirm={() => {
           confirmDialog.onConfirm();
-          setConfirmDialog({ ...confirmDialog, open: false });
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
         }}
-        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+        titulo="Cambiar estado de la organización"
+        mensaje={confirmDialog.mensaje}
       />
     </>
   );
@@ -122,46 +139,54 @@ function NombreEditor({
   onActualizarNombre: (nombre: string) => void;
 }) {
   const [editando, setEditando] = useState(false);
-  const [nombreEditado, setNombreEditado] = useState("");
+  const [nuevoNombre, setNuevoNombre] = useState(nombre);
 
-  if (!editando) {
+  function guardar() {
+    if (nuevoNombre.trim() && nuevoNombre.trim() !== nombre) {
+      onActualizarNombre(nuevoNombre.trim());
+    }
+    setEditando(false);
+  }
+
+  if (editando) {
     return (
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => {
-          setNombreEditado(nombre);
-          setEditando(true);
-        }}
-      >
-        ✏️ Editar Nombre
-      </Button>
+      <div className="flex items-center gap-2 max-w-sm">
+        <input
+          type="text"
+          value={nuevoNombre}
+          autoFocus
+          onChange={(e) => setNuevoNombre(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") guardar();
+            if (e.key === "Escape") { setNuevoNombre(nombre); setEditando(false); }
+          }}
+          className="flex-1 rounded-md border border-line-200 px-3 py-1.5 text-sm font-semibold text-ink-900 focus:border-brand-600 focus:outline-none"
+        />
+        <Button size="sm" onClick={guardar} disabled={isPending}>
+          Guardar
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => { setNuevoNombre(nombre); setEditando(false); }}
+        >
+          Cancelar
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="flex gap-2 items-center bg-blue-50/50 p-4 rounded-lg border border-blue-100">
-      <input
-        type="text"
-        value={nombreEditado}
-        onChange={(e) => setNombreEditado(e.target.value)}
-        className="border rounded-md px-3 py-1.5 text-sm w-full max-w-sm"
-        placeholder="Nombre de la organización"
-      />
-      <Button
-        size="sm"
-        className="bg-blue-600 text-white hover:bg-blue-700"
-        onClick={() => {
-          onActualizarNombre(nombreEditado.trim());
-          setEditando(false);
-        }}
-        disabled={isPending || !nombreEditado.trim()}
+    <div className="flex items-center gap-2">
+      <span className="font-semibold text-ink-900 text-base">{nombre}</span>
+      <button
+        type="button"
+        onClick={() => setEditando(true)}
+        className="text-ink-400 hover:text-ink-700 transition-colors"
+        title="Editar nombre"
       >
-        Guardar
-      </Button>
-      <Button size="sm" variant="ghost" onClick={() => setEditando(false)}>
-        Cancelar
-      </Button>
+        <Icon name="edit" size="sm" />
+      </button>
     </div>
   );
 }

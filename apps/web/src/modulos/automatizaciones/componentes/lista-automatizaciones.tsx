@@ -8,6 +8,7 @@ import {
 import { claseEstado, estadoVisual } from "@/compartido/utiles/automatizaciones";
 import { formatearFechaSeguro } from "@/compartido/utiles/formateador-fechas";
 import { construirUrlVerAutomatizacionQlik } from "@/compartido/utiles/qlik-urls";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ResumenAutomatizacion } from "@/modulos/automatizaciones/api";
 
 interface Props {
@@ -30,14 +31,14 @@ export function ListaAutomatizaciones({
     return (
       <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
         <p className="text-gray-500 font-medium mb-1">
-          No hay automatizaciones para mostrar en este espacio.
+          No hay automatizaciones aquí
         </p>
         <p className="text-xs text-gray-400 mb-4">
-          Prueba realizando otra búsqueda o creando una nueva automatización.
+          Intenta cambiar el espacio o la búsqueda, o crea una automatización nueva.
         </p>
         <Button size="sm" asChild className="bg-blue-600 text-white">
           <a href={`/automatizaciones/nueva${busqueda}`}>
-            + Crear Automatización
+            + Crear mi primera automatización
           </a>
         </Button>
       </div>
@@ -53,7 +54,7 @@ export function ListaAutomatizaciones({
               <CardTitle className="text-lg font-bold">
                 <a
                   href={`/automatizaciones/${auto.id}${busqueda}`}
-                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                  className="text-ink-900 hover:text-brand-600 transition-colors"
                 >
                   {auto.nombre}
                 </a>
@@ -69,25 +70,27 @@ export function ListaAutomatizaciones({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-gray-600 bg-gray-50 p-3 rounded-md w-full max-w-2xl">
                 <div>
-                  <span className="text-gray-400 block">Modo Disparador</span>
-                  <span className="font-semibold text-gray-800">
-                    ⚡ {auto.modoEjecucion || "Manual"}
+                  <span className="text-gray-400 block">Modo de ejecución</span>
+                  <span className="font-semibold text-gray-800 flex items-center gap-1 mt-0.5">
+                    <Icon name="zap" size="sm" className="text-brand-600" />
+                    {auto.modoEjecucion || "Manual"}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-400 block">Espacio</span>
                   <span className="font-semibold text-gray-800 truncate block">
-                    📁 {auto.espacioNombre || "Personal"}
+                    {auto.espacioNombre || "Espacio personal"}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-400 block">Propietario</span>
-                  <span className="font-semibold text-gray-800 truncate block">
-                    👤 {auto.propietarioNombre}
+                  <span className="font-semibold text-gray-800 truncate flex items-center gap-1 mt-0.5">
+                    <Icon name="users" size="sm" className="text-ink-400" />
+                    {auto.propietarioNombre}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block">Modificado</span>
+                  <span className="text-gray-400 block">Última modificación</span>
                   <span className="font-mono text-gray-700">
                     {formatearFechaSeguro(auto.modificadoEn)}
                   </span>
@@ -98,7 +101,8 @@ export function ListaAutomatizaciones({
                 <Button
                   asChild
                   variant="outline"
-                  className="text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-medium"
+                  size="sm"
+                  className="text-xs gap-1.5"
                 >
                   <a
                     href={construirUrlVerAutomatizacionQlik(
@@ -109,25 +113,29 @@ export function ListaAutomatizaciones({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    👁️ Ver en Qlik Cloud ↗
+                    <Icon name="ext" size="sm" />
+                    Abrir en Qlik Cloud
                   </a>
                 </Button>
                 <Button
                   variant="outline"
+                  size="sm"
                   data-accion="ejecutar"
                   disabled={!auto.puedeEjecutar || idEjecutando === auto.id}
                   onClick={() => onEjecutar(auto.id)}
-                  className="text-xs border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
+                  className="text-xs gap-1.5"
                 >
+                  <Icon name="play" size="sm" className="text-brand-600" />
                   {idEjecutando === auto.id
-                    ? "⏳ Ejecutando…"
+                    ? "Ejecutando…"
                     : auto.ejecucionActiva
-                      ? "▶️ En ejecución"
-                      : "▶️ Ejecutar"}
+                      ? "En ejecución"
+                      : "Ejecutar"}
                 </Button>
-                <Button variant="outline" asChild className="text-xs">
+                <Button variant="outline" size="sm" asChild className="text-xs gap-1.5">
                   <a href={`/automatizaciones/${auto.id}${busqueda}`}>
-                    ⚙️ Editar
+                    <Icon name="edit" size="sm" />
+                    Ver detalle
                   </a>
                 </Button>
               </div>

@@ -1,9 +1,11 @@
 import { Button } from "@/compartido/componentes/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/compartido/componentes/ui/card";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
 import type { ConfiguracionTenant, TablaImpala } from "@/modulos/automatizaciones/api";
 import type { ResumenFlujo } from "@qlik/contratos";
 import { type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
 
 interface Props {
   flujoId: string;
@@ -59,26 +61,37 @@ export function FormularioCrearAutomatizacion({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      {/* Enlace Volver */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Nueva Automatización</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Selecciona un Flujo de Datos (Dataflow) de Qlik y la tabla de destino
-          Impala para orquestar la ejecución automáticamente.
+        <Link
+          to="/automatizaciones"
+          className="inline-flex items-center gap-2 text-sm text-ink-500 hover:text-ink-900 transition-colors font-medium"
+        >
+          <Icon name="chev" size="sm" className="rotate-180" />
+          Volver a automatizaciones
+        </Link>
+      </div>
+
+      <div>
+        <h2 className="font-display text-2xl font-semibold text-ink-900 tracking-tight">Crear nueva automatización</h2>
+        <p className="mt-1 text-sm text-ink-500">
+          Elige el Dataflow de Qlik que quieres automatizar y la tabla de Impala donde se escribirán los datos. El nombre se sugiere automáticamente.
         </p>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-        <span>✅</span>
+      <div className="flex items-center gap-2 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-3.5 py-2.5 font-medium shadow-sm">
+        <Icon name="check" size="sm" className="text-brand-600 shrink-0" />
         <span>
           Plantilla base:{" "}
-          <strong>
+          <strong className="font-semibold text-brand-900">
             {configTenant?.automatizacionBaseNombre ??
-              configTenant?.automatizacionBaseIdQlik}
+              configTenant?.automatizacionBaseIdQlik ??
+              "Configurada por el administrador"}
           </strong>
         </span>
         {espacioId && (
           <>
-            <span className="text-gray-300">·</span>
+            <span className="text-brand-300">·</span>
             <span>
               Espacio destino: <strong>{espacioId}</strong>
             </span>
@@ -86,19 +99,20 @@ export function FormularioCrearAutomatizacion({
         )}
       </div>
 
-      <Card className="border-gray-200">
-        <CardHeader className="border-b bg-gray-50/50 pb-4">
-          <CardTitle className="text-lg font-bold text-gray-900">
-            Configuración del Orquestador
+      <Card className="border-line-200 bg-surface shadow-card">
+        <CardHeader className="border-b border-line-200 bg-app/30 pb-4">
+          <CardTitle className="font-display text-lg font-semibold text-ink-900 flex items-center gap-2">
+            <Icon name="zap" className="text-brand-600" />
+            Configura tu automatización
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
           <form className="space-y-6" onSubmit={enviar}>
             <SelectBuscable
-              etiqueta="1. Seleccionar Flujo de Datos (Dataflow de Qlik Cloud)"
-              placeholder="Selecciona un flujo de datos..."
-              searchPlaceholder="Buscar flujo por nombre o espacio..."
-              emptyText="No se encontraron flujos que coincidan con la búsqueda"
+              etiqueta="1. ¿Qué Dataflow quieres automatizar?"
+              placeholder="Selecciona un flujo de datos…"
+              searchPlaceholder="Busca por nombre o espacio…"
+              emptyText="No encontramos flujos con ese nombre. Verifica el nombre e inténtalo de nuevo."
               opciones={opcionesFlujos}
               valorSeleccionado={flujoId}
               onSeleccionar={setFlujoId}
@@ -107,10 +121,10 @@ export function FormularioCrearAutomatizacion({
 
             <div>
               <SelectBuscable
-                etiqueta="2. Seleccionar Tabla de Destino (Impala)"
-                placeholder="Selecciona una tabla de destino..."
-                searchPlaceholder="Buscar tabla Impala por nombre..."
-                emptyText="No se encontraron tablas en la base de datos configurada"
+                etiqueta="2. ¿En qué tabla de Impala escribirá los datos?"
+                placeholder="Selecciona una tabla de destino…"
+                searchPlaceholder="Busca la tabla por nombre…"
+                emptyText="No se encontraron tablas. Verifica que la conexión a Impala esté configurada correctamente."
                 opciones={opcionesTablas}
                 valorSeleccionado={tablaId}
                 onSeleccionar={setTablaId}
@@ -119,38 +133,43 @@ export function FormularioCrearAutomatizacion({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                3. Nombre de la Automatización
+              <label className="block text-sm font-semibold text-ink-900 mb-1.5">
+                3. Nombre de la automatización
               </label>
               <input
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ej. Auto - Dataflow Ventas → tabla_ventas_diarias"
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none shadow-sm"
+                className="w-full px-3.5 py-2.5 text-sm border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none shadow-card"
                 required
               />
-              <p className="mt-1 text-xs text-gray-400">
-                Se sugiere automáticamente al seleccionar el flujo y la tabla.
+              <p className="mt-1.5 text-xs text-ink-400">
+                Se sugiere automáticamente al elegir el flujo y la tabla. Puedes cambiarlo si lo deseas.
               </p>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button type="button" variant="outline" disabled={isCreating}>
-                Cancelar
-              </Button>
+            <div className="flex justify-end gap-3 pt-4 border-t border-line-200">
+              <Link to="/automatizaciones">
+                <Button type="button" variant="outline" disabled={isCreating}>
+                  Cancelar
+                </Button>
+              </Link>
               <Button
                 type="submit"
                 disabled={!puedeCrear || isCreating}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                className="gap-2"
               >
                 {isCreating ? (
-                  <span className="flex items-center gap-2">
-                    <span className="animate-spin">⚙️</span> Creando en Qlik
-                    Cloud…
-                  </span>
+                  <>
+                    <span className="h-3.5 w-3.5 rounded-full border-2 border-surface border-t-transparent animate-spin" />
+                    Creando en Qlik Cloud…
+                  </>
                 ) : (
-                  "🚀 Crear Automatización"
+                  <>
+                    <Icon name="sparkles" size="sm" />
+                    Crear Automatización
+                  </>
                 )}
               </Button>
             </div>

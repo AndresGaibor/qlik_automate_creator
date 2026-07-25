@@ -1,22 +1,22 @@
-import { Button } from "@/compartido/componentes/ui/button";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
+import { Icon } from "@/compartido/componentes/ui/icon";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { type DetalleTenant, obtenerDetalleTenant, obtenerTenantsQlik } from "./api";
-import { SeccionAutomatizacionBaseTenant } from "./componentes/seccion-automatizacion-base-tenant";
 import { SeccionInfoTenant } from "./componentes/seccion-info-tenant";
 import { SeccionQlikCloud } from "./componentes/seccion-qlik-cloud";
+import { SeccionAutomatizacionBaseTenant } from "./componentes/seccion-automatizacion-base-tenant";
 import { SeccionUsuarios } from "./componentes/seccion-usuarios";
 import { useDetalleTenantMutations } from "./hooks/useDetalleTenantMutations";
+import type { TenantQlik } from "./api";
 
 interface Props {
   tenantId: string;
 }
 
 export function PaginaDetalleTenant({ tenantId }: Props) {
-  const navegar = useNavigate();
   const [modalUsuario, setModalUsuario] = useState(false);
   const [correoUsuario, setCorreoUsuario] = useState("");
   const [rolUsuario, setRolUsuario] = useState<"admin" | "usuario">("usuario");
@@ -26,25 +26,32 @@ export function PaginaDetalleTenant({ tenantId }: Props) {
     queryFn: () => obtenerDetalleTenant(tenantId),
   });
 
-  const { data: tenantsQlik = [] } = useQuery({
+  const { data: tenantsQlik = [] } = useQuery<TenantQlik[]>({
     queryKey: ["admin-tenants-qlik", tenantId],
     queryFn: () => obtenerTenantsQlik(tenantId),
   });
 
-  const { actualizar, agregarUsuario, actualizarUsuario, eliminarUsuario, crearQlik, hacerPrincipal, eliminarQlik } =
-    useDetalleTenantMutations({
-      tenantId,
-      correoUsuario,
-      rolUsuario,
-      onLimpiarFormularioUsuario: () => {
-        setModalUsuario(false);
-        setCorreoUsuario("");
-        setRolUsuario("usuario");
-      },
-    });
+  const {
+    actualizar,
+    agregarUsuario,
+    actualizarUsuario,
+    eliminarUsuario,
+    crearQlik,
+    hacerPrincipal,
+    eliminarQlik,
+  } = useDetalleTenantMutations({
+    tenantId,
+    correoUsuario,
+    rolUsuario,
+    onLimpiarFormularioUsuario: () => {
+      setModalUsuario(false);
+      setCorreoUsuario("");
+      setRolUsuario("usuario");
+    },
+  });
 
   if (isLoading) {
-    return <EstadoCarga mensaje="Cargando detalles..." />;
+    return <EstadoCarga mensaje="Cargando configuración del entorno..." />;
   }
 
   if (!tenant) {
@@ -57,15 +64,36 @@ export function PaginaDetalleTenant({ tenantId }: Props) {
 
   return (
     <PageLayout>
-      <div>
-        <Button
-          variant="ghost"
-          onClick={() => navegar({ to: "/admin/tenants" })}
-          className="text-gray-600 hover:text-gray-900 -ml-2 mb-2"
+      {/* Breadcrumb + badge de estado */}
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          to="/admin/tenants"
+          className="inline-flex items-center gap-2 text-sm text-ink-500 hover:text-ink-900 transition-colors font-medium"
         >
-          ← Volver a Organizaciones
-        </Button>
+          <Icon name="chev" size="sm" className="rotate-180" />
+          Organizaciones
+        </Link>
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+            tenant.estado === "activa"
+              ? "bg-brand-50 text-brand-700 border border-brand-100"
+              : "bg-red-50 text-danger-600 border border-red-100"
+          }`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              tenant.estado === "activa"
+                ? "bg-brand-600 animate-dot-pulse"
+                : "bg-danger-600"
+            }`}
+          />
+          {tenant.estado === "activa" ? "Activa" : "Suspendida"}
+        </span>
       </div>
+
+      <h1 className="font-display text-2xl font-semibold text-ink-900 tracking-tight mb-6">
+        {tenant.nombre}
+      </h1>
 
       <SeccionInfoTenant
         tenant={tenant}
