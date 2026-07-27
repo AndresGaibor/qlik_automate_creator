@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   configuracionesOauthQlik,
   tenantsQlik,
@@ -9,7 +10,6 @@ import type {
   ServicioCifradoAdministracion,
 } from "../aplicacion/puertos/repositorio-administracion.js";
 
-type ConexionDb = typeof import("../../../plataforma/persistencia/conexion.js").db;
 type FilaConfiguracionOauth = typeof configuracionesOauthQlik.$inferSelect;
 type ConsultaOauthDb = {
   query: {

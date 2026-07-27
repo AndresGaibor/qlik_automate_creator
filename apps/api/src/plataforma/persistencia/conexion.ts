@@ -31,6 +31,7 @@ class DbHolder {
 
 const dbHolder = new DbHolder();
 export const db = dbHolder.db;
+export type ConexionDb = typeof db;
 
 export async function asegurarEsquemaTablas(): Promise<void> {
   try {

@@ -6,18 +6,46 @@ type ClienteSql = ReturnType<typeof postgres>;
 export class RepositorioBootstrapPostgres implements RepositorioBootstrap {
   constructor(private readonly sql: ClienteSql) {}
 
-  async asegurarOrganizacion(nombre: string) {
-    const [existente] = await this.sql<{ id: string; nombre: string }[]>`
-      SELECT id, nombre FROM organizaciones WHERE nombre = ${nombre} LIMIT 1
-    `;
-    if (existente) return existente;
-    const [creada] = await this.sql<{ id: string; nombre: string }[]>`
-      INSERT INTO organizaciones (nombre, estado)
-      VALUES (${nombre}, 'activa')
-      RETURNING id, nombre
-    `;
-    if (!creada) throw new Error("No se pudo crear la organización inicial");
-    return creada;
+  async resolverOrganizacionInicial(datos: {
+    nombre: string;
+    tenantHost: string;
+  }) {
+    return this.sql.begin(async (tx) => {
+      const [porHost] = await tx<{ id: string; nombre: string }[]>`
+        SELECT o.id, o.nombre
+        FROM tenants_qlik t
+        INNER JOIN organizaciones o ON o.id = t.organizacion_id
+        WHERE t.host = ${datos.tenantHost}
+        LIMIT 1
+      `;
+      if (porHost) {
+        const [actualizada] = await tx<{ id: string; nombre: string }[]>`
+          UPDATE organizaciones
+          SET nombre = ${datos.nombre}, estado = 'activa', actualizado_en = NOW()
+          WHERE id = ${porHost.id}
+          RETURNING id, nombre
+        `;
+        if (!actualizada) {
+          throw new Error("No se pudo actualizar la organización inicial");
+        }
+        return actualizada;
+      }
+
+      const [porNombre] = await tx<{ id: string; nombre: string }[]>`
+        SELECT id, nombre FROM organizaciones
+        WHERE nombre = ${datos.nombre}
+        LIMIT 1
+      `;
+      if (porNombre) return porNombre;
+
+      const [creada] = await tx<{ id: string; nombre: string }[]>`
+        INSERT INTO organizaciones (nombre, estado)
+        VALUES (${datos.nombre}, 'activa')
+        RETURNING id, nombre
+      `;
+      if (!creada) throw new Error("No se pudo crear la organización inicial");
+      return creada;
+    });
   }
 
   async asegurarTenantPrincipal(datos: {

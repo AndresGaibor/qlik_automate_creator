@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { configuracionesOauthQlik } from "../../../plataforma/persistencia/esquema.js";
 import type { ServicioCifradoPuerto } from "../aplicacion/puertos/repositorio-autenticacion.js";
 import type { EstadoConfiguracionOAuthQlik } from "../aplicacion/servicio-autenticacion.js";
@@ -17,16 +18,7 @@ export interface CredencialesClienteOAuthQlik {
   scopes: string[];
 }
 
-type DbConfiguracionOAuth = {
-  query: {
-    configuracionesOauthQlik: {
-      findFirst(opciones?: unknown): Promise<any>;
-    };
-  };
-  update(tabla: unknown): {
-    set(valores: unknown): { where(condicion: unknown): Promise<unknown> };
-  };
-};
+type DbConfiguracionOAuth = ConexionDb;
 
 export class RepositorioConfiguracionOAuthPostgres
   implements EstadoConfiguracionOAuthQlik

@@ -38,8 +38,8 @@ export function crearRutasConfiguracionOAuth(
   const ruta = "/organizaciones/:id/tenants-qlik/:tenantQlikId/oauth";
   rutas.get(ruta, async (c) => {
     try {
-      const organizacionId = c.req.param("id")!;
-      const tenantQlikId = c.req.param("tenantQlikId")!;
+      const organizacionId = c.req.param("id");
+      const tenantQlikId = c.req.param("tenantQlikId");
       const contexto = await dependencias.resolverContexto(c);
       exigirAccesoOrganizacion(contexto, organizacionId);
       const configuracion =
@@ -68,8 +68,8 @@ export function crearRutasConfiguracionOAuth(
 
   rutas.put(ruta, async (c) => {
     try {
-      const organizacionId = c.req.param("id")!;
-      const tenantQlikId = c.req.param("tenantQlikId")!;
+      const organizacionId = c.req.param("id");
+      const tenantQlikId = c.req.param("tenantQlikId");
       const contexto = await dependencias.resolverContexto(c);
       exigirAccesoOrganizacion(contexto, organizacionId);
       const entrada = esquemaConfigurarOauthQlik.parse(await c.req.json());
@@ -117,8 +117,8 @@ export function crearRutasConfiguracionOAuth(
 
   rutas.delete(ruta, async (c) => {
     try {
-      const organizacionId = c.req.param("id")!;
-      const tenantQlikId = c.req.param("tenantQlikId")!;
+      const organizacionId = c.req.param("id");
+      const tenantQlikId = c.req.param("tenantQlikId");
       const contexto = await dependencias.resolverContexto(c);
       exigirAccesoOrganizacion(contexto, organizacionId);
       if (!contexto.esSuperadmin) {
@@ -177,10 +177,11 @@ function resumenSinFila(
   redirectUri: string,
   heredada: OpcionesConfiguracionOAuth["configuracionHeredada"],
 ) {
-  const usaHeredada = Boolean(heredada.clienteId && heredada.tieneSecreto);
+  const clienteIdHeredado = heredada.clienteId ?? null;
+  const usaHeredada = Boolean(clienteIdHeredado && heredada.tieneSecreto);
   return {
     tenantQlikId,
-    clienteId: usaHeredada ? heredada.clienteId! : null,
+    clienteId: usaHeredada ? clienteIdHeredado : null,
     secretoMascara: usaHeredada ? "••••••••" : null,
     scopes: usaHeredada ? heredada.scopes : [],
     estado: null,

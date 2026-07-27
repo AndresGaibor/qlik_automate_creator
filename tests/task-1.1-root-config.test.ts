@@ -89,6 +89,6 @@ describe("Task 1.1: Configurar raíz del monorepo", () => {
     const compose = readFileSync(resolve(ROOT, "compose.yaml"), "utf-8");
     expect(compose).toContain("postgres:17-alpine");
     expect(compose).toContain("qlik_automatizaciones");
-    expect(compose).toContain("postgres_datos");
+    expect(compose).toContain("postgres_data");
   });
 });

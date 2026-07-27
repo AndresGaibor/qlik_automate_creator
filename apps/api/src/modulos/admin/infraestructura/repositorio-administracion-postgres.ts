@@ -1,3 +1,4 @@
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import type {
   EntradaGuardarConfiguracionOauth,
   EstadoOrganizacion,
@@ -16,7 +17,7 @@ import { ConsultaOrganizacion } from "./consulta-organizacion-postgres.js";
 import { ConsultaTenantQlik } from "./consulta-tenant-qlik-postgres.js";
 import { ConsultaUsuario } from "./consulta-usuario-postgres.js";
 
-type DbType = typeof import("../../../plataforma/persistencia/conexion.js").db;
+type DbType = ConexionDb;
 
 export class RepositorioAdministracionPostgres
   implements RepositorioAdministracion

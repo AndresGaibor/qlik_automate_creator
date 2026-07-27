@@ -10,7 +10,10 @@ export interface EntradaBootstrap {
 }
 
 export interface RepositorioBootstrap {
-  asegurarOrganizacion(nombre: string): Promise<{ id: string; nombre: string }>;
+  resolverOrganizacionInicial(datos: {
+    nombre: string;
+    tenantHost: string;
+  }): Promise<{ id: string; nombre: string }>;
   asegurarTenantPrincipal(datos: {
     organizacionId: string;
     tenantIdQlik: string;
@@ -28,23 +31,50 @@ export async function ejecutarBootstrap(
   repositorio: RepositorioBootstrap,
   entrada: EntradaBootstrap,
 ) {
-  const organizacion = await repositorio.asegurarOrganizacion(
-    entrada.organizacionNombre.trim(),
-  );
+  const tenantHost = normalizarHostQlik(entrada.tenantHost);
+  const organizacion = await repositorio.resolverOrganizacionInicial({
+    nombre: entrada.organizacionNombre.trim(),
+    tenantHost,
+  });
   const tenant = await repositorio.asegurarTenantPrincipal({
     organizacionId: organizacion.id,
     tenantIdQlik: entrada.tenantIdQlik.trim(),
-    host: normalizarHostQlik(entrada.tenantHost),
+    host: tenantHost,
     nombre: entrada.tenantNombre.trim(),
   });
-  const superadministrador = await repositorio.asegurarSuperadministrador({
-    organizacionId: organizacion.id,
-    correo: entrada.superadminCorreo.trim().toLowerCase(),
-    nombre: entrada.superadminNombre.trim(),
-  });
+  const correosSuperadministrador = normalizarCorreos(entrada.superadminCorreo);
+  if (correosSuperadministrador.length === 0) {
+    throw new Error("Debes configurar al menos un superadministrador");
+  }
+  const superadministradores: Array<{ id: string }> = [];
+  for (const correo of correosSuperadministrador) {
+    superadministradores.push(
+      await repositorio.asegurarSuperadministrador({
+        organizacionId: organizacion.id,
+        correo,
+        nombre: entrada.superadminNombre.trim(),
+      }),
+    );
+  }
+  const superadministradorPrincipal = superadministradores[0];
+  if (!superadministradorPrincipal) {
+    throw new Error("No se pudo crear el superadministrador inicial");
+  }
   return {
     organizacionId: organizacion.id,
     tenantQlikId: tenant.id,
-    superadministradorId: superadministrador.id,
+    superadministradorId: superadministradorPrincipal.id,
+    superadministradorIds: superadministradores.map(({ id }) => id),
   };
+}
+
+function normalizarCorreos(valor: string): string[] {
+  return Array.from(
+    new Set(
+      valor
+        .split(",")
+        .map((correo) => correo.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
 }

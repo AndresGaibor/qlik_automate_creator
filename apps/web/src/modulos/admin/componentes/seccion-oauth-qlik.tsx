@@ -139,6 +139,7 @@ function TarjetaOauthTenant({
           scopes,
         },
       );
+      setClienteSecreto("");
 
       if (conectar) {
         const retorno = `/admin/tenants/${organizacionId}`;
@@ -254,11 +255,15 @@ function FormularioOauthTenant({
             <li>Guarda y conecta para comprobar la configuración real.</li>
           </ol>
 
-          <label className="mt-4 block text-xs font-semibold text-ink-700">
+          <label
+            htmlFor={`oauth-redirect-${tenant.id}`}
+            className="mt-4 block text-xs font-semibold text-ink-700"
+          >
             URL de redirección
           </label>
           <div className="mt-1 flex gap-2">
             <input
+              id={`oauth-redirect-${tenant.id}`}
               readOnly
               value={configuracion?.redirectUri ?? "Cargando…"}
               className="min-w-0 flex-1 rounded-md border border-line-200 bg-app px-3 py-2 font-mono text-xs text-ink-700"

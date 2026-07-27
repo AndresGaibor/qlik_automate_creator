@@ -7,11 +7,31 @@ class RepositorioMemoria implements RepositorioBootstrap {
   usuarios = new Map<string, { id: string }>();
   membresias = new Set<string>();
 
-  async asegurarOrganizacion(nombre: string) {
-    const existente = this.organizaciones.get(nombre);
+  async resolverOrganizacionInicial(datos: {
+    nombre: string;
+    tenantHost: string;
+  }) {
+    const tenantExistente = this.tenants.get(datos.tenantHost);
+    if (tenantExistente) {
+      const entradaActual = Array.from(this.organizaciones.entries()).find(
+        ([, organizacion]) =>
+          organizacion.id === tenantExistente.organizacionId,
+      );
+      if (!entradaActual)
+        throw new Error("Organización del tenant no encontrada");
+      const [nombreActual, organizacion] = entradaActual;
+      this.organizaciones.delete(nombreActual);
+      const actualizada = { ...organizacion, nombre: datos.nombre };
+      this.organizaciones.set(datos.nombre, actualizada);
+      return actualizada;
+    }
+    const existente = this.organizaciones.get(datos.nombre);
     if (existente) return existente;
-    const creada = { id: `org-${this.organizaciones.size + 1}`, nombre };
-    this.organizaciones.set(nombre, creada);
+    const creada = {
+      id: `org-${this.organizaciones.size + 1}`,
+      nombre: datos.nombre,
+    };
+    this.organizaciones.set(datos.nombre, creada);
     return creada;
   }
   async asegurarTenantPrincipal(datos: {
@@ -64,5 +84,50 @@ describe("bootstrap inicial", () => {
     expect(repositorio.tenants.size).toBe(1);
     expect(repositorio.usuarios.size).toBe(1);
     expect(repositorio.membresias.size).toBe(1);
+  });
+
+  it("reutiliza la organización del host aunque su nombre haya cambiado", async () => {
+    const repositorio = new RepositorioMemoria();
+    repositorio.organizaciones.set("Banco", {
+      id: "org-existente",
+      nombre: "Banco",
+    });
+    repositorio.tenants.set("empresa.eu.qlikcloud.com", {
+      id: "tenant-existente",
+      organizacionId: "org-existente",
+    });
+
+    const resultado = await ejecutarBootstrap(repositorio, {
+      organizacionNombre: "Bancolombia",
+      tenantNombre: "Qlik principal",
+      tenantHost: "empresa.eu.qlikcloud.com",
+      tenantIdQlik: "tenant-qlik-001",
+      superadminCorreo: "admin@empresa.com",
+      superadminNombre: "Superadministrador",
+    });
+
+    expect(resultado.organizacionId).toBe("org-existente");
+    expect(repositorio.organizaciones.size).toBe(1);
+    expect(repositorio.organizaciones.get("Bancolombia")?.id).toBe(
+      "org-existente",
+    );
+  });
+
+  it("crea varios superadministradores desde correos separados por coma", async () => {
+    const repositorio = new RepositorioMemoria();
+    const resultado = await ejecutarBootstrap(repositorio, {
+      organizacionNombre: "Empresa Demo",
+      tenantNombre: "Qlik principal",
+      tenantHost: "empresa.eu.qlikcloud.com",
+      tenantIdQlik: "tenant-qlik-001",
+      superadminCorreo: " UNO@empresa.com, dos@empresa.com, uno@empresa.com ",
+      superadminNombre: "Superadministrador",
+    });
+
+    expect(Array.from(repositorio.usuarios.keys())).toEqual([
+      "uno@empresa.com",
+      "dos@empresa.com",
+    ]);
+    expect(resultado.superadministradorIds).toEqual(["usuario-1", "usuario-2"]);
   });
 });
