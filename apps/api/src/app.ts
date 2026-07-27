@@ -232,7 +232,7 @@ export async function crearAplicacion(
   aplicacion.use("*", await crearMiddlewareCors(db, frontendUrl));
   aplicacion.use("*", crearMiddlewareCabecerasSeguridad(produccion));
   aplicacion.use("*", crearMiddlewareObservabilidad(registrador));
-  aplicacion.use("*", crearMiddlewareOrigenCsrf(frontendUrl));
+  aplicacion.use("*", crearMiddlewareOrigenCsrf(db, frontendUrl));
   aplicacion.use(
     "*",
     crearMiddlewareLimiteSolicitudes([
