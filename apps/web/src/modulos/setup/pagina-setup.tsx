@@ -18,6 +18,17 @@ const PASOS = [
   { numero: 3, titulo: "Administrador", descripcion: "Datos del superadministrador" },
 ];
 
+interface FormularioData {
+  organizacionNombre: string;
+  qlikTenantHost: string;
+  qlikClientId: string;
+  qlikClientSecret: string;
+  qlikScopes: string[];
+  superadminNombre: string;
+  superadminCorreo: string;
+  qlikRedirectUri: string;
+}
+
 const SCOPES_POR_DEFECTO = [
   "audit-log:read",
   "automation:read",
@@ -40,14 +51,13 @@ const SCOPES_POR_DEFECTO = [
   "user:read",
 ];
 
-interface FormularioData {
-  organizacionNombre: string;
-  qlikTenantHost: string;
-  qlikClientId: string;
-  qlikClientSecret: string;
-  qlikScopes: string[];
-  superadminNombre: string;
-  superadminCorreo: string;
+function calcularRedirectUri(): string {
+  if (typeof window !== "undefined") {
+    const protocolo = window.location.protocol === "https:" ? "https" : "http";
+    const puerto = window.location.port ? `:${window.location.port}` : "";
+    return `${protocolo}://${window.location.hostname}${puerto}/api/auth/qlik/callback`;
+  }
+  return "http://localhost:3000/api/auth/qlik/callback";
 }
 
 const estadoInicial: FormularioData = {
@@ -58,6 +68,7 @@ const estadoInicial: FormularioData = {
   qlikScopes: SCOPES_POR_DEFECTO,
   superadminNombre: "",
   superadminCorreo: "",
+  qlikRedirectUri: calcularRedirectUri(),
 };
 
 export function PaginaSetup() {
@@ -315,7 +326,19 @@ export function PaginaSetup() {
                         <input
                           type="checkbox"
                           checked={formulario.qlikScopes.includes(scope)}
-                          disabled
+                          onChange={() => {
+                            if (formulario.qlikScopes.includes(scope)) {
+                              actualizarCampo(
+                                "qlikScopes",
+                                formulario.qlikScopes.filter((s) => s !== scope),
+                              );
+                            } else {
+                              actualizarCampo("qlikScopes", [
+                                ...formulario.qlikScopes,
+                                scope,
+                              ]);
+                            }
+                          }}
                           className="rounded border-gray-300 text-blue-600"
                         />
                         <span className="font-mono text-xs">{scope}</span>
@@ -323,9 +346,21 @@ export function PaginaSetup() {
                     ))}
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Se usan los scopes estándar para automatizaciones de Qlik.
+                    Selecciona los scopes que necesita tu aplicación.
                   </p>
                 </fieldset>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <p className="text-xs font-medium text-blue-800 mb-1">
+                    URI de redirección OAuth
+                  </p>
+                  <p className="text-xs text-blue-700 mb-2">
+                    Configura esta URL en tu aplicación OAuth de Qlik Cloud:
+                  </p>
+                  <code className="block bg-white border border-blue-200 rounded px-2 py-1 text-xs font-mono text-gray-800 break-all">
+                    {formulario.qlikRedirectUri}
+                  </code>
+                </div>
               </fieldset>
             )}
 

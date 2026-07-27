@@ -34,6 +34,8 @@ import {
   type ServicioQlik,
   crearRutasProxyQlik,
 } from "./modulos/qlik/publico.js";
+import { crearRutasSetup } from "./modulos/setup/publico.js";
+import { ConfiguracionAppPostgres } from "./modulos/setup/infraestructura/configuracion-app-postgres.js";
 import type { PuertoAuditoria } from "./nucleo/auditoria/puerto-auditoria.js";
 import { ErrorNoAutorizado } from "./nucleo/errores/error-aplicacion.js";
 import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
@@ -55,11 +57,14 @@ import {
   registradorConsola,
 } from "./plataforma/observabilidad/registrador.js";
 import { AuditoriaPostgres } from "./plataforma/persistencia/auditoria-postgres.js";
-import { db } from "./plataforma/persistencia/conexion.js";
-import { tenantsQlik } from "./plataforma/persistencia/esquema.js";
+import { db, dbHolder } from "./plataforma/persistencia/conexion.js";
+import { appConfig, tenantsQlik } from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
 import { OutboxPostgres } from "./plataforma/persistencia/outbox-postgres.js";
 import { servicioCifrado } from "./plataforma/seguridad/servicio-cifrado.js";
+import { leerSecretoCifrado } from "./plataforma/seguridad/secreto-cifrado.js";
+import { ejecutarBootstrap } from "./plataforma/bootstrap/bootstrap.js";
+import { RepositorioBootstrapPostgres } from "./plataforma/bootstrap/repositorio-bootstrap-postgres.js";
 
 export interface DependenciasAplicacion {
   configuracion?: ConfiguracionAplicacion;
@@ -80,11 +85,30 @@ export interface DependenciasAplicacion {
   resolverContextoAdmin?: ResolverContextoAdmin;
 }
 
-export function crearAplicacion(
+export async function crearAplicacion(
   dependencias: DependenciasAplicacion = {},
-): Hono {
+): Promise<Hono> {
   const configuracion = dependencias.configuracion;
   const registrador = dependencias.registrador ?? registradorConsola;
+
+  await servicioCifrado.inicializarConDb({
+    async guardar(clave, valor) {
+      await db
+        .insert(appConfig)
+        .values({ clave, valor: valor as Record<string, unknown> })
+        .onConflictDoUpdate({
+          target: appConfig.clave,
+          set: { valor: valor as Record<string, unknown>, actualizadoEn: new Date() },
+        });
+    },
+    async obtener(clave) {
+      const fila = await db.query.appConfig.findFirst({
+        where: (tc, { eq }) => eq(tc.clave, clave),
+      });
+      return fila?.valor ?? null;
+    },
+  });
+
   const repositorioAutenticacion =
     dependencias.repositorioAutenticacion ??
     new RepositorioAutenticacionPostgres(
@@ -145,7 +169,10 @@ export function crearAplicacion(
         port: tenant.impalaPort ?? 21050,
         authMechanism: tenant.impalaAuthMechanism ?? "NOSASL",
         user: tenant.impalaUser ?? undefined,
-        password: tenant.impalaPassword ?? undefined,
+        password: leerSecretoCifrado(
+          servicioCifrado,
+          tenant.impalaPasswordCifrada,
+        ),
         database: tenant.impalaDatabase ?? "default",
       });
     }
@@ -204,6 +231,31 @@ export function crearAplicacion(
       fecha: new Date().toISOString(),
       arquitectura: "monolito-modular",
     }),
+  );
+
+  const repoOAuthSetup = new RepositorioConfiguracionOAuthPostgres(
+    db,
+    servicioCifrado,
+    {},
+  );
+
+  aplicacion.route(
+    "/api/setup",
+    crearRutasSetup(
+      new ConfiguracionAppPostgres(db),
+      async (entrada) => {
+        const resultado = await ejecutarBootstrap(
+          new RepositorioBootstrapPostgres(dbHolder.client),
+          entrada,
+        );
+        return {
+          organizacionId: resultado.organizacionId,
+          tenantQlikId: resultado.tenantQlikId,
+          superadminId: resultado.superadministradorId,
+        };
+      },
+      repoOAuthSetup.guardarOAuthInicial.bind(repoOAuthSetup),
+    ),
   );
 
   // Composition root: único archivo que construye y conecta adaptadores.

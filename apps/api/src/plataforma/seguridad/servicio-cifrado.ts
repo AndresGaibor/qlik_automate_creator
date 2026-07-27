@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 const ALGORITMO = "aes-256-gcm";
+const CLAVE_CONFIG = "cifrado_clave_principal";
 
 export class ServicioCifrado {
   private clave: Buffer;
@@ -47,18 +48,42 @@ export const crearServicioCifrado = (): ServicioCifrado => {
   return new ServicioCifrado(clave);
 };
 
+interface PuertoConfigCifrado {
+  guardar(clave: string, valor: unknown): Promise<void>;
+  obtener(clave: string): Promise<unknown | null>;
+}
+
 class ServicioCifradoWrapper {
   private servicio: ServicioCifrado | null = null;
+  private inicializado = false;
+
+  async inicializarConDb(db: PuertoConfigCifrado): Promise<void> {
+    if (this.inicializado) return;
+    let clave = process.env.CIFRADO_CLAVE_PRINCIPAL;
+    if (!clave) {
+      const almacenado = await db.obtener(CLAVE_CONFIG);
+      if (almacenado && typeof almacenado === "object") {
+        clave = (almacenado as Record<string, unknown>).valor as string;
+      }
+    }
+    if (!clave) {
+      clave = crypto.randomBytes(32).toString("base64");
+      await db.guardar(CLAVE_CONFIG, { valor: clave });
+    }
+    this.servicio = new ServicioCifrado(clave);
+    this.inicializado = true;
+  }
 
   private obtenerInstancia(): ServicioCifrado {
     if (!this.servicio) {
       const clave = process.env.CIFRADO_CLAVE_PRINCIPAL;
       if (!clave) {
         throw new Error(
-          "CIFRADO_CLAVE_PRINCIPAL environment variable is not set. Cannot encrypt/decrypt tokens without it.",
+          "CIFRADO_CLAVE_PRINCIPAL no está configurado. Asegúrate de llamar a inicializarConDb antes de usar el servicio de cifrado.",
         );
       }
       this.servicio = new ServicioCifrado(clave);
+      this.inicializado = true;
     }
     return this.servicio;
   }

@@ -5,7 +5,7 @@ import { asegurarEsquemaTablas } from "../plataforma/persistencia/conexion.js";
 const configuracion = cargarConfiguracion();
 await asegurarEsquemaTablas();
 
-const app = crearAplicacion({ configuracion });
+const app = await crearAplicacion({ configuracion });
 const puerto = configuracion.PORT;
 
 Bun.serve({

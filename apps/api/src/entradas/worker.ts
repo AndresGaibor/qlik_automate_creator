@@ -19,7 +19,7 @@ async function obtenerAplicacion(entorno: EntornoWorker): Promise<Hono> {
     import("../app.js"),
     import("../plataforma/configuracion/entorno.js"),
   ]);
-  aplicacion = crearAplicacion({ configuracion: cargarConfiguracion() });
+  aplicacion = await crearAplicacion({ configuracion: cargarConfiguracion() });
   return aplicacion;
 }
 
