@@ -94,6 +94,21 @@ export async function crearAplicacion(
 ): Promise<Hono> {
   const configuracion = dependencias.configuracion;
   const registrador = dependencias.registrador ?? registradorConsola;
+  const frontendUrlGuardado = await obtenerFrontendUrlGuardado();
+  const frontendUrl =
+    frontendUrlGuardado ??
+    configuracion?.FRONTEND_URL ??
+    process.env.FRONTEND_URL ??
+    "http://localhost:5173";
+  const produccion =
+    (configuracion?.NODE_ENV ?? process.env.NODE_ENV) === "production";
+  const redirectUriConfigurado =
+    process.env.QLIK_REDIRECT_URI ?? configuracion?.QLIK_REDIRECT_URI;
+  const redirectUriOAuth =
+    frontendUrlGuardado
+      ? new URL("/api/auth/qlik/callback", frontendUrl).toString()
+      : (redirectUriConfigurado ??
+        "http://localhost:3000/api/auth/qlik/callback");
 
   await servicioCifrado.inicializarConDb({
     async guardar(clave, valor) {
@@ -125,7 +140,11 @@ export async function crearAplicacion(
     );
   const servicioAutenticacion =
     dependencias.servicioAutenticacion ??
-    crearServicioAutenticacionDiferido(repositorioAutenticacion, configuracion);
+    crearServicioAutenticacionDiferido(
+      repositorioAutenticacion,
+      configuracion,
+      redirectUriOAuth,
+    );
   const resolverContextoSolicitud = crearResolverContextoSolicitud(
     repositorioAutenticacion,
   );
@@ -211,16 +230,6 @@ export async function crearAplicacion(
     });
 
   const aplicacion = new Hono();
-  const frontendUrl =
-    configuracion?.FRONTEND_URL ??
-    process.env.FRONTEND_URL ??
-    "http://localhost:5173";
-  const produccion =
-    (configuracion?.NODE_ENV ?? process.env.NODE_ENV) === "production";
-  const redirectUriOAuth =
-    configuracion?.QLIK_REDIRECT_URI ??
-    process.env.QLIK_REDIRECT_URI ??
-    "http://localhost:3000/api/auth/qlik/callback";
   const scopesOAuthHeredados = (
     configuracion?.QLIK_OAUTH_SCOPES ??
     process.env.QLIK_OAUTH_SCOPES ??
@@ -355,9 +364,25 @@ export async function crearAplicacion(
   return aplicacion;
 }
 
+async function obtenerFrontendUrlGuardado(): Promise<string | null> {
+  try {
+    const fila = await db.query.appConfig.findFirst({
+      where: (tabla, { eq }) => eq(tabla.clave, "frontend_url"),
+    });
+    const valor = fila?.valor;
+    if (typeof valor !== "object" || valor === null) return null;
+    const url = (valor as Record<string, unknown>).valor;
+    if (typeof url !== "string") return null;
+    return new URL(url).toString();
+  } catch {
+    return null;
+  }
+}
+
 function crearServicioAutenticacionDiferido(
   repositorio: RepositorioAutenticacion,
   configuracion?: ConfiguracionAplicacion,
+  redirectUriOAuth?: string,
 ): ServicioAutenticacionQlik {
   const scopesHeredados = (
     configuracion?.QLIK_OAUTH_SCOPES ??
@@ -387,8 +412,9 @@ function crearServicioAutenticacionDiferido(
         cliente: new ClienteOAuthQlik(
           credenciales.clienteId,
           credenciales.clienteSecreto,
-          configuracion?.QLIK_REDIRECT_URI ??
-            exigirEntorno("QLIK_REDIRECT_URI"),
+           redirectUriOAuth ??
+             configuracion?.QLIK_REDIRECT_URI ??
+             exigirEntorno("QLIK_REDIRECT_URI"),
           tenant.host,
           credenciales.scopes.length
             ? credenciales.scopes.join(" ")
