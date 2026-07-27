@@ -228,7 +228,7 @@ export async function crearAplicacion(
     .split(/\s+/)
     .filter(Boolean);
 
-  aplicacion.use("*", crearMiddlewareCors(db, frontendUrl));
+  aplicacion.use("*", await crearMiddlewareCors(db, frontendUrl));
   aplicacion.use("*", crearMiddlewareCabecerasSeguridad(produccion));
   aplicacion.use("*", crearMiddlewareObservabilidad(registrador));
   aplicacion.use("*", crearMiddlewareOrigenCsrf(frontendUrl));
