@@ -1,178 +1,163 @@
 # Qlik Automate Creator
 
-Aplicación web para consultar, ejecutar y crear automatizaciones de Qlik a partir de una automatización base. El backend conserva los tokens OAuth en PostgreSQL cifrados y expone una API de negocio en español, además de un proxy validado para las operaciones administrativas de Qlik Automate.
+Aplicación web para consultar, ejecutar y crear automatizaciones de Qlik a partir de una automatización base. El backend expone una API REST en español con OAuth 2.0 + PKCE para autenticación con Qlik Cloud.
+
+## Requisitos
+
+- Docker y Docker Compose
+- Git
+
+## Despliegue — 0 configuración manual
+
+```bash
+git clone https://github.com/AndresGaibor/qlik_automate_creator.git
+cd qlik_automate_creator
+cp .env.example .env
+docker compose up -d
+```
+
+Listo. Abre **http://<ip-del-servidor>:3847** y completa el wizard de configuración inicial.
+
+---
+
+## Puertos por defecto
+
+| Servicio | Puerto |
+|---|---|
+| Frontend (nginx) | 3847 |
+| API (Bun) | 7823 |
+| PostgreSQL | 5432 (interno) |
+
+---
+
+## Configuración
+
+Todo se configura desde la interfaz. Las variables de `.env` son opcionales — los defaults funcionan.
+
+### `.env` — lo único que podrías necesitar cambiar
+
+```bash
+# Acceso por IP (default — no necesita dominio)
+HOST_IP=0.0.0.0
+
+# Si tienes dominio:
+SERVER_NAME=api.midominio.com
+
+# Cambiar puertos (opcional):
+PORT_WEB=3847
+PORT_API=7823
+```
+
+### Docker Compose levanta todo
+
+- **PostgreSQL** — base de datos con usuario y contraseña por defecto
+- **API** — backend Bun en puerto interno 7823
+- **Frontend** — nginx + static en puerto 3847
+
+Las tablas se crean automáticamente al primer arranque.
+
+---
+
+## Wizard de configuración inicial
+
+Al abrir la app por primera vez:
+
+1. **Organización** — nombre de tu organización
+2. **Conexión Qlik Cloud** — host del tenant, Client ID, Client Secret, scopes editables. La URI de redirección se muestra para que la copies en Qlik Cloud
+3. **Superadministrador** — nombre y correo
+
+Después del wizard → `/login` → autenticación OAuth con Qlik Cloud.
+
+---
+
+## Dominio propio y Cloudflare
+
+```bash
+# .env
+SERVER_NAME=api.midominio.com
+HOST_IP=0.0.0.0
+PORT_WEB=80
+PORT_API=7823
+```
+
+1. Crea un túnel de Cloudflare en [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Apunta el túnel a `http://localhost:3847`
+3. Configura el DNS: `api.midominio.com` → túnel
+4. `docker compose up -d`
+
+SSL se maneja en Cloudflare (el tráfico llega en HTTPS a Cloudflare, se reenvía en HTTP al servidor).
+
+---
+
+## Gestión de superadministradores
+
+Después del primer login, accede a `/admin/superadmins` para agregar o eliminar superadministradores.
+
+---
+
+## Comandos útiles
+
+```bash
+# Ver logs
+docker compose logs -f
+
+# Reiniciar
+docker compose restart
+
+# Actualizar (reconstruir)
+git pull
+docker compose up -d --build
+
+# Detener
+docker compose down
+
+# Reset completo (borra todo)
+docker compose down -v
+docker compose up -d
+
+# Conectarse a PostgreSQL
+docker compose exec postgres psql -U qlik_app -d qlik_automatizaciones
+```
+
+---
 
 ## Arquitectura
 
-El backend es un **monolito modular con Clean Architecture, arquitectura hexagonal y DDD**:
+Backend: **monolito modular** con Clean Architecture y arquitectura hexagonal
 
-```text
+```
 apps/api/src/
-├── app.ts                    # único composition root
-├── entradas/                 # Bun, Node y Cloudflare Worker
-├── plataforma/               # HTTP, configuración, errores, contexto, logs y persistencia
-├── nucleo/                   # auditoría, eventos, idempotencia, tiempo y valores
+├── app.ts              # composition root
+├── entradas/           # Bun, Node y Cloudflare Worker
+├── plataforma/         # HTTP, configuración, persistencia
+├── nucleo/             # auditoría, eventos, idempotencia
 └── modulos/
     ├── autenticacion-qlik/
     ├── automatizaciones/
     ├── destinos/
     ├── flujos/
-    └── qlik/
+    ├── qlik/
+    └── setup/          # wizard de configuración inicial
 
-packages/contratos/src/       # Zod y DTO compartidos con React
-apps/web/src/
-├── app/
-├── compartido/
-└── modulos/                  # frontend feature-based
+packages/contratos/     # Zod y DTO compartidos con React
+apps/web/               # React + TanStack Router + TanStack Query
 ```
 
-Cada módulo del backend contiene `dominio`, `aplicacion`, `aplicacion/puertos`, `infraestructura`, `http` y `publico.ts`. Las dependencias se dirigen hacia el dominio y `app.ts` es el único lugar donde se construyen adaptadores concretos.
+Tecnologías: React 18, Vite, Hono, PostgreSQL, Drizzle ORM, OAuth 2.0 + PKCE, AES-256-GCM.
 
-Más detalle:
+---
 
-- [Decisiones y reglas de arquitectura](docs/arquitectura/README.md)
-- [Matriz de rutas Qlik](docs/arquitectura/rutas-qlik.md)
-- [Puesta en marcha](docs/desarrollo/puesta-en-marcha.md)
-
-## Superficies HTTP
-
-### API estable para el frontend
-
-```text
-GET  /api/automatizaciones
-GET  /api/automatizaciones/espacios
-POST /api/automatizaciones/desde-plantilla
-GET  /api/automatizaciones/:id
-POST /api/automatizaciones/:id/ejecuciones
-POST /api/automatizaciones/:id/ejecuciones/:ejecucionId/detener
-
-GET  /api/flujos
-GET  /api/destinos/bases-datos
-GET  /api/destinos/bases-datos/:baseDatos/tablas
-GET  /api/destinos/bases-datos/:baseDatos/tablas/:tabla/columnas
-GET  /api/destinos/flujos-datos
-```
-
-Las respuestas de negocio usan el contrato común:
-
-```json
-{
-  "exito": true,
-  "datos": {}
-}
-```
-
-### Proxy Qlik
-
-El prefijo `/api/qlik` replica, valida y reenvía las APIs relacionadas con:
-
-- Automations: 21 endpoints.
-- Automation Connections: 8 endpoints.
-- Automation Connectors: 2 endpoints.
-- Spaces: 17 endpoints.
-- Users: 9 endpoints.
-
-En respuestas exitosas, el proxy conserva el código HTTP, cuerpo y encabezados relevantes de Qlik. Los errores pasan por el manejador central y se normalizan con el contrato común. El bearer token nunca llega desde el navegador: se obtiene de la sesión OAuth cifrada.
-
-## Creación desde una automatización base
-
-`POST /api/automatizaciones/desde-plantilla` ejecuta:
-
-```text
-copiar automatización
-→ cambiar espacio opcional
-→ obtener y reemplazar rutas JSON Pointer existentes en workspace
-→ actualizar la definición completa
-→ cambiar propietario opcional (al final)
-→ auditoría + outbox + idempotencia
-```
-
-Ejemplo:
-
-```json
-{
-  "nombre": "Creación de carpetas - Empresa A",
-  "plantillaIdQlik": "ID_AUTOMATIZACION_BASE",
-  "espacioIdQlik": "ID_ESPACIO_DESTINO",
-  "reemplazosWorkspace": [
-    {
-      "ruta": "/blocks/0/settings/table",
-      "valor": "carpetas_empresa_a"
-    }
-  ]
-}
-```
-
-También acepta `Idempotency-Key`. Si una etapa posterior a la copia falla, el caso de uso intenta eliminar la copia incompleta.
-
-## Tecnologías
-
-- React 18, Vite, TanStack Router y TanStack Query.
-- Hono con entrypoints para Bun, Node y Cloudflare Worker.
-- PostgreSQL y Drizzle ORM.
-- OAuth 2.0 Authorization Code + PKCE.
-- AES-256-GCM para tokens OAuth.
-- Zod para contratos y validación.
-- Outbox, auditoría e idempotencia persistentes.
-
-## Inicio local
+## Desarrollo local
 
 ```bash
 cp .env.example .env
 bun install
 docker compose up -d
-bun --cwd apps/api run db:migrate
-bun run dev:api
-bun run dev
+bun run dev:api   # API en http://localhost:7823
+bun run dev       # Frontend en http://localhost:5173
 ```
 
-- API: `http://localhost:3000`
-- Frontend: `http://localhost:5173`
-
-## Variables principales
-
-```env
-DATABASE_URL=postgres://qlik_app:desarrollo@localhost:5432/qlik_automatizaciones
-FRONTEND_URL=http://localhost:5173
-QLIK_REDIRECT_URI=http://localhost:3000/api/auth/qlik/callback
-QLIK_OAUTH_SCOPES="user_default offline_access identity.name:read identity.email:read identity.subject:read identity.picture:read automations automations.private automations.shared spaces:read apps:read data-integration"
-QLIK_OAUTH_TIMEOUT_MS=10000
-# Fallback temporal; puede quedar vacío cuando los tenants se configuran desde la app.
-QLIK_CLIENT_ID=...
-QLIK_CLIENT_SECRET=...
-CIFRADO_CLAVE_PRINCIPAL=...
-REMOTE_API_URL=https://api.example.com
-REMOTE_API_KEY=...
-```
-
-Genera la clave de cifrado con:
-
-```bash
-openssl rand -base64 32
-```
-
-## Protección HTTP
-
-- Las mutaciones `POST`, `PUT`, `PATCH` y `DELETE` exigen el encabezado `Origin` exactamente igual a `FRONTEND_URL`; por tanto, las solicitudes sin `Origin` y los clientes no navegador se rechazan por defecto. No hay rutas técnicas exceptuadas actualmente.
-- El callback OAuth es `GET`, por lo que queda fuera de esa validación de mutaciones. Los inicios y callback OAuth, y el cierre del setup, tienen límites por IP en memoria.
-- La API añade cabeceras defensivas; HSTS solo se emite en producción. Cada llamada saliente OAuth vence tras `QLIK_OAUTH_TIMEOUT_MS` (10 s por defecto).
-- Las entradas Node y Bun interceptan `SIGTERM`/`SIGINT`, detienen el servidor y cierran PostgreSQL antes de finalizar.
-
-## Configuración OAuth por tenant
-
-El primer superadministrador se crea con `bun run db:seed`. El bootstrap marca su usuario como superadmin en PostgreSQL; `SUPERADMINMAIL` queda únicamente como mecanismo inicial y fallback de migración.
-
-Después del primer inicio de sesión:
-
-1. Abre **Administración** y entra al detalle de una organización.
-2. Registra el host de cada entorno Qlik Cloud.
-3. En **Acceso OAuth de Qlik**, sigue las instrucciones mostradas para crear un cliente Web en Qlik.
-4. Copia la URL de redirección exacta, el Client ID y el Client Secret.
-5. Pulsa **Guardar y conectar con Qlik** para ejecutar una verificación OAuth real.
-
-Cada tenant guarda su propio Client ID, scopes y secreto cifrado. El secreto no se devuelve al navegador ni se registra en auditoría. Mientras un tenant no tenga configuración propia, puede usar temporalmente `QLIK_CLIENT_ID` y `QLIK_CLIENT_SECRET` del entorno global.
-
-Los administradores de una organización pueden crear, actualizar y verificar OAuth de sus tenants. Solo un superadministrador puede eliminar una configuración OAuth.
+---
 
 ## Calidad
 
@@ -182,9 +167,3 @@ bun run test
 bun run lint
 bun run build
 ```
-
-Las migraciones `0006_panoramic_plazm.sql` y `0007_superadmin_oauth_por_tenant.sql` incorporan el superadministrador persistido y la configuración OAuth cifrada por tenant.
-
-## Cloudflare Worker
-
-`apps/api/src/entradas/worker.ts` contiene el handler Worker. Para PostgreSQL se debe enlazar Hyperdrive o reemplazar el adaptador desde `app.ts`; el bundle necesita compatibilidad de Node porque el cifrado y el driver PostgreSQL usan esas APIs.
