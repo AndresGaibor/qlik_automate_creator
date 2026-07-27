@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-const cadenaOpcional = z.preprocess(
-  (valor) =>
-    typeof valor === "string" && valor.trim() === "" ? undefined : valor,
-  z.string().min(1).optional(),
-);
-
 const esquemaEntorno = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
@@ -13,27 +7,15 @@ const esquemaEntorno = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   FRONTEND_URL: z.string().url().default("http://localhost:5173"),
   DATABASE_URL: z.string().min(1),
-  QLIK_CLIENT_ID: cadenaOpcional,
-  QLIK_CLIENT_SECRET: cadenaOpcional,
-  QLIK_REDIRECT_URI: z.string().url(),
+  QLIK_CLIENT_ID: z.string().optional(),
+  QLIK_CLIENT_SECRET: z.string().optional(),
+  QLIK_REDIRECT_URI: z.string().url().default("http://localhost:3000/api/auth/qlik/callback"),
   QLIK_TENANT_HOST: z.string().min(1).transform(normalizarHostQlik).optional(),
-  QLIK_OAUTH_SCOPES: z.string().min(1).optional(),
-  CIFRADO_CLAVE_PRINCIPAL: z.string().min(1),
+  QLIK_OAUTH_SCOPES: z.string().optional(),
+  CIFRADO_CLAVE_PRINCIPAL: z.string().optional(),
   REMOTE_API_URL: z.string().url().optional(),
   REMOTE_API_KEY: z.string().optional(),
-  SUPERADMINMAIL: z
-    .string()
-    .refine(
-      (val) =>
-        val
-          .split(",")
-          .every((email) => z.string().email().safeParse(email.trim()).success),
-      {
-        message:
-          "SUPERADMINMAIL debe contener uno o varios correos válidos separados por coma",
-      },
-    )
-    .optional(),
+  SUPERADMINMAIL: z.string().optional(),
 });
 
 export type ConfiguracionAplicacion = z.infer<typeof esquemaEntorno>;

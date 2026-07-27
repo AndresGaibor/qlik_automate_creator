@@ -13,8 +13,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    profiles:
-      - with-postgres
 
   api:
     build:
@@ -25,27 +23,13 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: ${DATABASE_URL}
-      QLIK_CLIENT_ID: ${QLIK_CLIENT_ID}
-      QLIK_CLIENT_SECRET: ${QLIK_CLIENT_SECRET}
-      QLIK_REDIRECT_URI: ${QLIK_REDIRECT_URI}
-      QLIK_OAUTH_SCOPES: ${QLIK_OAUTH_SCOPES}
-      CIFRADO_CLAVE_PRINCIPAL: ${CIFRADO_CLAVE_PRINCIPAL}
-      REMOTE_API_URL: ${REMOTE_API_URL}
-      REMOTE_API_KEY: ${REMOTE_API_KEY}
-      BOOTSTRAP_ORGANIZACION_NOMBRE: ${BOOTSTRAP_ORGANIZACION_NOMBRE:-Empresa}
-      BOOTSTRAP_TENANT_NOMBRE: ${BOOTSTRAP_TENANT_NOMBRE:-Tenant Principal}
-      BOOTSTRAP_TENANT_HOST: ${BOOTSTRAP_TENANT_HOST}
-      BOOTSTRAP_TENANT_ID_QLIK: ${BOOTSTRAP_TENANT_ID_QLIK}
-      SUPERADMINMAIL: ${SUPERADMINMAIL}
-      BOOTSTRAP_SUPERADMIN_NOMBRE: ${BOOTSTRAP_SUPERADMIN_NOMBRE:-Admin}
+      DATABASE_URL: ${DATABASE_URL:-postgres://qlik_app:cambiar_en_produccion@postgres:5432/qlik_automatizaciones}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
-    profiles:
-      - with-postgres
 
   web:
     build:
@@ -53,15 +37,11 @@ services:
       dockerfile: Dockerfile
       target: web
     restart: unless-stopped
-    volumes:
-      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./deploy/vite.config.timestamp.ts:/usr/share/nginx/html/assets/vite.config.timestamp.ts:ro
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8080:80"
-    profiles:
-      - with-nginx
 
 volumes:
   postgres_data:
