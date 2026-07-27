@@ -6,12 +6,13 @@ Qlik Automate Creator **no requiere ninguna configuración en archivos `.env`** 
 
 ---
 
-## Variables de entorno requeridas (solo infraestructura)
+## Variables de entorno requeridas
 
 | Variable | Valor | Propósito |
 |---|---|---|
 | `DATABASE_URL` | `postgres://user:pass@host:5432/db` | Conexión a PostgreSQL |
-| `FRONTEND_URL` | `http://localhost:8080` | Configuración CORS (solo en desarrollo) |
+
+La URL del frontend se configura en el wizard y se guarda automáticamente. CORS se resuelve dinámicamente.
 
 ### Docker Compose — configuración mínima
 
@@ -37,10 +38,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: ${DATABASE_URL}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
-    ports:
-      - "127.0.0.1:3000:3000"
+      DATABASE_URL: ${DATABASE_URL:-postgres://qlik_app:cambiar_en_produccion@postgres:5432/qlik_automatizaciones}
     depends_on:
       postgres:
         condition: service_healthy
@@ -58,16 +56,13 @@ volumes:
   postgres_data:
 ```
 
-### Arrancar
+### Arrancar (desarrollo local)
 
 ```bash
-docker compose up -d postgres
-docker compose run --rm api
-# o en segundo plano:
 docker compose up -d
 ```
 
-La API arranca en `http://localhost:3000`. La UI en `http://localhost:8080`.
+Accede a `http://localhost:8080`. El wizard de setup arranca automáticamente.
 
 ---
 

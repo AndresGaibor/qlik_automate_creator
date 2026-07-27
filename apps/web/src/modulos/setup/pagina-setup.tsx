@@ -1,3 +1,4 @@
+import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
 import {
   Card,
@@ -5,17 +6,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
-import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
-import {
-  completarSetup,
-  type EntradaSetup,
-} from "@/modulos/setup/api";
+import { type EntradaSetup, completarSetup } from "@/modulos/setup/api";
 import { useState } from "react";
 
 const PASOS = [
-  { numero: 1, titulo: "Organización", descripcion: "Nombre de tu organización" },
-  { numero: 2, titulo: "Conexión Qlik", descripcion: "Configura tu tenant de Qlik Cloud" },
-  { numero: 3, titulo: "Administrador", descripcion: "Datos del superadministrador" },
+  {
+    numero: 1,
+    titulo: "Organización",
+    descripcion: "Nombre de tu organización",
+  },
+  {
+    numero: 2,
+    titulo: "Conexión Qlik",
+    descripcion: "Configura tu tenant de Qlik Cloud",
+  },
+  {
+    numero: 3,
+    titulo: "Administrador",
+    descripcion: "Datos del superadministrador",
+  },
 ];
 
 interface FormularioData {
@@ -85,8 +94,13 @@ export function PaginaSetup() {
   };
 
   const validarPaso1 = () => {
-    if (!formulario.organizacionNombre.trim() || formulario.organizacionNombre.trim().length < 2) {
-      mostrarError("El nombre de la organización debe tener al menos 2 caracteres");
+    if (
+      !formulario.organizacionNombre.trim() ||
+      formulario.organizacionNombre.trim().length < 2
+    ) {
+      mostrarError(
+        "El nombre de la organización debe tener al menos 2 caracteres",
+      );
       return false;
     }
     return true;
@@ -113,8 +127,13 @@ export function PaginaSetup() {
   };
 
   const validarPaso3 = () => {
-    if (!formulario.superadminNombre.trim() || formulario.superadminNombre.trim().length < 2) {
-      mostrarError("El nombre del administrador debe tener al menos 2 caracteres");
+    if (
+      !formulario.superadminNombre.trim() ||
+      formulario.superadminNombre.trim().length < 2
+    ) {
+      mostrarError(
+        "El nombre del administrador debe tener al menos 2 caracteres",
+      );
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -149,6 +168,7 @@ export function PaginaSetup() {
         qlikScopes: formulario.qlikScopes,
         superadminNombre: formulario.superadminNombre.trim(),
         superadminCorreo: formulario.superadminCorreo.trim().toLowerCase(),
+        frontendUrl: window.location.origin,
       };
 
       const resultado = await completarSetup(datos);
@@ -160,7 +180,10 @@ export function PaginaSetup() {
         mostrarError("La respuesta del servidor no fue la esperada");
       }
     } catch (err) {
-      const mensaje = err instanceof Error ? err.message : "Error al guardar la configuración";
+      const mensaje =
+        err instanceof Error
+          ? err.message
+          : "Error al guardar la configuración";
       mostrarError(mensaje);
     } finally {
       setEnviando(false);
@@ -172,9 +195,26 @@ export function PaginaSetup() {
       <Card className="w-full max-w-xl shadow-lg border-gray-200">
         <CardHeader className="text-center pb-6">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <svg className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="Configuración">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="w-10 h-10 text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-label="Configuración"
+            >
+              <title>Configuración</title>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
@@ -216,7 +256,9 @@ export function PaginaSetup() {
                 key={p.numero}
                 className={[
                   "text-xs",
-                  paso === p.numero ? "text-blue-600 font-medium" : "text-gray-400",
+                  paso === p.numero
+                    ? "text-blue-600 font-medium"
+                    : "text-gray-400",
                 ].join(" ")}
               >
                 {p.titulo}
@@ -245,12 +287,15 @@ export function PaginaSetup() {
                     type="text"
                     required
                     value={formulario.organizacionNombre}
-                    onChange={(e) => actualizarCampo("organizacionNombre", e.target.value)}
+                    onChange={(e) =>
+                      actualizarCampo("organizacionNombre", e.target.value)
+                    }
                     placeholder="Mi Empresa S.A."
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Este nombre se usará para identificar tu organización en el sistema.
+                    Este nombre se usará para identificar tu organización en el
+                    sistema.
                   </p>
                 </div>
               </fieldset>
@@ -274,7 +319,9 @@ export function PaginaSetup() {
                     type="text"
                     required
                     value={formulario.qlikTenantHost}
-                    onChange={(e) => actualizarCampo("qlikTenantHost", e.target.value)}
+                    onChange={(e) =>
+                      actualizarCampo("qlikTenantHost", e.target.value)
+                    }
                     placeholder="empresa.us.qlikcloud.com"
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
@@ -292,7 +339,9 @@ export function PaginaSetup() {
                     type="text"
                     required
                     value={formulario.qlikClientId}
-                    onChange={(e) => actualizarCampo("qlikClientId", e.target.value)}
+                    onChange={(e) =>
+                      actualizarCampo("qlikClientId", e.target.value)
+                    }
                     placeholder="Client ID de tu aplicación OAuth en Qlik Cloud"
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
@@ -310,7 +359,9 @@ export function PaginaSetup() {
                     type="password"
                     required
                     value={formulario.qlikClientSecret}
-                    onChange={(e) => actualizarCampo("qlikClientSecret", e.target.value)}
+                    onChange={(e) =>
+                      actualizarCampo("qlikClientSecret", e.target.value)
+                    }
                     placeholder="Client Secret de tu aplicación OAuth"
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
@@ -322,7 +373,10 @@ export function PaginaSetup() {
                   </legend>
                   <div className="bg-gray-50 rounded-md border border-gray-200 p-3 max-h-40 overflow-y-auto space-y-1">
                     {formulario.qlikScopes.map((scope) => (
-                      <label key={scope} className="flex items-center gap-2 text-sm text-gray-700">
+                      <label
+                        key={scope}
+                        className="flex items-center gap-2 text-sm text-gray-700"
+                      >
                         <input
                           type="checkbox"
                           checked={formulario.qlikScopes.includes(scope)}
@@ -330,7 +384,9 @@ export function PaginaSetup() {
                             if (formulario.qlikScopes.includes(scope)) {
                               actualizarCampo(
                                 "qlikScopes",
-                                formulario.qlikScopes.filter((s) => s !== scope),
+                                formulario.qlikScopes.filter(
+                                  (s) => s !== scope,
+                                ),
                               );
                             } else {
                               actualizarCampo("qlikScopes", [
@@ -382,7 +438,9 @@ export function PaginaSetup() {
                     type="text"
                     required
                     value={formulario.superadminNombre}
-                    onChange={(e) => actualizarCampo("superadminNombre", e.target.value)}
+                    onChange={(e) =>
+                      actualizarCampo("superadminNombre", e.target.value)
+                    }
                     placeholder="Juan Pérez"
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
@@ -400,12 +458,15 @@ export function PaginaSetup() {
                     type="email"
                     required
                     value={formulario.superadminCorreo}
-                    onChange={(e) => actualizarCampo("superadminCorreo", e.target.value)}
+                    onChange={(e) =>
+                      actualizarCampo("superadminCorreo", e.target.value)
+                    }
                     placeholder="juan@empresa.com"
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Usa el mismo correo que configurarás en tu cliente OAuth de Qlik.
+                    Usa el mismo correo que configurarás en tu cliente OAuth de
+                    Qlik.
                   </p>
                 </div>
               </fieldset>
@@ -413,7 +474,11 @@ export function PaginaSetup() {
 
             <div className="flex items-center justify-between pt-4 border-t">
               {paso > 1 ? (
-                <Button type="button" variant="outline" onClick={handleAnterior}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAnterior}
+                >
                   ← Anterior
                 </Button>
               ) : (

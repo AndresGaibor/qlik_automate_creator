@@ -8,6 +8,7 @@ export interface EntradaSetup {
   qlikScopes: string[];
   superadminNombre: string;
   superadminCorreo: string;
+  frontendUrl?: string;
 }
 
 export interface EntradaBootstrap {
@@ -41,7 +42,9 @@ export class ErrorSetupYaCompletado extends Error {
 export class ServicioSetup {
   constructor(
     private readonly configApp: PuertoConfiguracionApp,
-    private readonly ejecutarBootstrap: (entrada: EntradaBootstrap) => Promise<ResultadoSetup>,
+    private readonly ejecutarBootstrap: (
+      entrada: EntradaBootstrap,
+    ) => Promise<ResultadoSetup>,
     private readonly guardarOAuthInicial?: GuardarOAuthInicial,
   ) {}
 
@@ -78,6 +81,11 @@ export class ServicioSetup {
         nombre: entrada.organizacionNombre,
       });
       await this.configApp.guardar("setup.completado", { valor: true });
+      if (entrada.frontendUrl) {
+        await this.configApp.guardar("frontend_url", {
+          valor: entrada.frontendUrl,
+        });
+      }
       return bootstrap;
     });
 

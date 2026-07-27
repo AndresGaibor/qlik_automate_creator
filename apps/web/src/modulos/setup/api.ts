@@ -12,6 +12,7 @@ export interface EntradaSetup {
   qlikScopes: string[];
   superadminNombre: string;
   superadminCorreo: string;
+  frontendUrl?: string;
 }
 
 export interface ResultadoSetup {
