@@ -3,11 +3,13 @@ import { useFiltroEspacioConPersistencia } from "@/compartido/hooks/use-filtro-e
 import {
   type ConfiguracionTenant,
   type ResultadoCrearDesdePlantilla,
+  type ResumenAutomatizacion,
+  type TablaImpala,
   crearAutomatizacionDesdePlantilla,
+  obtenerAutomatizaciones,
   obtenerConfiguracionTenant,
   obtenerFlujosConFiltros,
   obtenerTablasImpala,
-  type TablaImpala,
 } from "@/modulos/automatizaciones/api";
 import { AlertaConfiguracionTenant } from "@/modulos/automatizaciones/componentes/alerta-configuracion-tenant";
 import { FormularioCrearAutomatizacion } from "@/modulos/automatizaciones/componentes/formulario-crear-automatizacion";
@@ -23,33 +25,52 @@ export function PaginaNuevaAutomatizacion() {
   const { espacioId: espacioIdPersistente } = useFiltroEspacioConPersistencia();
 
   const searchParams = new URLSearchParams(window.location.search);
-  const espacioIdActual = searchParams.get("espacioId") || espacioIdPersistente || undefined;
+  const espacioIdActual =
+    searchParams.get("espacioId") || espacioIdPersistente || undefined;
+  const flujoIdParam = searchParams.get("flujoId") || "";
 
-  const [flujoId, setFlujoId] = useState("");
+  const [flujoId, setFlujoId] = useState(flujoIdParam);
   const [tablaId, setTablaId] = useState("");
   const [nombre, setNombre] = useState("");
 
-  const { data: configTenant, isLoading: cargandoConfig } = useQuery<ConfiguracionTenant>({
-    queryKey: ["automatizaciones-config-tenant"],
-    queryFn: obtenerConfiguracionTenant,
+  const { data: configTenant, isLoading: cargandoConfig } =
+    useQuery<ConfiguracionTenant>({
+      queryKey: ["automatizaciones-config-tenant"],
+      queryFn: obtenerConfiguracionTenant,
+      retry: false,
+    });
+
+  const { data: automatizaciones = [] } = useQuery<ResumenAutomatizacion[]>({
+    queryKey: ["automatizaciones"],
+    queryFn: obtenerAutomatizaciones,
     retry: false,
   });
 
   const tieneBase = !!configTenant?.automatizacionBaseIdQlik;
 
-  const { data: flujos = [], isLoading: cargandoFlujos } = useQuery<ResumenFlujo[]>({
+  const { data: flujos = [], isLoading: cargandoFlujos } = useQuery<
+    ResumenFlujo[]
+  >({
     queryKey: espacioIdActual ? ["flujos", espacioIdActual] : ["flujos"],
     queryFn: () => obtenerFlujosConFiltros(espacioIdActual),
     retry: false,
     enabled: tieneBase,
   });
 
-  const { data: tablas = [], isLoading: cargandoTablas } = useQuery<TablaImpala[]>({
+  const { data: tablas = [], isLoading: cargandoTablas } = useQuery<
+    TablaImpala[]
+  >({
     queryKey: ["impala-tablas"],
     queryFn: obtenerTablasImpala,
     retry: false,
     enabled: tieneBase,
   });
+
+  useEffect(() => {
+    if (flujoIdParam && !flujoId) {
+      setFlujoId(flujoIdParam);
+    }
+  }, [flujoIdParam, flujoId]);
 
   useEffect(() => {
     if (flujoId && tablaId && !nombre) {
@@ -61,10 +82,14 @@ export function PaginaNuevaAutomatizacion() {
   const crear = useMutation<ResultadoCrearDesdePlantilla>({
     mutationFn: async () => {
       const flujoObj = flujos.find((f) => f.id === flujoId);
-      if (!flujoObj) throw new Error("Debes seleccionar un flujo de datos válido");
-      if (!tablaId) throw new Error("Debes seleccionar una tabla de destino Impala");
+      if (!flujoObj)
+        throw new Error("Debes seleccionar un flujo de datos válido");
+      if (!tablaId)
+        throw new Error("Debes seleccionar una tabla de destino Impala");
       if (!configTenant?.automatizacionBaseIdQlik) {
-        throw new Error("El tenant no tiene una automatización base configurada");
+        throw new Error(
+          "El tenant no tiene una automatización base configurada",
+        );
       }
       return crearAutomatizacionDesdePlantilla({
         nombre: nombre.trim() || `Auto - ${flujoObj.nombre} → ${tablaId}`,
@@ -75,7 +100,9 @@ export function PaginaNuevaAutomatizacion() {
       });
     },
     onSuccess: async (resultado) => {
-      mostrarExito(`✅ Automatización "${resultado.nombre}" creada correctamente en Qlik Cloud`);
+      mostrarExito(
+        `✅ Automatización "${resultado.nombre}" creada correctamente en Qlik Cloud`,
+      );
       await queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
       navegar({ to: "/automatizaciones" });
     },
@@ -83,15 +110,22 @@ export function PaginaNuevaAutomatizacion() {
   });
 
   function onCrear() {
-    if (!flujoId) { mostrarError("Por favor selecciona un flujo de datos"); return; }
-    if (!tablaId) { mostrarError("Por favor selecciona una tabla de destino Impala"); return; }
+    if (!flujoId) {
+      mostrarError("Por favor selecciona un flujo de datos");
+      return;
+    }
+    if (!tablaId) {
+      mostrarError("Por favor selecciona una tabla de destino Impala");
+      return;
+    }
     crear.mutate();
   }
 
   if (cargandoConfig) {
     return (
       <div className="mx-auto max-w-3xl flex items-center justify-center py-20 text-gray-500 text-sm gap-2">
-        <span className="animate-spin">⚙️</span> Verificando configuración del tenant...
+        <span className="animate-spin">⚙️</span> Verificando configuración del
+        tenant...
       </div>
     );
   }
@@ -99,7 +133,9 @@ export function PaginaNuevaAutomatizacion() {
   if (!tieneBase) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">Nueva Automatización</h2>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Nueva Automatización
+        </h2>
         <AlertaConfiguracionTenant
           configTenant={configTenant}
           onVolver={() => navegar({ to: "/automatizaciones" })}
@@ -110,13 +146,20 @@ export function PaginaNuevaAutomatizacion() {
 
   return (
     <FormularioCrearAutomatizacion
-      flujoId={flujoId} setFlujoId={setFlujoId}
-      tablaId={tablaId} setTablaId={setTablaId}
-      nombre={nombre} setNombre={setNombre}
-      flujos={flujos} tablas={tablas}
+      flujoId={flujoId}
+      setFlujoId={setFlujoId}
+      tablaId={tablaId}
+      setTablaId={setTablaId}
+      nombre={nombre}
+      setNombre={setNombre}
+      flujos={flujos}
+      tablas={tablas}
+      automatizaciones={automatizaciones}
       espacioId={espacioIdActual}
-      isLoadingFlujos={cargandoFlujos} isLoadingTablas={cargandoTablas}
-      onCrear={onCrear} isCreating={crear.isPending}
+      isLoadingFlujos={cargandoFlujos}
+      isLoadingTablas={cargandoTablas}
+      onCrear={onCrear}
+      isCreating={crear.isPending}
       puedeCrear={!!(flujoId && tablaId && nombre.trim())}
       configTenant={configTenant}
     />
