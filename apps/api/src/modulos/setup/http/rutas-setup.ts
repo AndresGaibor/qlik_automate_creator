@@ -1,12 +1,15 @@
-import { z } from "zod";
 import { type Context, Hono } from "hono";
-import { responderError, responderExito } from "../../../nucleo/http/respuestas.js";
+import { z } from "zod";
+import {
+  responderError,
+  responderExito,
+} from "../../../nucleo/http/respuestas.js";
+import type { PuertoConfiguracionApp } from "../aplicacion/puerto/puerto-configuracion-app.js";
 import {
   ErrorSetupYaCompletado,
   type GuardarOAuthInicial,
   ServicioSetup,
 } from "../aplicacion/servicio-setup.js";
-import type { PuertoConfiguracionApp } from "../aplicacion/puerto/puerto-configuracion-app.js";
 import type { EntradaBootstrap } from "../aplicacion/servicio-setup.js";
 
 const esquemaSetup = z.object({
@@ -17,14 +20,23 @@ const esquemaSetup = z.object({
   qlikScopes: z.array(z.string()).min(1),
   superadminNombre: z.string().min(2).max(100),
   superadminCorreo: z.string().email(),
+  frontendUrl: z.string().optional(),
 });
 
 export function crearRutasSetup(
   configApp: PuertoConfiguracionApp,
-  ejecutarBootstrap: (entrada: EntradaBootstrap) => Promise<{ organizacionId: string; tenantQlikId: string; superadminId: string }>,
+  ejecutarBootstrap: (entrada: EntradaBootstrap) => Promise<{
+    organizacionId: string;
+    tenantQlikId: string;
+    superadminId: string;
+  }>,
   guardarOAuthInicial?: GuardarOAuthInicial,
 ) {
-  const servicio = new ServicioSetup(configApp, ejecutarBootstrap, guardarOAuthInicial);
+  const servicio = new ServicioSetup(
+    configApp,
+    ejecutarBootstrap,
+    guardarOAuthInicial,
+  );
   const rutas = new Hono();
 
   rutas.get("/status", async (c: Context) => {
@@ -37,15 +49,22 @@ export function crearRutasSetup(
     try {
       cuerpo = await c.req.json();
     } catch {
-      return responderError(c, "Cuerpo inválido", 400, { codigo: "CUERPO_INVALIDO" });
+      return responderError(c, "Cuerpo inválido", 400, {
+        codigo: "CUERPO_INVALIDO",
+      });
     }
 
     const parsed = esquemaSetup.safeParse(cuerpo);
     if (!parsed.success) {
-      return responderError(c, parsed.error.errors[0]?.message ?? "Datos inválidos", 400, {
-        codigo: "VALIDACION_ERROR",
-        detalles: parsed.error.errors,
-      });
+      return responderError(
+        c,
+        parsed.error.errors[0]?.message ?? "Datos inválidos",
+        400,
+        {
+          codigo: "VALIDACION_ERROR",
+          detalles: parsed.error.errors,
+        },
+      );
     }
 
     try {
@@ -53,13 +72,20 @@ export function crearRutasSetup(
       return responderExito(c, resultado, 201);
     } catch (err) {
       if (err instanceof ErrorSetupYaCompletado) {
-        return responderError(c, "La configuración inicial ya fue completada", 409, {
-          codigo: "SETUP_YA_COMPLETADO",
-        });
+        return responderError(
+          c,
+          "La configuración inicial ya fue completada",
+          409,
+          { codigo: "SETUP_YA_COMPLETADO" },
+        );
       }
-      return responderError(c, "No se pudo completar la configuración inicial", 500, {
-        codigo: "SETUP_ERROR",
-      });
+      const mensaje = err instanceof Error ? err.message : "Error desconocido";
+      return responderError(
+        c,
+        `No se pudo completar la configuración: ${mensaje}`,
+        500,
+        { codigo: "SETUP_ERROR" },
+      );
     }
   });
 

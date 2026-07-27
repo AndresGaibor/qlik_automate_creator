@@ -2,25 +2,74 @@
 
 ## Resumen
 
-Qlik Automate Creator **no requiere ninguna configuración en archivos `.env`** para funcionar. Toda la configuración de negocio se realiza vía interfaz de usuario después del primer arranque.
+Qlik Automate Creator funciona **sin modificar ningún archivo** — solo copiar `.env.example` a `.env` y ajustar si es necesario (los defaults funcionan).
 
 ---
 
-## Variables de entorno requeridas
+## Configuración con un solo comando
 
-| Variable | Valor | Propósito |
-|---|---|---|
-| `DATABASE_URL` | `postgres://user:pass@host:5432/db` | Conexión a PostgreSQL |
+```bash
+cp .env.example .env
+docker compose up -d
+# Accede a http://localhost:8080 → wizard automático
+```
 
-La URL del frontend se configura en el wizard y se guarda automáticamente. CORS se resuelve dinámicamente.
+---
 
-### Docker Compose — configuración mínima
+## Configuración de puertos y dominio
+
+Edita `.env` según tu entorno:
+
+```bash
+# Desarrollo local (default — funciona sin cambios)
+PORT_WEB=8080
+PORT_API=3000
+HOST_IP=127.0.0.1
+SERVER_NAME=localhost
+
+# Producción con dominio propio (ej. api.midominio.com)
+PORT_WEB=80
+PORT_API=3000
+HOST_IP=0.0.0.0
+SERVER_NAME=api.midominio.com
+
+# Producción con SSL (el certificado se gestiona en el proxy/Cloudflare)
+# El app siempre corre en HTTP — SSL se termina en nginx o Cloudflare Tunnel
+```
+
+### Cloudflare
+
+1. Crea un túnel de Cloudflare (o usa Cloudflare Tunnel) apuntando a tu servidor
+2. En Cloudflare, configura el subdomain (`api.midominio.com`) → túnel
+3. En `.env`:
+   ```bash
+   HOST_IP=0.0.0.0
+   SERVER_NAME=api.midominio.com
+   PORT_WEB=80
+   PORT_API=3000
+   ```
+4. En el wizard de setup, la URL del frontend se detecta automáticamente
+
+### Cambiar puertos después
+
+```bash
+# Edita .env
+PORT_WEB=8888
+PORT_API=4000
+
+# Reinicia
+docker compose down && docker compose up -d
+```
+
+---
+
+## Docker Compose — configuración completa
 
 ```yaml
-# compose.yaml
 services:
   postgres:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: qlik_automatizaciones
       POSTGRES_USER: ${POSTGRES_USER:-qlik_app}
@@ -30,6 +79,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U qlik_app -d qlik_automatizaciones"]
       interval: 10s
+      timeout: 5s
       retries: 5
 
   api:
@@ -37,8 +87,10 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: ${PORT_API:-3000}
       DATABASE_URL: ${DATABASE_URL:-postgres://qlik_app:cambiar_en_produccion@postgres:5432/qlik_automatizaciones}
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${PORT_API:-3000}:${PORT_API:-3000}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,19 +102,11 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8080:80"
+      - "${HOST_IP:-127.0.0.1}:${PORT_WEB:-8080}:80"
 
 volumes:
   postgres_data:
 ```
-
-### Arrancar (desarrollo local)
-
-```bash
-docker compose up -d
-```
-
-Accede a `http://localhost:8080`. El wizard de setup arranca automáticamente.
 
 ---
 
