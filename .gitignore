@@ -42,3 +42,5 @@ apps/web/node_modules/
 
 # Superpowers
 .superpowers/
+
+.worktrees/
