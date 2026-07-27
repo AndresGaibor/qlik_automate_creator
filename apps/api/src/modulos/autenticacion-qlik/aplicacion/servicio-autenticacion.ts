@@ -79,6 +79,13 @@ export class ServicioAutenticacionQlik {
     return this.repositorio.cambiarTenantActivo(tokenSesion, tenantQlikId);
   }
 
+  async verificarCredenciales(tokenSesion: string): Promise<boolean> {
+    const info = await this.repositorio.obtenerInfoSesion(tokenSesion);
+    if (!info) return false;
+    const credenciales = await this.repositorio.obtenerCredenciales(info);
+    return credenciales !== null;
+  }
+
   cerrarSesion(tokenSesion: string) {
     return this.repositorio.revocarSesion(tokenSesion);
   }

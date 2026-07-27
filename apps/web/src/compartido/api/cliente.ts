@@ -17,7 +17,13 @@ export class ErrorClienteApi extends Error {
 }
 
 export class ClienteApi {
+  private _onUnauthorized?: () => void;
+
   constructor(private readonly baseUrl = "/api") {}
+
+  set onUnauthorized(fn: (() => void) | undefined) {
+    this._onUnauthorized = fn;
+  }
 
   get<T>(ruta: string, configuracion?: ConfiguracionSolicitud): Promise<T> {
     return this.solicitar<T>(ruta, { ...configuracion, method: "GET" });
@@ -89,6 +95,9 @@ export class ClienteApi {
       const error = contenido.exito
         ? { mensaje: `HTTP ${respuesta.status}` }
         : contenido.error;
+      if (respuesta.status === 401) {
+        this._onUnauthorized?.();
+      }
       throw new ErrorClienteApi(
         error.mensaje,
         respuesta.status,

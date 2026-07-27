@@ -181,6 +181,13 @@ export function crearRutasAutenticacionQlik(
         codigo: "SESION_INVALIDA",
       });
     }
+    const credencialesValidas = await servicio.verificarCredenciales(token);
+    if (!credencialesValidas) {
+      deleteCookie(c, COOKIE_SESION, cookieSegura);
+      return responderError(c, "El tenant activo requiere conexión Qlik", 401, {
+        codigo: "CREDENCIALES_QLIK_INVALIDAS",
+      });
+    }
     return responderExito(c, sesion);
   });
 
