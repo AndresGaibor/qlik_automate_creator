@@ -41,7 +41,7 @@ export function PaginaSuperadmins() {
     mutationFn: (entrada: { nombre: string; correo: string }) =>
       agregarSuperadmin(entrada),
     onSuccess: () => {
-      mostrarExito("Superadministrador agregado correctamente");
+      mostrarExito("Superadministrador agregado");
       setModalCrear(false);
       queryClient.invalidateQueries({ queryKey: ["superadmins"] });
     },
@@ -70,7 +70,7 @@ export function PaginaSuperadmins() {
         description="Gestiona los usuarios con acceso de superadministrador al sistema."
         actions={
           <Button onClick={() => setModalCrear(true)} font-medium>
-            + Agregar superadministrador
+            Agregar superadministrador
           </Button>
         }
       />
@@ -150,7 +150,7 @@ export function PaginaSuperadmins() {
               Agrega el primer superadministrador para gestionar el sistema.
             </p>
             <Button size="sm" onClick={() => setModalCrear(true)}>
-              + Agregar superadministrador
+              Agregar superadministrador
             </Button>
           </div>
         )}

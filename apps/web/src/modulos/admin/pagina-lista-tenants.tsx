@@ -42,7 +42,7 @@ export function PaginaListaTenants() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenants"] });
       setModalCrear(false);
-      mostrarExito("Organización creada exitosamente");
+      mostrarExito("Organización creada");
     },
     onError: (error: Error) => mostrarError(error.message),
   });
@@ -67,7 +67,7 @@ export function PaginaListaTenants() {
         description="Cada organización agrupa un entorno de Qlik Cloud, sus usuarios autorizados y la configuración de Impala."
         actions={
           <Button onClick={() => setModalCrear(true)} font-medium>
-            + Nueva organización
+            Nueva organización
           </Button>
         }
       />
@@ -165,7 +165,7 @@ export function PaginaListaTenants() {
               Cloud y agregar usuarios.
             </p>
             <Button size="sm" onClick={() => setModalCrear(true)}>
-              + Crear Organización
+              Crear organización
             </Button>
           </div>
         )}

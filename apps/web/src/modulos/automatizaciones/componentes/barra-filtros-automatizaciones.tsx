@@ -35,7 +35,7 @@ export function BarraFiltrosAutomatizaciones({
         actions={
           <Button asChild font-medium>
             <a href={`/automatizaciones/nueva${busqueda}`}>
-              + Crear automatización
+              Crear automatización
             </a>
           </Button>
         }

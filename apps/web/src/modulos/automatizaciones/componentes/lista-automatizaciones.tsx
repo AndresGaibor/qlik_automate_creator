@@ -48,7 +48,7 @@ export function ListaAutomatizaciones({
         </p>
         <Button size="sm" asChild className="bg-blue-600 text-white">
           <a href={`/automatizaciones/nueva${busqueda}`}>
-            + Crear mi primera automatización
+            Crear mi primera automatización
           </a>
         </Button>
       </div>

@@ -35,7 +35,7 @@ export function useDetalleTenantMutations({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenant", tenantId] });
       queryClient.invalidateQueries({ queryKey: ["admin-tenants"] });
-      mostrarExito("Organización actualizada correctamente");
+      mostrarExito("Organización actualizada");
     },
     onError: (error: Error) => mostrarError(error.message),
   });
@@ -49,7 +49,7 @@ export function useDetalleTenantMutations({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenant", tenantId] });
       onLimpiarFormularioUsuario();
-      mostrarExito("Usuario autorizado correctamente");
+      mostrarExito("Usuario autorizado");
     },
     onError: (error: Error) => mostrarError(error.message),
   });

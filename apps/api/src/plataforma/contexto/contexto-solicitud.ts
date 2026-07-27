@@ -1,9 +1,9 @@
-import { generarUuid } from "../../nucleo/valores/generar-uuid.js";
 import type { Context } from "hono";
 import type {
   InfoSesion,
   SesionPublica,
 } from "../../nucleo/sesion/tipos-sesion.js";
+import { generarUuid } from "../../nucleo/valores/generar-uuid.js";
 
 export interface ContextoSolicitud {
   idSolicitud: string;

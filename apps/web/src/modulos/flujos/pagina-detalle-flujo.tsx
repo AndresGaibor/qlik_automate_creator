@@ -174,8 +174,8 @@ export function PaginaDetalleFlujo() {
                   to="/automatizaciones/nueva"
                   search={{ flujoId: flujo.id }}
                 >
-                  <Icon name="zap" size="sm" />+ Crear automatización en Qlik
-                  Automate
+                  <Icon name="zap" size="sm" />
+                  Crear automatización en Qlik Automate
                 </Link>
               </Button>
             )}
@@ -401,8 +401,8 @@ export function PaginaDetalleFlujo() {
                     to="/automatizaciones/nueva"
                     search={{ flujoId: flujo.id }}
                   >
-                    <Icon name="zap" size="sm" />+ Crear automatización en Qlik
-                    Automate
+                    <Icon name="zap" size="sm" />
+                    Crear automatización en Qlik Automate
                   </Link>
                 </Button>
               </div>

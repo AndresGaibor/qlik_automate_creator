@@ -298,7 +298,7 @@ function PasoPlantillaBase({
       queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
-      mostrarExito("Plantilla base actualizada correctamente");
+      mostrarExito("Plantilla base actualizada");
     },
     onError: (err: Error) => mostrarError(err.message),
   });
@@ -421,7 +421,7 @@ function ImpalaPorEntorno({
       queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
-      mostrarExito("Conexión Impala guardada correctamente");
+      mostrarExito("Conexión Impala guardada");
     },
     onError: (err: Error) => mostrarError(err.message),
   });

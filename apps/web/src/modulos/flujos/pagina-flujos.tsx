@@ -12,6 +12,10 @@ import { usePaginacion } from "@/compartido/hooks/use-paginacion";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import { construirUrlCrearFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import {
+  type ResumenAutomatizacion,
+  obtenerAutomatizaciones,
+} from "@/modulos/automatizaciones/api";
+import {
   type ResumenFlujo,
   obtenerEspacios,
   obtenerFlujosConFiltros,
@@ -44,14 +48,9 @@ export function PaginaFlujos() {
     retry: false,
   });
 
-  const { data: automatizaciones = [] } = useQuery<
-    import("@qlik/contratos/automatizaciones").ResumenAutomatizacion[]
-  >({
+  const { data: automatizaciones = [] } = useQuery<ResumenAutomatizacion[]>({
     queryKey: ["automatizaciones", tenantActivo?.id],
-    queryFn: () =>
-      import("@/modulos/automatizaciones/api").then((m) =>
-        m.obtenerAutomatizaciones(),
-      ),
+    queryFn: obtenerAutomatizaciones,
     retry: false,
   });
 

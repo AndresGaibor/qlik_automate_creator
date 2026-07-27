@@ -1,6 +1,6 @@
 import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
-import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
+import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { aplicarReemplazosEnWorkspace } from "./servicio-reemplazo-workspace.js";
 
 export interface ResultadoCopiaAutomatizacion {

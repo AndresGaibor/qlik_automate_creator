@@ -1,5 +1,4 @@
 import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
-import { generarUuid } from "./nucleo/valores/generar-uuid.js";
 import { eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
@@ -41,6 +40,7 @@ import type { PuertoAuditoria } from "./nucleo/auditoria/puerto-auditoria.js";
 import { ErrorNoAutorizado } from "./nucleo/errores/error-aplicacion.js";
 import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "./nucleo/idempotencia/puerto-idempotencia.js";
+import { generarUuid } from "./nucleo/valores/generar-uuid.js";
 import { ejecutarBootstrap } from "./plataforma/bootstrap/bootstrap.js";
 import { RepositorioBootstrapPostgres } from "./plataforma/bootstrap/repositorio-bootstrap-postgres.js";
 import type { ConfiguracionAplicacion } from "./plataforma/configuracion/entorno.js";

@@ -62,7 +62,7 @@ export function PaginaAutomatizaciones() {
       setIdEjecutando(id);
     },
     onSuccess: async (_resultado, _id) => {
-      mostrarExito("Automatización ejecutada exitosamente");
+      mostrarExito("Automatización ejecutada");
       await queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
     },
     onError: (err: Error) => {

@@ -136,7 +136,7 @@ export function PaginaSetup() {
           "La respuesta del servidor no contiene la configuración creada.",
         );
       }
-      mostrarExito("La configuración inicial se guardó correctamente.");
+      mostrarExito("Configuración inicial guardada.");
       window.location.assign("/login");
     } catch (causa) {
       const mensaje =
@@ -157,6 +157,15 @@ export function PaginaSetup() {
         ? formulario.qlikScopes.filter((actual) => actual !== scope)
         : [...formulario.qlikScopes, scope],
     );
+  };
+
+  const copiarRedirectUri = async () => {
+    try {
+      await navigator.clipboard.writeText(formulario.qlikRedirectUri);
+      mostrarExito("URI de redirección copiada");
+    } catch {
+      mostrarError("No se pudo copiar la URI de redirección");
+    }
   };
 
   return (
@@ -373,9 +382,20 @@ export function PaginaSetup() {
                     Registra esta URI exactamente en la aplicación OAuth de Qlik
                     Cloud.
                   </p>
-                  <code className="mt-2 block break-all border border-line-200 bg-surface px-2 py-1.5 text-xs text-ink-800">
-                    {formulario.qlikRedirectUri}
-                  </code>
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-start">
+                    <code className="block min-w-0 flex-1 break-all border border-line-200 bg-surface px-2 py-1.5 text-xs text-ink-800">
+                      {formulario.qlikRedirectUri}
+                    </code>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={copiarRedirectUri}
+                    >
+                      <Icon name="copy" size="sm" />
+                      Copiar URI
+                    </Button>
+                  </div>
                 </aside>
               </fieldset>
             )}

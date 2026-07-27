@@ -116,7 +116,7 @@ export function PaginaLogin() {
                   htmlFor="correo-usuario"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Correo Electrónico
+                  Correo electrónico
                 </label>
                 <input
                   id="correo-usuario"

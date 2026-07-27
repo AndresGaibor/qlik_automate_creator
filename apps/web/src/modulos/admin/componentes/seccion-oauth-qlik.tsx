@@ -47,7 +47,7 @@ export function SeccionOauthQlik({ organizacionId, tenantsQlik }: Props) {
     if (!verificado && !error) return;
 
     if (verificado) {
-      mostrarExito("La conexión OAuth con Qlik fue verificada correctamente");
+      mostrarExito("Conexión OAuth con Qlik verificada");
       queryClient.invalidateQueries({ queryKey: ["admin-oauth-qlik"] });
     } else if (error) {
       mostrarError("No se pudo verificar la conexión OAuth con Qlik");
@@ -159,7 +159,7 @@ function TarjetaOauthTenant({
         queryKey: ["admin-oauth-qlik", organizacionId, tenant.id],
       });
       if (!conectar) {
-        mostrarExito("Configuración OAuth guardada correctamente");
+        mostrarExito("Configuración OAuth guardada");
       }
     },
     onError: (err: Error) => {

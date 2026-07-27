@@ -79,7 +79,7 @@ export function SeccionUsuarios({
                 <tr className="border-b border-line-200 text-xs text-ink-500 uppercase tracking-wider bg-app/60 font-semibold">
                   <th className="py-3 px-4 font-semibold">Usuario</th>
                   <th className="py-3 px-4 font-semibold">
-                    Correo Electrónico
+                    Correo electrónico
                   </th>
                   <th className="py-3 px-4 font-semibold">Rol / Permisos</th>
                   <th className="py-3 px-4 font-semibold text-right">

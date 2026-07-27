@@ -158,7 +158,7 @@ export function FormularioCrearAutomatizacion({
                 etiqueta="2. Tabla destino (Impala)"
                 placeholder="Elige dónde guardar el resultado en Impala..."
                 searchPlaceholder="Busca la tabla por nombre…"
-                emptyText="No se encontraron tablas. Verifica que la conexión a Impala esté configurada correctamente."
+                emptyText="No se encontraron tablas. Revisa la conexión a Impala e inténtalo de nuevo."
                 opciones={opcionesTablas}
                 valorSeleccionado={tablaId}
                 onSeleccionar={setTablaId}

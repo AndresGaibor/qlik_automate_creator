@@ -46,7 +46,7 @@ export function SeccionConfigurarImpalaTenant({
       queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
-      mostrarExito("Conexión a Impala guardada correctamente");
+      mostrarExito("Conexión a Impala guardada");
     },
     onError: (err: Error) => mostrarError(err.message),
   });

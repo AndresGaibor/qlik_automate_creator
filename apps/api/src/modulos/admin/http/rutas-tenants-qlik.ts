@@ -1,10 +1,10 @@
 import { esquemaCrearTenantQlik } from "@qlik/contratos/admin";
-import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import { Hono } from "hono";
 import {
   responderError,
   responderExito,
 } from "../../../nucleo/http/respuestas.js";
+import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import {
   crearTenantQlik,
   eliminarTenantQlik,

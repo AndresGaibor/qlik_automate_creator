@@ -70,7 +70,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   const mutationEjecutar = useMutation({
     mutationFn: () => ejecutarAutomatizacion(id),
     onSuccess: () => {
-      mostrarExito("Ejecución iniciada correctamente");
+      mostrarExito("Ejecución iniciada");
       queryClient.invalidateQueries({ queryKey: ["automatizacion", id] });
     },
     onError: (err: Error) => {
@@ -99,9 +99,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   const mutationClonar = useMutation({
     mutationFn: (nombre: string) => clonarAutomatizacion(id, { nombre }),
     onSuccess: (resultado) => {
-      mostrarExito(
-        `Automatización "${resultado.nombre}" clonada correctamente`,
-      );
+      mostrarExito(`Automatización "${resultado.nombre}" clonada`);
       setModalClonarAbierto(false);
       queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
       navegar({ to: `/automatizaciones/${resultado.id}` });

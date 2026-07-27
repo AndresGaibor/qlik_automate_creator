@@ -41,7 +41,7 @@ export function SeccionConfigurarAutomatizacionBase({
       queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
-      mostrarExito("Automatización Base del Tenant configurada exitosamente");
+      mostrarExito("Plantilla base del tenant configurada");
     },
     onError: (err: Error) => mostrarError(err.message),
   });

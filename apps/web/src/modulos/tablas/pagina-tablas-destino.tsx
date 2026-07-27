@@ -146,7 +146,7 @@ export function PaginaTablasDestino() {
             className="gap-1.5 bg-brand-600 hover:bg-brand-700 text-white"
           >
             <Icon name="plus" size="sm" />
-            {esAdmin ? "+ Crear nuevo reporte" : "+ Solicitar un nuevo reporte"}
+            {esAdmin ? "Crear nuevo reporte" : "Solicitar un nuevo reporte"}
           </Button>
         }
       />

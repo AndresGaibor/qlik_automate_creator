@@ -100,9 +100,7 @@ export function PaginaNuevaAutomatizacion() {
       });
     },
     onSuccess: async (resultado) => {
-      mostrarExito(
-        `Automatización "${resultado.nombre}" creada correctamente en Qlik Cloud`,
-      );
+      mostrarExito(`Automatización "${resultado.nombre}" creada en Qlik Cloud`);
       await queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
       navegar({ to: "/automatizaciones" });
     },
@@ -133,7 +131,7 @@ export function PaginaNuevaAutomatizacion() {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <h2 className="text-2xl font-bold text-gray-900">
-          Nueva Automatización
+          Nueva automatización
         </h2>
         <AlertaConfiguracionTenant
           configTenant={configTenant}

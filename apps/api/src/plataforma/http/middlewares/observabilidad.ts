@@ -1,5 +1,5 @@
-import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import type { MiddlewareHandler } from "hono";
+import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import type { Registrador } from "../../observabilidad/registrador.js";
 
 export function crearMiddlewareObservabilidad(

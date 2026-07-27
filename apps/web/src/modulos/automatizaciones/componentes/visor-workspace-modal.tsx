@@ -36,7 +36,7 @@ function VisorEditorJsonTab({
     mutationFn: (workspaceNuevo: Record<string, unknown>) =>
       actualizarWorkspaceAutomatizacion(automatizacionId, workspaceNuevo),
     onSuccess: () => {
-      mostrarExito("Workspace actualizado correctamente en Qlik Cloud");
+      mostrarExito("Workspace actualizado en Qlik Cloud");
       setModoEdicion(false);
       setErrorJson(null);
       queryClient.invalidateQueries({
