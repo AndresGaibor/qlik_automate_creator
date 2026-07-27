@@ -61,14 +61,22 @@ class ServicioCifradoWrapper {
     if (this.inicializado) return;
     let clave = process.env.CIFRADO_CLAVE_PRINCIPAL;
     if (!clave) {
-      const almacenado = await db.obtener(CLAVE_CONFIG);
-      if (almacenado && typeof almacenado === "object") {
-        clave = (almacenado as Record<string, unknown>).valor as string;
+      try {
+        const almacenado = await db.obtener(CLAVE_CONFIG);
+        if (almacenado && typeof almacenado === "object") {
+          clave = (almacenado as Record<string, unknown>).valor as string;
+        }
+      } catch {
+        // Tabla aún no existe — se generará clave temporal
       }
     }
     if (!clave) {
       clave = crypto.randomBytes(32).toString("base64");
-      await db.guardar(CLAVE_CONFIG, { valor: clave });
+      try {
+        await db.guardar(CLAVE_CONFIG, { valor: clave });
+      } catch {
+        // No se pudo persistir — sigue con clave en memoria
+      }
     }
     this.servicio = new ServicioCifrado(clave);
     this.inicializado = true;

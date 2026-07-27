@@ -49,6 +49,19 @@ export async function cerrarConexion(): Promise<void> {
 export async function asegurarEsquemaTablas(): Promise<void> {
   try {
     await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS app_config (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        clave text NOT NULL UNIQUE,
+        valor jsonb NOT NULL DEFAULT '{}',
+        actualizado_en timestamp with time zone NOT NULL DEFAULT NOW()
+      )
+    `);
+  } catch (error) {
+    console.warn("Aviso al asegurar esquema de app_config:", error);
+  }
+
+  try {
+    await db.execute(sql`
       SET client_min_messages = WARNING;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_id_qlik TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_nombre TEXT;
@@ -63,6 +76,6 @@ export async function asegurarEsquemaTablas(): Promise<void> {
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS impala_database TEXT;
     `);
   } catch (error) {
-    console.warn("Aviso al asegurar esquema de base de datos:", error);
+    console.warn("Aviso al asegurar esquema de tenants_qlik:", error);
   }
 }
