@@ -21,23 +21,38 @@ cp .env.example .env
 Edita `.env` según tu servidor:
 
 ```bash
-# Tu dominio o subdomain
+# Si usas dominio:
 SERVER_NAME=api.midominio.com
+HOST_IP=0.0.0.0
 
-# IP del servidor (0.0.0.0 = todas las interfaces)
+# Si solo quieres acceso por IP (sin dominio):
+# No necesitas SERVER_NAME — CORS funciona automáticamente con la IP del servidor
 HOST_IP=0.0.0.0
 ```
 
 Los puertos internos ya vienen configurados con valores no-estándar (3847 para web, 7823 para API). Puedes cambiarlos si lo necesitas.
 
-## 3. Crear túnel de Cloudflare
+## 3. Acceso sin dominio (solo IP)</Para pruebas o uso interno sin dominio:
+
+```bash
+HOST_IP=0.0.0.0
+```
+
+Accede directamente desde el navegador:
+```
+http://<ip-del-servidor>:3847
+```
+
+El wizard de setup funciona perfectamente — CORS se resuelve automáticamente con la IP de origen.
+
+## 4. Crear túnel de Cloudflare
 
 1. Instala `cloudflared` en tu servidor: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/install-and-setup/tunnel-guide/
 2. Crea un túnel en [Cloudflare Dashboard](https://dash.cloudflare.com/)
 3. Apunta el túnel a tu servidor: `http://localhost:3847`
 4. Configura el subdomain: `api.midominio.com` → túnel
 
-## 4. Arrancar
+## 5. Arrancar
 
 ```bash
 docker compose up -d
@@ -94,6 +109,16 @@ nginx (proxy inverso)
     └── /api/     → api (Bun :7823)
                         └── PostgreSQL (:5432)
 ```
+
+## Cambiar puertos
+
+```bash
+# En .env
+PORT_WEB=4000
+PORT_API=9000
+```
+
+Los puertos externos e internos usan los mismos valores. Nginx siempre conecta al API en el puerto interno 7823 (o el que definas con `PORT_API`).
 
 ---
 
