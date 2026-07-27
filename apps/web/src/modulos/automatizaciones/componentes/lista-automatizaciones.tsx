@@ -75,7 +75,7 @@ export function ListaAutomatizaciones({
               <span
                 className={`rounded-full px-3 py-0.5 text-xs font-semibold ${claseEstado(auto)}`}
               >
-                ● {estadoVisual(auto)}
+                {estadoVisual(auto)}
               </span>
             </div>
           </CardHeader>

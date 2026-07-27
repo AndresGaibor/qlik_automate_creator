@@ -138,7 +138,7 @@ export function SeccionAutomatizacionBaseTenant({
                           : "bg-amber-400 text-white"
                       }`}
                     >
-                      {tienePlantilla ? "✓" : "1"}
+                      {tienePlantilla ? <Icon name="check" size="sm" /> : "1"}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-ink-900 text-sm">
@@ -195,7 +195,7 @@ export function SeccionAutomatizacionBaseTenant({
                           : "bg-amber-400 text-white"
                       }`}
                     >
-                      {tieneImpala ? "✓" : "2"}
+                      {tieneImpala ? <Icon name="check" size="sm" /> : "2"}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-ink-900 text-sm">

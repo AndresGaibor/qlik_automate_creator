@@ -1,3 +1,4 @@
+import { generarUuid } from "../../nucleo/valores/generar-uuid.js";
 import type { Context } from "hono";
 import type {
   InfoSesion,
@@ -29,7 +30,7 @@ export function obtenerContextoSolicitud(c: Context): ContextoSolicitud {
     idSolicitud:
       c.res.headers.get("x-request-id") ??
       c.req.header("x-request-id") ??
-      crypto.randomUUID(),
+      generarUuid(),
     ...(ip ? { ip } : {}),
     ...(agenteUsuario ? { agenteUsuario } : {}),
   };

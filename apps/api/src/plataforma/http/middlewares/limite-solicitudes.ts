@@ -28,6 +28,11 @@ export function crearMiddlewareLimiteSolicitudes(
     if (!regla) return siguiente();
 
     const instante = ahora();
+    for (const [claveExistente, contadorExistente] of contadores) {
+      if (contadorExistente.reiniciaEn <= instante) {
+        contadores.delete(claveExistente);
+      }
+    }
     const clave = `${regla.ruta}:${c.req.method}:${obtenerCliente(c)}`;
     const contador = contadores.get(clave);
     const actual =

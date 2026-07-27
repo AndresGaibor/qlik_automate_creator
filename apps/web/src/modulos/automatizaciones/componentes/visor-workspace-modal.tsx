@@ -137,7 +137,7 @@ function VisorEditorJsonTab({
 
       {errorJson && (
         <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-mono">
-          🚨 <strong>Sintaxis JSON Inválida:</strong> {errorJson}
+          <strong>Sintaxis JSON inválida:</strong> {errorJson}
         </div>
       )}
 
@@ -442,7 +442,7 @@ export function VisorWorkspaceModal({
                                         </h4>
                                         {bloque.comment && (
                                           <p className="text-xs text-slate-500 italic mt-0.5">
-                                            💬 "{bloque.comment}"
+                                            Comentario: "{bloque.comment}"
                                           </p>
                                         )}
                                       </div>
@@ -518,7 +518,7 @@ export function VisorWorkspaceModal({
                                       <span>ID: {bloque.id}</span>
                                       {bloque.nextBlockId && (
                                         <span className="text-brand-600 font-semibold bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-md">
-                                          Conectado a ➔{" "}
+                                          Conectado a{" "}
                                           {bloque.nextBlockId.substring(0, 8)}…
                                         </span>
                                       )}
@@ -561,7 +561,7 @@ export function VisorWorkspaceModal({
                                   <div className="flex flex-col items-center py-2">
                                     <div className="w-0.5 h-6 bg-brand-300" />
                                     <div className="flex items-center justify-center h-5 w-5 rounded-full bg-brand-100 text-brand-700 border border-brand-200 shadow-sm text-[10px]">
-                                      ↓
+                                      Ver detalles
                                     </div>
                                     <div className="w-0.5 h-2 bg-brand-300" />
                                   </div>
@@ -577,7 +577,7 @@ export function VisorWorkspaceModal({
                   {pestana === "json" && (
                     <div className="space-y-4">
                       <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 font-medium">
-                        ⚠️ Esta sección es para usuarios con experiencia técnica.
+                        Esta sección es para usuarios con experiencia técnica.
                         Modificar el JSON directamente puede afectar el
                         funcionamiento de la automatización.
                       </div>

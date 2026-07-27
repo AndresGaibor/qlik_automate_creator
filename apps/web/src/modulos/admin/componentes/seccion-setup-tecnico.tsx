@@ -5,20 +5,6 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
 import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-/**
- * SeccionSetupTecnico
- *
- * Accordion de 3 pasos para configurar un entorno de Qlik Cloud:
- *   Paso 1 — Conexión Qlik Cloud
- *   Paso 2 — Plantilla base (automatización molde)
- *   Paso 3 — Conexión Impala
- *
- * Reglas UX:
- * - El primer paso incompleto aparece expandido automáticamente.
- * - Los pasos completos muestran solo una fila resumen (colapsados).
- * - Cualquier paso puede abrirse manualmente haciendo clic.
- * - Los pasos sin prerequisito cumplido aparecen "atenuados" (no bloqueantes).
- */
 import { useEffect, useState } from "react";
 import {
   type ConfigurarImpalaTenant,
@@ -28,9 +14,6 @@ import {
   listarAutomatizacionesParaAdmin,
 } from "../api";
 
-/* ─────────────────────────────────────────────
-   Tipos / Props raíz
-───────────────────────────────────────────── */
 interface Props {
   tenant: { id: string };
   tenantsQlik: TenantQlik[];
@@ -42,44 +25,10 @@ interface Props {
   hacerPrincipal: { isPending: boolean };
 }
 
-/* ─────────────────────────────────────────────
-   Componente de badge de estado
-───────────────────────────────────────────── */
-function Badge({
-  listo,
-  textoListo,
-  textoPendiente,
-}: {
-  listo: boolean;
-  textoListo: string;
-  textoPendiente: string;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-        listo
-          ? "bg-brand-50 text-brand-700 border border-brand-100"
-          : "bg-amber-50 text-amber-700 border border-amber-200"
-      }`}
-    >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          listo ? "bg-brand-600" : "bg-amber-500 animate-pulse"
-        }`}
-      />
-      {listo ? textoListo : textoPendiente}
-    </span>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   Wrapper de paso del accordion
-───────────────────────────────────────────── */
 function PasoAccordion({
   numero,
   titulo,
   descripcionCorta,
-  tooltipInfo,
   listo,
   expandido,
   onToggle,
@@ -89,30 +38,23 @@ function PasoAccordion({
   numero: number;
   titulo: string;
   descripcionCorta: string;
-  tooltipInfo: string;
   listo: boolean;
   expandido: boolean;
   onToggle: () => void;
   resumen?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const [mostrandoTooltip, setMostrandoTooltip] = useState(false);
-
   return (
     <div
-      className={`rounded-xl border transition-all duration-200 ${
-        expandido ? "border-brand-200 shadow-sm" : "border-line-200"
-      } bg-surface overflow-hidden`}
+      className={`border ${expandido ? "border-brand-300" : "border-line-200"} bg-surface`}
     >
-      {/* Cabecera del paso (siempre visible) */}
       <button
         type="button"
         onClick={onToggle}
         className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-hover transition-colors"
       >
-        {/* Número / check */}
         <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-sm font-bold ${
             listo
               ? "bg-brand-600 text-white"
               : expandido
@@ -120,46 +62,24 @@ function PasoAccordion({
                 : "bg-line-200 text-ink-500"
           }`}
         >
-          {listo ? "✓" : numero}
+          {listo ? <Icon name="check" size="sm" /> : numero}
         </div>
 
-        {/* Título + descripción corta */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-sm text-ink-900">{titulo}</span>
-            <Badge
-              listo={listo}
-              textoListo="Configurado"
-              textoPendiente="Pendiente"
-            />
-
-            {/* Tooltip info */}
-            <button
-              type="button"
-              aria-label={`Más información sobre ${titulo}`}
-              className="relative inline-flex"
-              onMouseEnter={() => setMostrandoTooltip(true)}
-              onMouseLeave={() => setMostrandoTooltip(false)}
-              onFocus={() => setMostrandoTooltip(true)}
-              onBlur={() => setMostrandoTooltip(false)}
-              onClick={(e) => e.stopPropagation()}
+            <span
+              className={
+                listo ? "text-xs text-brand-700" : "text-xs text-ink-500"
+              }
             >
-              <span className="text-ink-300 hover:text-ink-500 cursor-default text-xs select-none">
-                ⓘ
-              </span>
-              {mostrandoTooltip && (
-                <div className="absolute left-6 top-0 z-20 w-64 rounded-lg border border-line-200 bg-surface shadow-panel p-3 text-xs text-ink-600 leading-relaxed">
-                  {tooltipInfo}
-                </div>
-              )}
-            </button>
+              {listo ? "Configurado" : "Pendiente"}
+            </span>
           </div>
 
-          {/* Resumen compacto cuando está colapsado y listo */}
           {!expandido && listo && resumen && (
             <div className="mt-0.5">{resumen}</div>
           )}
-          {/* Descripción cuando está colapsado y pendiente */}
           {!expandido && !listo && (
             <p className="text-xs text-ink-400 mt-0.5 truncate">
               {descripcionCorta}
@@ -167,7 +87,6 @@ function PasoAccordion({
           )}
         </div>
 
-        {/* Chevron */}
         <Icon
           name="chev"
           size="sm"
@@ -177,7 +96,6 @@ function PasoAccordion({
         />
       </button>
 
-      {/* Contenido expandible */}
       {expandido && (
         <div className="border-t border-line-200 px-5 py-5">{children}</div>
       )}
@@ -185,9 +103,6 @@ function PasoAccordion({
   );
 }
 
-/* ─────────────────────────────────────────────
-   PASO 1 — Conexión Qlik Cloud
-───────────────────────────────────────────── */
 function PasoQlikCloud({
   tenant,
   tenantsQlik,
@@ -217,7 +132,6 @@ function PasoQlikCloud({
 
   return (
     <div className="space-y-5">
-      {/* Formulario agregar */}
       <div className="grid gap-3 sm:grid-cols-3 items-end rounded-lg border border-line-200 bg-app/40 p-4">
         <div className="sm:col-span-1">
           <label
@@ -266,7 +180,6 @@ function PasoQlikCloud({
         </Button>
       </div>
 
-      {/* Lista de entornos */}
       {tenantsQlik.length === 0 ? (
         <p className="text-sm text-ink-400 text-center py-4">
           Agrega al menos un entorno Qlik Cloud para continuar.
@@ -350,9 +263,6 @@ function PasoQlikCloud({
   );
 }
 
-/* ─────────────────────────────────────────────
-   PASO 2 — Plantilla base (por entorno Qlik)
-───────────────────────────────────────────── */
 function PasoPlantillaBase({
   organizacionId,
   tenantsQlik,
@@ -406,7 +316,6 @@ function PasoPlantillaBase({
           key={tQlik.id}
           className="rounded-lg border border-line-200 bg-app/30 p-4 space-y-3"
         >
-          {/* Cabecera del entorno */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider">
               Entorno:
@@ -419,9 +328,8 @@ function PasoPlantillaBase({
             </span>
           </div>
 
-          {/* Plantilla activa */}
           {tQlik.automatizacionBaseNombre && (
-            <div className="flex items-center gap-2 rounded-md border border-brand-100 bg-brand-50/50 px-3 py-2">
+            <div className="flex items-center gap-2 border-l-2 border-brand-600 bg-brand-50 px-3 py-2">
               <Icon name="star" size="sm" className="text-brand-600 shrink-0" />
               <div className="min-w-0">
                 <span className="text-xs text-ink-500">Plantilla activa: </span>
@@ -432,7 +340,6 @@ function PasoPlantillaBase({
             </div>
           )}
 
-          {/* Select */}
           <SelectBuscable
             placeholder={
               tQlik.automatizacionBaseNombre
@@ -455,9 +362,6 @@ function PasoPlantillaBase({
   );
 }
 
-/* ─────────────────────────────────────────────
-   PASO 3 — Conexión Impala (por entorno Qlik)
-───────────────────────────────────────────── */
 function PasoImpala({
   organizacionId,
   tenantsQlik,
@@ -527,7 +431,6 @@ function ImpalaPorEntorno({
 
   return (
     <div className="rounded-lg border border-line-200 bg-app/30 p-4 space-y-4">
-      {/* Cabecera del entorno */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider">
@@ -538,14 +441,12 @@ function ImpalaPorEntorno({
           </span>
         </div>
         {tenantQlik.impalaHost && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-obj-700 bg-obj-50 border border-obj-100 rounded-full px-2.5 py-0.5 font-mono font-medium">
-            <span className="h-1.5 w-1.5 rounded-full bg-obj-600 animate-pulse" />
+          <span className="text-xs text-obj-700 font-mono font-medium">
             {tenantQlik.impalaHost}:{tenantQlik.impalaPort || 21050}
           </span>
         )}
       </div>
 
-      {/* Campos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label
@@ -677,9 +578,6 @@ function ImpalaPorEntorno({
   );
 }
 
-/* ─────────────────────────────────────────────
-   COMPONENTE RAÍZ — SeccionSetupTecnico
-───────────────────────────────────────────── */
 export function SeccionSetupTecnico({
   tenant,
   tenantsQlik,
@@ -694,7 +592,6 @@ export function SeccionSetupTecnico({
   const tienePlantilla = tenantsQlik.some((t) => !!t.automatizacionBaseIdQlik);
   const tieneImpala = tenantsQlik.some((t) => !!t.impalaHost);
 
-  // Determina qué paso abrir automáticamente al montar
   const primerPasoAbierto = !tieneQlik
     ? 0
     : !tienePlantilla
@@ -711,8 +608,6 @@ export function SeccionSetupTecnico({
       titulo: "Conexión Qlik Cloud",
       descripcionCorta:
         "Vincula al menos un entorno Qlik Cloud a esta organización.",
-      tooltipInfo:
-        "El host es la dirección web de tu entorno Qlik Cloud (ej: miempresa.us.qlikcloud.com). Puedes conectar múltiples entornos a la misma organización.",
       listo: tieneQlik,
       resumen: tieneQlik ? (
         <p className="text-xs text-ink-500 truncate">
@@ -738,8 +633,6 @@ export function SeccionSetupTecnico({
       titulo: "Plantilla base",
       descripcionCorta:
         "Designa la automatización de Qlik que servirá como molde para crear nuevas automatizaciones.",
-      tooltipInfo:
-        "La plantilla base es una automatización existente en Qlik Automate. Cuando un usuario crea una nueva automatización, el sistema clona esta plantilla automáticamente y la personaliza. Los usuarios finales nunca la ven.",
       listo: tienePlantilla,
       resumen: tienePlantilla ? (
         <p className="text-xs text-ink-500 truncate">
@@ -764,8 +657,6 @@ export function SeccionSetupTecnico({
       titulo: "Conexión Impala",
       descripcionCorta:
         "Configura el acceso al servidor Impala para que los usuarios puedan seleccionar tablas de destino.",
-      tooltipInfo:
-        "La conexión a Impala permite que los usuarios elijan tablas de datos al crear automatizaciones. Sin esto, no podrán seleccionar a qué tabla escribir los datos.",
       listo: tieneImpala,
       resumen: tieneImpala ? (
         <p className="text-xs text-ink-500 font-mono truncate">
@@ -784,12 +675,9 @@ export function SeccionSetupTecnico({
 
   return (
     <div className="space-y-3">
-      {/* Banner de estado global */}
       {tieneQlik && tienePlantilla && tieneImpala ? (
-        <div className="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50/60 px-4 py-3 mb-4">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white text-sm font-bold">
-            ✓
-          </span>
+        <div className="flex items-center gap-3 border-l-4 border-brand-600 bg-brand-50 px-4 py-3 mb-4">
+          <Icon name="check" size="md" className="text-brand-700" />
           <div>
             <p className="text-sm font-semibold text-brand-900">
               Configuración técnica completa
@@ -800,10 +688,7 @@ export function SeccionSetupTecnico({
           </div>
         </div>
       ) : (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-3 mb-4">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold mt-0.5">
-            !
-          </span>
+        <div className="flex items-start gap-3 border-l-4 border-amber-500 bg-amber-50 px-4 py-3 mb-4">
           <div>
             <p className="text-sm font-semibold text-amber-900">
               Completa los{" "}
@@ -820,14 +705,12 @@ export function SeccionSetupTecnico({
         </div>
       )}
 
-      {/* Accordion de pasos */}
       {pasos.map((paso, i) => (
         <PasoAccordion
           key={paso.titulo}
           numero={i + 1}
           titulo={paso.titulo}
           descripcionCorta={paso.descripcionCorta}
-          tooltipInfo={paso.tooltipInfo}
           listo={paso.listo}
           expandido={pasoAbierto === i}
           onToggle={() => toggle(i)}

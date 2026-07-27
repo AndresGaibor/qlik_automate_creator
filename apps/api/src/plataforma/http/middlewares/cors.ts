@@ -3,7 +3,10 @@ import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 
 const FRONTEND_KEY = "frontend_url";
 
-export async function crearMiddlewareCors(db: ConexionDb, origenEstatico?: string) {
+export async function crearMiddlewareCors(
+  db: ConexionDb,
+  origenEstatico?: string,
+) {
   if (origenEstatico) {
     return cors({
       origin: new URL(origenEstatico).origin,

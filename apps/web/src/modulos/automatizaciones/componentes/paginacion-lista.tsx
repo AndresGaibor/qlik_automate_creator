@@ -34,7 +34,7 @@ export function PaginacionLista({
           onClick={() => onIrPagina(paginaActual - 1)}
           className="text-xs"
         >
-          ◀ Anterior
+          Anterior
         </Button>
         <span className="font-semibold text-gray-800 text-xs">
           Página {paginaActual} de {totalPaginas}
@@ -46,7 +46,7 @@ export function PaginacionLista({
           onClick={() => onIrPagina(paginaActual + 1)}
           className="text-xs"
         >
-          Siguiente ▶
+          Siguiente
         </Button>
       </div>
     </div>

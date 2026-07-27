@@ -18,7 +18,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Props) {
         onClick={() => onPageChange(currentPage - 1)}
         className="text-xs"
       >
-        ◀ Anterior
+        Anterior
       </Button>
       <span className="font-semibold text-gray-800 text-xs">
         Página {currentPage} de {totalPages}
@@ -30,7 +30,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Props) {
         onClick={() => onPageChange(currentPage + 1)}
         className="text-xs"
       >
-        Siguiente ▶
+        Siguiente
       </Button>
     </div>
   );

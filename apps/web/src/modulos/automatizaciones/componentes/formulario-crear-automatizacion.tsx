@@ -65,7 +65,7 @@ export function FormularioCrearAutomatizacion({
       nombre: f.nombre,
       espacioNombre: f.espacioNombre || "Espacio Personal",
       badgeAviso: autoVinculada
-        ? `⚠️ Este Dataflow ya se usa en: "${autoVinculada.nombre.slice(0, 25)}"`
+        ? `Este Dataflow ya se usa en: "${autoVinculada.nombre.slice(0, 25)}"`
         : undefined,
     };
   });
@@ -79,7 +79,7 @@ export function FormularioCrearAutomatizacion({
       nombre: t.nombre,
       espacioNombre: "Impala",
       badgeAviso: autoVinculada
-        ? `⚠️ Esta tabla ya se usa en: "${autoVinculada.nombre.slice(0, 25)}"`
+        ? `Esta tabla ya se usa en: "${autoVinculada.nombre.slice(0, 25)}"`
         : undefined,
     };
   });

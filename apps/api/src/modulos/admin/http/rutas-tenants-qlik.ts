@@ -1,4 +1,5 @@
 import { esquemaCrearTenantQlik } from "@qlik/contratos/admin";
+import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import { Hono } from "hono";
 import {
   responderError,
@@ -55,7 +56,7 @@ export function crearRutasTenantsQlik({
       const entrada = esquemaCrearTenantQlik.parse(await c.req.json());
       const tenant = await crearTenantQlik(repositorio, {
         organizacionId,
-        tenantIdQlik: entrada.tenantIdQlik ?? crypto.randomUUID(),
+        tenantIdQlik: entrada.tenantIdQlik ?? generarUuid(),
         host: entrada.host,
         nombre: entrada.nombre,
       });

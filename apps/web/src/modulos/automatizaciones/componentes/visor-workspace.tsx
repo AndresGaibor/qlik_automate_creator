@@ -154,7 +154,7 @@ function JsonVer({ data }: { data: unknown }) {
   return (
     <button type="button" onClick={() => setOpen(!open)} className="text-left">
       <span className="text-xs text-ink-400 font-medium">
-        {open ? "▼" : "▶"} Ver valor
+        {open ? "Ocultar" : "Ver"} valor
       </span>
       {open && (
         <pre className="mt-1 p-2 bg-ink-50 rounded text-xs font-mono text-ink-700 overflow-x-auto whitespace-pre-wrap break-all max-h-48">
@@ -203,7 +203,7 @@ function GrupoArray({
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-2 px-3 py-2 bg-ink-50 hover:bg-ink-100 transition-colors text-left"
       >
-        <span className="text-xs text-ink-400">{open ? "▼" : "▶"}</span>
+        <span className="text-xs text-ink-400">{open ? "Ocultar" : "Ver"}</span>
         <span className="font-semibold text-xs text-ink-700">
           {grupo.clave}
         </span>
@@ -406,7 +406,7 @@ export function VisorWorkspace({ workspace }: Props) {
                   Orquestación de Datos Referenciada
                 </div>
                 <span className="text-[11px] font-medium bg-brand-100 text-brand-700 px-2.5 py-0.5 rounded-full border border-brand-200">
-                  Dataflow ➔ Impala Pipeline
+                  Dataflow a Impala Pipeline
                 </span>
               </div>
 

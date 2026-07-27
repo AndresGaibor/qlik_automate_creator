@@ -158,7 +158,7 @@ export function VisorScriptFlujoModal({ flujo }: Props) {
                   {errorScript && (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 space-y-2">
                       <p className="font-semibold">
-                        ⚠️ Nota sobre el Script de este Dataflow:
+                        Nota sobre el script de este Dataflow:
                       </p>
                       <p className="leading-relaxed">
                         {(error as Error)?.message ||
@@ -174,7 +174,7 @@ export function VisorScriptFlujoModal({ flujo }: Props) {
                     <div className="relative rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
                       {datosScript.versionMessage && (
                         <div className="text-xs text-slate-500 font-mono border-b border-slate-100 pb-2">
-                          💬 Mensaje de versión: {datosScript.versionMessage}
+                          Mensaje de versión: {datosScript.versionMessage}
                         </div>
                       )}
 

@@ -99,7 +99,7 @@ export function PaginaFlujos() {
         actions={
           tenants.length > 1 ? (
             <Button onClick={() => setModalTenantsAbierto(true)}>
-              + Crear flujo en Qlik Cloud ↗
+              Crear flujo en Qlik Cloud
             </Button>
           ) : targetHost ? (
             <Button asChild>
@@ -108,7 +108,7 @@ export function PaginaFlujos() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                + Crear flujo en Qlik Cloud ↗
+                Crear flujo en Qlik Cloud
               </a>
             </Button>
           ) : null

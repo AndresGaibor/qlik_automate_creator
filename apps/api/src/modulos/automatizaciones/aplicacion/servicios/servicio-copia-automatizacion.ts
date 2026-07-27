@@ -1,5 +1,6 @@
 import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
+import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import { aplicarReemplazosEnWorkspace } from "./servicio-reemplazo-workspace.js";
 
 export interface ResultadoCopiaAutomatizacion {
@@ -153,7 +154,7 @@ function modificarWorkspaceConParametrosFlujo(
         block.operations = [
           {
             id: "set_value",
-            key: crypto.randomUUID(),
+            key: generarUuid(),
             name: "Set value of { variable }",
             value: valorNuevo,
           },

@@ -1,4 +1,5 @@
 import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
+import { generarUuid } from "./nucleo/valores/generar-uuid.js";
 import { eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
@@ -419,7 +420,7 @@ function crearResolverContextoSolicitud(repositorio: RepositorioAutenticacion) {
     if (!info || !publica)
       throw new ErrorNoAutorizado("Sesión inválida o expirada");
     const contexto = construirContextoSolicitud({
-      solicitudId: (c.get("solicitudId") as string) ?? crypto.randomUUID(),
+      solicitudId: (c.get("solicitudId") as string) ?? generarUuid(),
       sesion: info,
       sesionPublica: publica,
     });

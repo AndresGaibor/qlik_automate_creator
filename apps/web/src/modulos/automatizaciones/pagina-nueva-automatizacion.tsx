@@ -92,7 +92,7 @@ export function PaginaNuevaAutomatizacion() {
         );
       }
       return crearAutomatizacionDesdePlantilla({
-        nombre: nombre.trim() || `Auto - ${flujoObj.nombre} → ${tablaId}`,
+        nombre: nombre.trim() || `Auto - ${flujoObj.nombre} a ${tablaId}`,
         espacioIdQlik: espacioIdActual,
         flujoId,
         tablaId,
@@ -101,7 +101,7 @@ export function PaginaNuevaAutomatizacion() {
     },
     onSuccess: async (resultado) => {
       mostrarExito(
-        `✅ Automatización "${resultado.nombre}" creada correctamente en Qlik Cloud`,
+        `Automatización "${resultado.nombre}" creada correctamente en Qlik Cloud`,
       );
       await queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
       navegar({ to: "/automatizaciones" });
@@ -124,8 +124,7 @@ export function PaginaNuevaAutomatizacion() {
   if (cargandoConfig) {
     return (
       <div className="mx-auto max-w-3xl flex items-center justify-center py-20 text-gray-500 text-sm gap-2">
-        <span className="animate-spin">⚙️</span> Verificando configuración del
-        tenant...
+        Verificando configuración del tenant...
       </div>
     );
   }

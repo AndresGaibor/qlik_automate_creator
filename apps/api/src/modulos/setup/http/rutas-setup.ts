@@ -79,10 +79,9 @@ export function crearRutasSetup(
           { codigo: "SETUP_YA_COMPLETADO" },
         );
       }
-      const mensaje = err instanceof Error ? err.message : "Error desconocido";
       return responderError(
         c,
-        `No se pudo completar la configuración: ${mensaje}`,
+        "No se pudo completar la configuración inicial",
         500,
         { codigo: "SETUP_ERROR" },
       );

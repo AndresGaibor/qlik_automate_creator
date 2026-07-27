@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import type {
   CrearDesdePlantilla,
   ResultadoCrearDesdePlantilla,
@@ -101,7 +101,7 @@ export class CrearAutomatizacionDesdePlantilla {
       await Promise.all([
         this.outbox.guardar([
           {
-            id: crypto.randomUUID(),
+            id: generarUuid(),
             tipo: "automatizaciones.automatizacion-creada-desde-plantilla.v1",
             agregadoTipo: "automatizacion-qlik",
             agregadoId: resultado.id,

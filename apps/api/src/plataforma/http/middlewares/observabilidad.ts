@@ -1,3 +1,4 @@
+import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import type { MiddlewareHandler } from "hono";
 import type { Registrador } from "../../observabilidad/registrador.js";
 
@@ -6,7 +7,7 @@ export function crearMiddlewareObservabilidad(
 ): MiddlewareHandler {
   return async (c, siguiente) => {
     const inicio = Date.now();
-    const trazaId = c.req.header("x-request-id") ?? crypto.randomUUID();
+    const trazaId = c.req.header("x-request-id") ?? generarUuid();
     c.header("x-request-id", trazaId);
 
     await siguiente();

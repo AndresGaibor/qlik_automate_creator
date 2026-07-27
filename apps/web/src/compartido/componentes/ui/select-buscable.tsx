@@ -234,7 +234,7 @@ export function SelectBuscable({
                         <span className="truncate">{opcion.nombre}</span>
                         {opcion.badgeAviso && (
                           <span className="text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shrink-0">
-                            ⚠️ {opcion.badgeAviso}
+                            Aviso: {opcion.badgeAviso}
                           </span>
                         )}
                         {opcion.tipo && (

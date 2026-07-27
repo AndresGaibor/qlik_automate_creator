@@ -157,7 +157,7 @@ export function PaginaLogin() {
             >
               {cargando
                 ? "Redirigiendo a Qlik Cloud…"
-                : "Continuar con Qlik Cloud →"}
+                : "Continuar con Qlik Cloud"}
             </Button>
 
             <div className="pt-2 text-center">
@@ -167,7 +167,7 @@ export function PaginaLogin() {
                 className="text-xs text-gray-500 hover:text-gray-700 underline"
               >
                 {modoAvanzado
-                  ? "← Volver a ingresar con correo"
+                  ? "Volver a ingresar con correo"
                   : "¿Conoces la dirección de tu entorno Qlik? Ingrésala directamente"}
               </button>
             </div>

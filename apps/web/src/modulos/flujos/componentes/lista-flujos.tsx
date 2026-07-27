@@ -83,7 +83,7 @@ export function ListaFlujos({
                   {automatizacionVinculada && (
                     <span className="text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1 font-sans">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      🟢 Ya tiene una automatización en Qlik Automate
+                      Ya tiene una automatización en Qlik Automate
                     </span>
                   )}
                 </CardTitle>
@@ -130,7 +130,7 @@ export function ListaFlujos({
                           rel="noopener noreferrer"
                         >
                           <Icon name="ext" size="sm" />
-                          Ver en Qlik Cloud ↗
+                          Ver en Qlik Cloud
                         </a>
                       </Button>
                     )}

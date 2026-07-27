@@ -328,11 +328,11 @@ export function PaginaTablasDestino() {
                       </span>
                       {esAdmin ? (
                         <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block mt-0.5">
-                          ⚡ Tienes permiso para editar
+                          Tienes permiso para editar
                         </span>
                       ) : (
                         <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block mt-0.5">
-                          🔒 Solo un administrador puede editar esto
+                          Solo un administrador puede editar esto
                         </span>
                       )}
                     </div>

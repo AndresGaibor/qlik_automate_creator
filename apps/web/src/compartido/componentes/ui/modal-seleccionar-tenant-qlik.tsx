@@ -1,6 +1,7 @@
 import { construirUrlCrearFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import { useEffect, useId, useRef } from "react";
 import { Button } from "./button";
+import { Icon } from "./icon";
 
 export interface TenantQlikOpcion {
   id: string;
@@ -79,18 +80,15 @@ export function ModalSeleccionarTenantQlik({
           aria-label="Cerrar selector de tenant"
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition text-sm"
         >
-          ✕
+          <Icon name="x" size="sm" />
         </button>
 
         <div className="text-center max-w-md mx-auto mb-6">
-          <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-            🟢
-          </div>
           <h3 id={tituloId} className="text-2xl font-bold text-gray-900">
             ¿En qué entorno de Qlik quieres crear el flujo?
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Tienes acceso a múItiples entornos de Qlik Cloud. Elige uno para ser
+            Tienes acceso a múltiples entornos de Qlik Cloud. Elige uno para ser
             redirigido y crear tu nuevo Dataflow.
           </p>
         </div>
@@ -121,7 +119,7 @@ export function ModalSeleccionarTenantQlik({
                     </div>
                     {esActivo && (
                       <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
-                        ● Entorno activo
+                        Entorno activo
                       </span>
                     )}
                   </div>
@@ -135,9 +133,9 @@ export function ModalSeleccionarTenantQlik({
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
-                  <span className="flex items-center gap-1">🇺🇸 Qlik Cloud</span>
+                  <span>Qlik Cloud</span>
                   <span className="text-green-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                    Ir y crear ↗
+                    Ir y crear
                   </span>
                 </div>
               </a>

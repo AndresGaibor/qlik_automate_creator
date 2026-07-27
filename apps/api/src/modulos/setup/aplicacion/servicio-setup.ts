@@ -1,3 +1,4 @@
+import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import type { PuertoConfiguracionApp } from "./puerto/puerto-configuracion-app.js";
 
 export interface EntradaSetup {
@@ -63,7 +64,7 @@ export class ServicioSetup {
         organizacionNombre: entrada.organizacionNombre,
         tenantNombre: entrada.qlikTenantHost,
         tenantHost: entrada.qlikTenantHost,
-        tenantIdQlik: crypto.randomUUID(),
+        tenantIdQlik: generarUuid(),
         superadminCorreo: entrada.superadminCorreo,
         superadminNombre: entrada.superadminNombre,
       });

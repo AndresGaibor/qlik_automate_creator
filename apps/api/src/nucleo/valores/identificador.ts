@@ -1,4 +1,5 @@
 import { ErrorDominio } from "../errores/error-dominio.js";
+import { generarUuid } from "./generar-uuid.js";
 
 export class Identificador {
   private constructor(public readonly valor: string) {}
@@ -15,7 +16,7 @@ export class Identificador {
   }
 
   static nuevo(): Identificador {
-    return new Identificador(crypto.randomUUID());
+    return new Identificador(generarUuid());
   }
 
   toString(): string {

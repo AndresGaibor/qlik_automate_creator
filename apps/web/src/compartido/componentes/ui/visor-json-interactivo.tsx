@@ -97,7 +97,7 @@ export function VisorJsonInteractivo({
               onClick={() => setColapsado(!colapsado)}
               className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors text-[10px]"
             >
-              {colapsado ? "▶" : "▼"}
+              {colapsado ? "Expandir" : "Contraer"}
             </button>
           )}
           <span className="text-slate-600 font-bold">[</span>
@@ -153,7 +153,7 @@ export function VisorJsonInteractivo({
             onClick={() => setColapsado(!colapsado)}
             className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors text-[10px]"
           >
-            {colapsado ? "▶" : "▼"}
+            {colapsado ? "Expandir" : "Contraer"}
           </button>
         )}
         <span className="text-slate-600 font-bold">&#123;</span>

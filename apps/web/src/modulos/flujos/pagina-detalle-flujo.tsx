@@ -145,7 +145,7 @@ export function PaginaDetalleFlujo() {
                   rel="noopener noreferrer"
                 >
                   <Icon name="ext" size="sm" />
-                  Ver en Qlik Cloud ↗
+                  Ver en Qlik Cloud
                 </a>
               </Button>
             )}
@@ -257,9 +257,9 @@ export function PaginaDetalleFlujo() {
             {errorScript && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-xs text-amber-900 space-y-2">
                 <p className="font-semibold text-sm">
-                  ⚠️ Este Dataflow se creó con transformación visual en Qlik
-                  Cloud (sin escribir código), por eso no hay un script para
-                  mostrar aquí. La automatización funciona igual de bien.
+                  Este Dataflow se creó con transformación visual en Qlik Cloud
+                  (sin escribir código), por eso no hay un script para mostrar
+                  aquí. La automatización funciona igual de bien.
                 </p>
               </div>
             )}
@@ -268,7 +268,7 @@ export function PaginaDetalleFlujo() {
               <div className="relative rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
                 {datosScript.versionMessage && (
                   <div className="text-xs text-slate-500 font-mono border-b border-slate-100 pb-2">
-                    💬 Mensaje de versión: {datosScript.versionMessage}
+                    Mensaje de versión: {datosScript.versionMessage}
                   </div>
                 )}
 
@@ -365,7 +365,7 @@ export function PaginaDetalleFlujo() {
                       to="/automatizaciones/$id"
                       params={{ id: automatizacionVinculada.id }}
                     >
-                      Ver automatización completa ➔
+                      Ver automatización completa
                     </Link>
                   </Button>
                 </div>

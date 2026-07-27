@@ -280,7 +280,7 @@ export function LayoutPrincipal() {
             onClick={() => setMenuMovilAbierto((abierto) => !abierto)}
           >
             <span aria-hidden className="text-xl">
-              {menuMovilAbierto ? "×" : "☰"}
+              <Icon name={menuMovilAbierto ? "x" : "rows"} size="sm" />
             </span>
           </button>
         </header>
