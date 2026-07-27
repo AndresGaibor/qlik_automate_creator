@@ -1,9 +1,13 @@
 import { serve } from "@hono/node-server";
 import { crearAplicacion } from "../app.js";
 import { cargarConfiguracion } from "../plataforma/configuracion/entorno.js";
-import { cerrarConexion } from "../plataforma/persistencia/conexion.js";
+import {
+  asegurarEsquemaTablas,
+  cerrarConexion,
+} from "../plataforma/persistencia/conexion.js";
 
 const configuracion = cargarConfiguracion();
+await asegurarEsquemaTablas();
 const app = await crearAplicacion({ configuracion });
 const puerto = configuracion.PORT;
 const servidor = serve({ fetch: app.fetch, port: puerto });
