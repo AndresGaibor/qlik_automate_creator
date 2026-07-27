@@ -11,7 +11,7 @@ Qlik Automate Creator funciona **sin modificar ningún archivo** — solo copiar
 ```bash
 cp .env.example .env
 docker compose up -d
-# Accede a http://localhost:8080 → wizard automático
+# Accede a http://localhost:3847 → wizard automático
 ```
 
 ---

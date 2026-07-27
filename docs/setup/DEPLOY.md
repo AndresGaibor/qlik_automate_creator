@@ -26,17 +26,15 @@ SERVER_NAME=api.midominio.com
 
 # IP del servidor (0.0.0.0 = todas las interfaces)
 HOST_IP=0.0.0.0
-
-# Puertos internos (default funcionan)
-PORT_API=3000
-PORT_WEB=8080
 ```
+
+Los puertos internos ya vienen configurados con valores no-estándar (3847 para web, 7823 para API). Puedes cambiarlos si lo necesitas.
 
 ## 3. Crear túnel de Cloudflare
 
 1. Instala `cloudflared` en tu servidor: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/install-and-setup/tunnel-guide/
 2. Crea un túnel en [Cloudflare Dashboard](https://dash.cloudflare.com/)
-3. Apunta el túnel a tu servidor: `http://localhost:8080`
+3. Apunta el túnel a tu servidor: `http://localhost:3847`
 4. Configura el subdomain: `api.midominio.com` → túnel
 
 ## 4. Arrancar
@@ -46,9 +44,9 @@ docker compose up -d
 ```
 
 Docker Compose:
-- Levanta **PostgreSQL** automáticamente
-- Levanta la **API** (backend)
-- Levanta el **Frontend** (nginx + static)
+- Levanta **PostgreSQL** automáticamente (puerto interno 5432)
+- Levanta la **API** (backend) en puerto interno 7823
+- Levanta el **Frontend** (nginx + static) en puerto 3847 (externo)
 - Crea las tablas automáticamente al primer inicio
 
 ## 5. Completar el wizard
@@ -90,11 +88,11 @@ docker compose up -d
 
 ```
 cloudflared (túnel)
-    ↓ (http :8080)
+    ↓ (http :3847)
 nginx (proxy inverso)
     ├── /          → frontend (static)
-    └── /api/      → api (Bun :3000)
-                        └── PostgreSQL
+    └── /api/     → api (Bun :7823)
+                        └── PostgreSQL (:5432)
 ```
 
 ---
@@ -122,7 +120,7 @@ El app siempre corre en HTTP. SSL se maneja en:
 |---|---|---|
 | `SERVER_NAME` | `localhost` | Dominio del servidor |
 | `HOST_IP` | `127.0.0.1` | IP de bind (usa `0.0.0.0` para exponer) |
-| `PORT_WEB` | `8080` | Puerto interno del frontend |
-| `PORT_API` | `3000` | Puerto interno de la API |
+| `PORT_WEB` | `3847` | Puerto externo del frontend |
+| `PORT_API` | `7823` | Puerto interno de la API |
 | `DATABASE_URL` | interno de Docker | Solo cambiar si usas DB externa |
 | `POSTGRES_PASSWORD` | `cambiar_en_produccion` | Contraseña de PostgreSQL |
