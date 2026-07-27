@@ -1,10 +1,8 @@
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
-import { estaEnCurso } from "@/compartido/utiles/estados-ejecucion";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
-import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { PageHeader } from "@/compartido/componentes/ui/page-header";
+import { estaEnCurso } from "@/compartido/utiles/estados-ejecucion";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type DetalleAutomatizacion,
@@ -16,11 +14,13 @@ import {
   obtenerDetalleAutomatizacion,
   obtenerWorkspaceAutomatizacion,
 } from "@/modulos/automatizaciones/api";
-import { TarjetaDetalleAutomatizacion } from "@/modulos/automatizaciones/componentes/tarjeta-detalle-automatizacion";
 import { ListaEjecuciones } from "@/modulos/automatizaciones/componentes/lista-ejecuciones";
-import { VisorWorkspace } from "@/modulos/automatizaciones/componentes/visor-workspace";
 import { ModalClonarAutomatizacion } from "@/modulos/automatizaciones/componentes/modal-clonar-automatizacion";
+import { TarjetaDetalleAutomatizacion } from "@/modulos/automatizaciones/componentes/tarjeta-detalle-automatizacion";
+import { VisorWorkspace } from "@/modulos/automatizaciones/componentes/visor-workspace";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 
 interface Props {
   id: string;
@@ -49,11 +49,15 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     queryFn: () => obtenerDetalleAutomatizacion(id),
     retry: false,
     refetchInterval: (consulta) => {
-      const detalleActual = consulta.state.data as DetalleAutomatizacion | undefined;
+      const detalleActual = consulta.state.data as
+        | DetalleAutomatizacion
+        | undefined;
       const automatizacionActual = detalleActual?.automatizacion;
       const ejecucionActiva =
         automatizacionActual?.ejecucionActiva ||
-        detalleActual?.ejecuciones.some((ejecucion) => estaEnCurso(ejecucion.estado)) ||
+        detalleActual?.ejecuciones.some((ejecucion) =>
+          estaEnCurso(ejecucion.estado),
+        ) ||
         false;
       return ejecucionActiva ? 3000 : false;
     },
@@ -85,19 +89,19 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     },
   });
 
-  const {
-    data: workspace,
-    isLoading: cargandoWorkspace,
-  } = useQuery<WorkspaceAutomatizacion>({
-    queryKey: ["workspace", id],
-    queryFn: () => obtenerWorkspaceAutomatizacion(id),
-    retry: false,
-  });
+  const { data: workspace, isLoading: cargandoWorkspace } =
+    useQuery<WorkspaceAutomatizacion>({
+      queryKey: ["workspace", id],
+      queryFn: () => obtenerWorkspaceAutomatizacion(id),
+      retry: false,
+    });
 
   const mutationClonar = useMutation({
     mutationFn: (nombre: string) => clonarAutomatizacion(id, { nombre }),
     onSuccess: (resultado) => {
-      mostrarExito(`Automatización "${resultado.nombre}" clonada correctamente`);
+      mostrarExito(
+        `Automatización "${resultado.nombre}" clonada correctamente`,
+      );
       setModalClonarAbierto(false);
       queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
       navegar({ to: `/automatizaciones/${resultado.id}` });
@@ -119,7 +123,10 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   if (errorDetalle) {
     return (
       <EstadoError
-        mensaje={errorDetalleMsg?.message ?? "Error al cargar el detalle de la automatización"}
+        mensaje={
+          errorDetalleMsg?.message ??
+          "Error al cargar el detalle de la automatización"
+        }
         onReintentar={() =>
           queryClient.invalidateQueries({ queryKey: ["automatizacion", id] })
         }
@@ -129,7 +136,9 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
 
   if (!auto) return null;
 
-  const ejecutandoActiva = ejecuciones?.find((e: EjecucionResumen) => estaEnCurso(e.estado));
+  const ejecutandoActiva = ejecuciones?.find((e: EjecucionResumen) =>
+    estaEnCurso(e.estado),
+  );
   const hostQlik = sesion?.tenantHost?.trim();
   const urlQlik = hostQlik
     ? new URL(`/automations/${id}`, `https://${hostQlik}`).toString()

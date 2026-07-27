@@ -20,6 +20,43 @@ function dbConFila(fila: Record<string, unknown> | null) {
 }
 
 describe("RepositorioConfiguracionOAuthPostgres", () => {
+  it("persiste el secreto inicial cifrado y actualiza la configuración del tenant al repetir setup", async () => {
+    let valores: Record<string, unknown> | undefined;
+    let usoUpsert = false;
+    const db = {
+      insert: () => ({
+        values: (entrada: Record<string, unknown>) => {
+          valores = entrada;
+          return {
+            returning: async () => [{ id: "oauth-1" }],
+            onConflictDoUpdate: () => {
+              usoUpsert = true;
+              return { returning: async () => [{ id: "oauth-1" }] };
+            },
+          };
+        },
+      }),
+    };
+    const repositorio = new RepositorioConfiguracionOAuthPostgres(
+      db as never,
+      cifrado,
+      {},
+    );
+
+    await repositorio.guardarOAuthInicial(
+      "tenant-1",
+      "cliente-1",
+      "secreto-inicial",
+      ["user_default"],
+    );
+
+    expect(usoUpsert).toBe(true);
+    expect(valores?.clienteSecretoCifrado).toBe(
+      JSON.stringify({ cifrado: "secreto-inicial", iv: "iv", tag: "tag" }),
+    );
+    expect(JSON.stringify(valores)).not.toContain('"clienteSecreto"');
+  });
+
   it("resuelve y descifra la configuración propia del tenant", async () => {
     const paquete = JSON.stringify({
       cifrado: "secreto",

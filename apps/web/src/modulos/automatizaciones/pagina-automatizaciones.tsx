@@ -1,31 +1,36 @@
-import { PageLayout } from "@/compartido/componentes/ui/page-layout";
-import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
+import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useBusqueda } from "@/compartido/hooks/use-busqueda";
 import { useFiltroEspacioConPersistencia } from "@/compartido/hooks/use-filtro-espacio-con-persistencia";
 import { useManejoError } from "@/compartido/hooks/use-manejo-error";
 import { usePaginacion } from "@/compartido/hooks/use-paginacion";
+import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import {
   type ResumenAutomatizacion,
   ejecutarAutomatizacion,
   obtenerAutomatizacionesConFiltros,
   obtenerEspacios,
 } from "@/modulos/automatizaciones/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { BarraFiltrosAutomatizaciones } from "./componentes/barra-filtros-automatizaciones";
 import { ListaAutomatizaciones } from "./componentes/lista-automatizaciones";
 import { PaginacionLista } from "./componentes/paginacion-lista";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 
 export function PaginaAutomatizaciones() {
   const { mostrarError, mostrarExito } = useNotificaciones();
   const queryClient = useQueryClient();
-  const { espacioId, establecerEspacioId } = useFiltroEspacioConPersistencia();
+  const { tenant: tenantActivo } = useTenantActivo();
+  const { espacioId, establecerEspacioId } = useFiltroEspacioConPersistencia(
+    tenantActivo?.id,
+  );
   const espacioFiltrado = espacioId.trim() || undefined;
   const [idEjecutando, setIdEjecutando] = useState<string | null>(null);
 
-  const { busquedaTemp, setBusquedaTemp, busquedaActiva, buscar, limpiar } = useBusqueda();
+  const { busquedaTemp, setBusquedaTemp, busquedaActiva, buscar, limpiar } =
+    useBusqueda();
 
   const {
     data: automatizaciones,
@@ -34,13 +39,19 @@ export function PaginaAutomatizaciones() {
     error,
     refetch,
   } = useQuery<ResumenAutomatizacion[]>({
-    queryKey: ["automatizaciones", espacioFiltrado, busquedaActiva],
-    queryFn: () => obtenerAutomatizacionesConFiltros(espacioFiltrado, busquedaActiva),
+    queryKey: [
+      "automatizaciones",
+      tenantActivo?.id,
+      espacioFiltrado,
+      busquedaActiva,
+    ],
+    queryFn: () =>
+      obtenerAutomatizacionesConFiltros(espacioFiltrado, busquedaActiva),
     retry: false,
   });
 
   const espacios = useQuery({
-    queryKey: ["automatizaciones", "espacios"],
+    queryKey: ["automatizaciones", "espacios", tenantActivo?.id],
     queryFn: obtenerEspacios,
     retry: false,
   });
@@ -74,13 +85,12 @@ export function PaginaAutomatizaciones() {
     }
   }, [isError, error, manejar]);
 
-  const { paginaActual, totalPaginas, elementosPagina: automatizacionesPaginados, irPagina, reset } = usePaginacion(
-    automatizaciones ?? [],
-  );
-
-  useEffect(() => {
-    reset();
-  }, [reset, espacioId, busquedaActiva]);
+  const {
+    paginaActual,
+    totalPaginas,
+    elementosPagina: automatizacionesPaginados,
+    irPagina,
+  } = usePaginacion(automatizaciones ?? []);
 
   if (isLoading) {
     return <EstadoCarga mensaje="Cargando automatizaciones..." />;
@@ -101,9 +111,9 @@ export function PaginaAutomatizaciones() {
         buscar={buscar}
         limpiar={limpiar}
         espacios={espacios.data ?? []}
+        errorEspacios={espacios.isError}
         espacioFiltrado={espacioFiltrado}
         onEspacioChange={establecerEspacioId}
-        onNueva={() => {}}
       />
 
       <div className="space-y-4">
@@ -111,6 +121,8 @@ export function PaginaAutomatizaciones() {
           automatizaciones={automatizacionesPaginados}
           idEjecutando={idEjecutando}
           espacioFiltrado={espacioFiltrado}
+          targetHost={tenantActivo?.host}
+          hayFiltros={Boolean(espacioFiltrado || busquedaActiva)}
           onEjecutar={(id) => ejecutar.mutate(id)}
         />
 

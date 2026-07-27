@@ -4,7 +4,6 @@ export interface PuertoConsultaTenantQlik {
     automatizacionBaseIdQlik?: string | null;
     automatizacionBaseNombre?: string | null;
     destinoApiUrl?: string | null;
-    destinoApiKey?: string | null;
     impalaHost?: string | null;
     impalaPort?: number | null;
   } | null>;

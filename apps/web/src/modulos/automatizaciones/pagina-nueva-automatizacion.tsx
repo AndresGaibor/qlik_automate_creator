@@ -75,7 +75,7 @@ export function PaginaNuevaAutomatizacion() {
   useEffect(() => {
     if (flujoId && tablaId && !nombre) {
       const flujo = flujos.find((f) => f.id === flujoId);
-      if (flujo) setNombre(`Auto - ${flujo.nombre} → ${tablaId}`);
+      if (flujo) setNombre(`${flujo.nombre} hacia ${tablaId}`);
     }
   }, [flujoId, tablaId, flujos, nombre]);
 

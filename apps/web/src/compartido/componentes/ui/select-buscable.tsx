@@ -1,11 +1,12 @@
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export interface OpcionSelect {
   id: string;
   nombre: string;
   tipo?: string;
   espacioNombre?: string;
+  badgeAviso?: string;
 }
 
 interface SelectBuscableProps {
@@ -39,6 +40,10 @@ export function SelectBuscable({
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const contenedorRef = useRef<HTMLDivElement>(null);
+  const disparadorRef = useRef<HTMLButtonElement>(null);
+  const busquedaRef = useRef<HTMLInputElement>(null);
+  const listaId = useId();
+  const disparadorId = useId();
 
   // Cerrar al hacer clic fuera del componente
   useEffect(() => {
@@ -54,28 +59,56 @@ export function SelectBuscable({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (abierto) busquedaRef.current?.focus();
+  }, [abierto]);
+
+  const cerrar = () => {
+    setAbierto(false);
+    setBusqueda("");
+    disparadorRef.current?.focus();
+  };
+
   const opcionActual = opciones.find((o) => o.id === valorSeleccionado);
 
   const opcionesFiltradas = opciones.filter(
     (o) =>
       (o.nombre ?? "").toLowerCase().includes(busqueda.toLowerCase()) ||
-      ((o.tipo ?? "").toLowerCase().includes(busqueda.toLowerCase())) ||
-      ((o.espacioNombre ?? "").toLowerCase().includes(busqueda.toLowerCase())),
+      (o.tipo ?? "").toLowerCase().includes(busqueda.toLowerCase()) ||
+      (o.espacioNombre ?? "").toLowerCase().includes(busqueda.toLowerCase()),
   );
 
-  const textoVacio = emptyText ?? `No se encontraron resultados para "${busqueda}"`;
+  const textoVacio =
+    emptyText ?? `No se encontraron resultados para "${busqueda}"`;
 
   return (
     <div className="relative w-full" ref={contenedorRef}>
       {etiqueta && (
-        <label className="block text-sm font-semibold text-ink-900 mb-1.5">
+        <label
+          htmlFor={disparadorId}
+          className="block text-sm font-semibold text-ink-900 mb-1.5"
+        >
           {etiqueta}
         </label>
       )}
 
       {/* Botón Principal del Select */}
-      <div
-        onClick={() => !cargando && setAbierto(!abierto)}
+      <button
+        id={disparadorId}
+        ref={disparadorRef}
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={abierto}
+        aria-controls={listaId}
+        aria-label={etiqueta || placeholder}
+        disabled={cargando}
+        onClick={() => setAbierto(!abierto)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setAbierto(true);
+          }
+        }}
         className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-md border bg-surface cursor-pointer shadow-card text-sm transition-all duration-150 ease-soft ${
           abierto
             ? "border-brand-600 ring-2 ring-brand-100 shadow-panel"
@@ -108,80 +141,102 @@ export function SelectBuscable({
         </div>
 
         <div className="flex items-center gap-2 ml-2 shrink-0">
-          {valorSeleccionado && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSeleccionar("");
-                setBusqueda("");
-              }}
-              className="text-ink-400 hover:text-ink-900 p-1 rounded hover:bg-hover transition-colors"
-              title="Limpiar selección"
-            >
-              <Icon name="x" size="sm" />
-            </button>
-          )}
-          <Icon name="chev" size="sm" className={`text-ink-400 transition-transform duration-150 ${abierto ? "-rotate-90" : "rotate-90"}`} />
+          <Icon
+            name="chev"
+            size="sm"
+            className={`text-ink-400 transition-transform duration-150 ${abierto ? "-rotate-90" : "rotate-90"}`}
+          />
         </div>
-      </div>
+      </button>
 
       {/* Menú Desplegable Buscable */}
       {abierto && (
         <div className="absolute z-50 mt-1.5 w-full bg-surface border border-line-200 rounded-lg shadow-panel overflow-hidden animate-in fade-in duration-100">
           {/* Input de Búsqueda */}
           <div className="p-2 border-b border-line-200 bg-app/50 relative">
-            <Icon name="search" size="sm" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
+            <Icon
+              name="search"
+              size="sm"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-400"
+            />
             <input
               type="text"
-              autoFocus
+              ref={busquedaRef}
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-line-200 rounded-md bg-surface text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  cerrar();
+                }
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  contenedorRef.current
+                    ?.querySelector<HTMLButtonElement>("[data-opcion-select]")
+                    ?.focus();
+                }
+              }}
+              className="w-full rounded-md border border-line-200 bg-surface py-1.5 pl-8 pr-3 text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
             />
           </div>
 
           {/* Lista de Opciones */}
-          <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
+          <div
+            id={listaId}
+            className="max-h-60 overflow-y-auto space-y-0.5 p-1"
+          >
             {/* Opción "Todos / Limpiar" sólo si allowClear=true */}
             {allowClear && (
-              <div
+              <button
+                type="button"
+                data-opcion-select
                 onClick={() => {
                   onSeleccionar("");
-                  setAbierto(false);
-                  setBusqueda("");
+                  cerrar();
                 }}
                 className={`px-3 py-2 text-sm flex items-center justify-between rounded-md cursor-pointer transition-colors ${
-                  !valorSeleccionado ? "bg-brand-50 font-semibold text-brand-700" : "text-ink-700 hover:bg-hover"
+                  !valorSeleccionado
+                    ? "bg-brand-50 font-semibold text-brand-700"
+                    : "text-ink-700 hover:bg-hover"
                 }`}
               >
                 <span className="flex items-center gap-2">
                   <Icon name="cloud" size="sm" className="text-ink-400" />
                   {placeholder}
                 </span>
-                {!valorSeleccionado && <Icon name="check" size="sm" className="text-brand-600" />}
-              </div>
+                {!valorSeleccionado && (
+                  <Icon name="check" size="sm" className="text-brand-600" />
+                )}
+              </button>
             )}
 
             {opcionesFiltradas.length > 0 ? (
               opcionesFiltradas.map((opcion) => {
                 const esSeleccionado = opcion.id === valorSeleccionado;
                 return (
-                  <div
+                  <button
+                    type="button"
+                    data-opcion-select
                     key={opcion.id}
                     onClick={() => {
                       onSeleccionar(opcion.id);
-                      setAbierto(false);
-                      setBusqueda("");
+                      cerrar();
                     }}
                     className={`px-3 py-2 text-sm flex items-center justify-between rounded-md cursor-pointer transition-colors ${
-                      esSeleccionado ? "bg-brand-50 font-semibold text-brand-700" : "text-ink-700 hover:bg-hover hover:text-ink-900"
+                      esSeleccionado
+                        ? "bg-brand-50 font-semibold text-brand-700"
+                        : "text-ink-700 hover:bg-hover hover:text-ink-900"
                     }`}
                   >
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-2 truncate">
                         <span className="truncate">{opcion.nombre}</span>
+                        {opcion.badgeAviso && (
+                          <span className="text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shrink-0">
+                            ⚠️ {opcion.badgeAviso}
+                          </span>
+                        )}
                         {opcion.tipo && (
                           <span className="text-xs bg-obj-50 text-obj-600 px-1.5 py-0.5 rounded font-mono font-medium shrink-0">
                             {opcion.tipo}
@@ -189,13 +244,19 @@ export function SelectBuscable({
                         )}
                       </div>
                       {opcion.espacioNombre && (
-                        <span className="text-xs text-ink-400 truncate">{opcion.espacioNombre}</span>
+                        <span className="text-xs text-ink-400 truncate">
+                          {opcion.espacioNombre}
+                        </span>
                       )}
                     </div>
                     {esSeleccionado && (
-                      <Icon name="check" size="sm" className="text-brand-600 shrink-0 ml-2" />
+                      <Icon
+                        name="check"
+                        size="sm"
+                        className="text-brand-600 shrink-0 ml-2"
+                      />
                     )}
-                  </div>
+                  </button>
                 );
               })
             ) : (

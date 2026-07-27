@@ -37,7 +37,9 @@ export class ConfiguracionAppPostgres implements PuertoConfiguracionApp {
     await this.guardar(CLAVE_SETUP_COMPLETADO, { valor: true });
   }
 
-  async ejecutarSiPendiente<T>(tarea: () => Promise<T>): Promise<T | undefined> {
+  async ejecutarSiPendiente<T>(
+    tarea: () => Promise<T>,
+  ): Promise<T | undefined> {
     return this.db.transaction(async (tx) => {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(hashtext('setup-inicial'))`,

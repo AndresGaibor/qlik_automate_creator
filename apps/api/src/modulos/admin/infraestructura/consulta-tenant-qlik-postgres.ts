@@ -1,8 +1,11 @@
 import { and, eq } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { tenantsQlik } from "../../../plataforma/persistencia/esquema.js";
+import { cifrarSecretoParaPersistencia } from "../../../plataforma/seguridad/secreto-cifrado.js";
 import type {
   EstadoTenantQlik,
   ResultadoEliminarTenantQlik,
+  ServicioCifradoAdministracion,
   TenantQlikAdministrable,
 } from "../aplicacion/puertos/repositorio-administracion.js";
 import {
@@ -12,18 +15,7 @@ import {
 import { validarYNormalizarHost } from "../dominio/validador-host-qlik.js";
 import { mapearTenantQlik } from "./helpers-admin.js";
 
-type DbType = {
-  query: {
-    [key: string]: {
-      findFirst: (opts?: any) => Promise<any>;
-      findMany: (opts?: any) => Promise<any[]>;
-    };
-  };
-  transaction<T>(fn: (tx: any) => Promise<T>): Promise<T>;
-  insert(table: any): any;
-  update(table: any): any;
-  delete(table: any): any;
-};
+type DbType = ConexionDb;
 
 export const ConsultaTenantQlik = {
   async listarTenantsQlik(db: DbType, organizacionId: string) {
@@ -121,17 +113,32 @@ export const ConsultaTenantQlik = {
 
   async configurarDestinoTenant(
     db: DbType,
+    cifrado: ServicioCifradoAdministracion,
     organizacionId: string,
     tenantQlikId: string,
     destinoApiUrl: string,
-    destinoApiKey: string,
+    destinoApiKey?: string,
     destinoBaseDatos?: string,
   ) {
+    const existente = await db.query.tenantsQlik.findFirst({
+      where: and(
+        eq(tenantsQlik.id, tenantQlikId),
+        eq(tenantsQlik.organizacionId, organizacionId),
+      ),
+    });
+    if (!existente) return null;
+    const secretoNuevo = destinoApiKey?.trim();
+    const destinoApiKeyCifrada = secretoNuevo
+      ? cifrarSecretoParaPersistencia(cifrado, secretoNuevo)
+      : existente.destinoApiKeyCifrada;
+    if (!destinoApiKeyCifrada) {
+      throw new Error("Debes ingresar la API key inicial del destino");
+    }
     const [fila] = await db
       .update(tenantsQlik)
       .set({
         destinoApiUrl,
-        destinoApiKey,
+        destinoApiKeyCifrada,
         destinoBaseDatos: destinoBaseDatos ?? "default",
         actualizadoEn: new Date(),
       })
@@ -148,6 +155,7 @@ export const ConsultaTenantQlik = {
 
   async configurarImpalaTenant(
     db: DbType,
+    cifrado: ServicioCifradoAdministracion,
     organizacionId: string,
     tenantQlikId: string,
     datos: {
@@ -159,6 +167,17 @@ export const ConsultaTenantQlik = {
       impalaDatabase?: string;
     },
   ) {
+    const existente = await db.query.tenantsQlik.findFirst({
+      where: and(
+        eq(tenantsQlik.id, tenantQlikId),
+        eq(tenantsQlik.organizacionId, organizacionId),
+      ),
+    });
+    if (!existente) return null;
+    const secretoNuevo = datos.impalaPassword?.trim();
+    const impalaPasswordCifrada = secretoNuevo
+      ? cifrarSecretoParaPersistencia(cifrado, secretoNuevo)
+      : existente.impalaPasswordCifrada;
     const [fila] = await db
       .update(tenantsQlik)
       .set({
@@ -166,7 +185,7 @@ export const ConsultaTenantQlik = {
         impalaPort: datos.impalaPort ?? 21050,
         impalaAuthMechanism: datos.impalaAuthMechanism ?? "NOSASL",
         impalaUser: datos.impalaUser ?? null,
-        impalaPassword: datos.impalaPassword ?? null,
+        impalaPasswordCifrada,
         impalaDatabase: datos.impalaDatabase ?? "default",
         actualizadoEn: new Date(),
       })

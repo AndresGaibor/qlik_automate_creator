@@ -1,5 +1,5 @@
 import "@/index.css";
-import { clienteConsultas, Proveedores } from "@/app/proveedores";
+import { Proveedores, clienteConsultas } from "@/app/proveedores";
 import { clienteApi } from "@/compartido/api/cliente";
 import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { RouterProvider } from "@tanstack/react-router";

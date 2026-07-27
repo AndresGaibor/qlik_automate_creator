@@ -1,11 +1,8 @@
-import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
+import { Card, CardContent } from "@/compartido/componentes/ui/card";
 import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import {
-  Card,
-  CardContent,
-} from "@/compartido/componentes/ui/card";
+import { useEffect, useRef, useState } from "react";
 import type { DetalleTenant } from "../api";
 
 interface Props {
@@ -105,9 +102,7 @@ export function SeccionInfoTenant({
                     name={tenant.estado === "activa" ? "pause" : "play"}
                     size="sm"
                   />
-                  {tenant.estado === "activa"
-                    ? "Desactivar"
-                    : "Activar"}
+                  {tenant.estado === "activa" ? "Desactivar" : "Activar"}
                 </Button>
               </div>
             </div>
@@ -140,6 +135,11 @@ function NombreEditor({
 }) {
   const [editando, setEditando] = useState(false);
   const [nuevoNombre, setNuevoNombre] = useState(nombre);
+  const campoNombreRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editando) campoNombreRef.current?.focus();
+  }, [editando]);
 
   function guardar() {
     if (nuevoNombre.trim() && nuevoNombre.trim() !== nombre) {
@@ -152,13 +152,16 @@ function NombreEditor({
     return (
       <div className="flex items-center gap-2 max-w-sm">
         <input
+          ref={campoNombreRef}
           type="text"
           value={nuevoNombre}
-          autoFocus
           onChange={(e) => setNuevoNombre(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") guardar();
-            if (e.key === "Escape") { setNuevoNombre(nombre); setEditando(false); }
+            if (e.key === "Escape") {
+              setNuevoNombre(nombre);
+              setEditando(false);
+            }
           }}
           className="flex-1 rounded-md border border-line-200 px-3 py-1.5 text-sm font-semibold text-ink-900 focus:border-brand-600 focus:outline-none"
         />
@@ -168,7 +171,10 @@ function NombreEditor({
         <Button
           size="sm"
           variant="outline"
-          onClick={() => { setNuevoNombre(nombre); setEditando(false); }}
+          onClick={() => {
+            setNuevoNombre(nombre);
+            setEditando(false);
+          }}
         >
           Cancelar
         </Button>

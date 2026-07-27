@@ -16,12 +16,16 @@ export function VisorJsonInteractivo({
   esUltimo = true,
 }: Props) {
   const [colapsado, setColapsado] = useState(inicialColapsado || nivel > 2);
-  const coma = !esUltimo ? <span className="text-slate-500 font-bold ml-0.5">,</span> : null;
+  const coma = !esUltimo ? (
+    <span className="text-slate-500 font-bold ml-0.5">,</span>
+  ) : null;
 
   if (data === null) {
     return (
       <div className="font-mono text-xs leading-relaxed inline">
-        {nombre && <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>}
+        {nombre && (
+          <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>
+        )}
         <span className="text-rose-600 font-semibold">null</span>
         {coma}
       </div>
@@ -31,7 +35,9 @@ export function VisorJsonInteractivo({
   if (data === undefined) {
     return (
       <div className="font-mono text-xs leading-relaxed inline">
-        {nombre && <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>}
+        {nombre && (
+          <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>
+        )}
         <span className="text-slate-400 italic">undefined</span>
         {coma}
       </div>
@@ -43,7 +49,9 @@ export function VisorJsonInteractivo({
   if (tipo === "boolean") {
     return (
       <div className="font-mono text-xs leading-relaxed inline">
-        {nombre && <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>}
+        {nombre && (
+          <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>
+        )}
         <span className="text-amber-700 font-semibold">{String(data)}</span>
         {coma}
       </div>
@@ -53,7 +61,9 @@ export function VisorJsonInteractivo({
   if (tipo === "number") {
     return (
       <div className="font-mono text-xs leading-relaxed inline">
-        {nombre && <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>}
+        {nombre && (
+          <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>
+        )}
         <span className="text-emerald-700 font-medium">{String(data)}</span>
         {coma}
       </div>
@@ -63,7 +73,9 @@ export function VisorJsonInteractivo({
   if (tipo === "string") {
     return (
       <div className="font-mono text-xs leading-relaxed inline break-all">
-        {nombre && <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>}
+        {nombre && (
+          <span className="text-sky-700 font-semibold mr-1">"{nombre}":</span>
+        )}
         <span className="text-emerald-800">"{String(data)}"</span>
         {coma}
       </div>
@@ -76,7 +88,9 @@ export function VisorJsonInteractivo({
     return (
       <div className="font-mono text-xs leading-relaxed">
         <div className="inline-flex items-center gap-1">
-          {nombre && <span className="text-sky-700 font-semibold">"{nombre}":</span>}
+          {nombre && (
+            <span className="text-sky-700 font-semibold">"{nombre}":</span>
+          )}
           {!esVacio && (
             <button
               type="button"
@@ -96,18 +110,16 @@ export function VisorJsonInteractivo({
               {data.length} elementos...
             </button>
           )}
-          {esVacio && (
-            <span className="text-slate-600 font-bold">
-              ]{coma}
-            </span>
-          )}
+          {esVacio && <span className="text-slate-600 font-bold">]{coma}</span>}
         </div>
 
         {!colapsado && !esVacio && (
           <div className="pl-4 border-l border-slate-300 ml-1.5 space-y-0.5 my-0.5">
             {data.map((elem, idx) => (
-              <div key={idx} className="block">
-                <span className="text-slate-400 mr-1 select-none text-[11px]">{idx}:</span>
+              <div key={JSON.stringify(elem)} className="block">
+                <span className="text-slate-400 mr-1 select-none text-[11px]">
+                  {idx}:
+                </span>
                 <VisorJsonInteractivo
                   data={elem}
                   nivel={nivel + 1}
@@ -119,9 +131,7 @@ export function VisorJsonInteractivo({
         )}
 
         {!colapsado && !esVacio && (
-          <div className="text-slate-600 font-bold">
-            ]{coma}
-          </div>
+          <div className="text-slate-600 font-bold">]{coma}</div>
         )}
       </div>
     );
@@ -134,7 +144,9 @@ export function VisorJsonInteractivo({
   return (
     <div className="font-mono text-xs leading-relaxed">
       <div className="inline-flex items-center gap-1">
-        {nombre && <span className="text-sky-700 font-semibold">"{nombre}":</span>}
+        {nombre && (
+          <span className="text-sky-700 font-semibold">"{nombre}":</span>
+        )}
         {!esVacio && (
           <button
             type="button"
@@ -155,9 +167,7 @@ export function VisorJsonInteractivo({
           </button>
         )}
         {esVacio && (
-          <span className="text-slate-600 font-bold">
-            &#125;{coma}
-          </span>
+          <span className="text-slate-600 font-bold">&#125;{coma}</span>
         )}
       </div>
 
@@ -177,9 +187,7 @@ export function VisorJsonInteractivo({
       )}
 
       {!colapsado && !esVacio && (
-        <div className="text-slate-600 font-bold">
-          &#125;{coma}
-        </div>
+        <div className="text-slate-600 font-bold">&#125;{coma}</div>
       )}
     </div>
   );

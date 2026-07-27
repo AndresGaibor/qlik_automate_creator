@@ -1,1 +1,4 @@
-export { responderExito, responderError } from "../../nucleo/http/respuestas.js";
+export {
+  responderExito,
+  responderError,
+} from "../../nucleo/http/respuestas.js";

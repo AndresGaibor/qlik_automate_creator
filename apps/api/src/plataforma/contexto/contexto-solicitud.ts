@@ -1,5 +1,8 @@
 import type { Context } from "hono";
-import type { InfoSesion, SesionPublica } from "../../nucleo/sesion/tipos-sesion.js";
+import type {
+  InfoSesion,
+  SesionPublica,
+} from "../../nucleo/sesion/tipos-sesion.js";
 
 export interface ContextoSolicitud {
   idSolicitud: string;

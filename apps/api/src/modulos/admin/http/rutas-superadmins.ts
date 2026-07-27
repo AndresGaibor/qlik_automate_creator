@@ -1,6 +1,9 @@
 import { esquemaAgregarSuperadmin } from "@qlik/contratos/admin";
 import { Hono } from "hono";
-import { responderError, responderExito } from "../../../nucleo/http/respuestas.js";
+import {
+  responderError,
+  responderExito,
+} from "../../../nucleo/http/respuestas.js";
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
 import type { ResolverContextoAdmin } from "./rutas-comunes.js";
 import { responderErrorAdmin } from "./rutas-comunes.js";
@@ -45,9 +48,14 @@ export function crearRutasSuperadmins({
 
       const resultado = await repositorio.agregarSuperadmin(entrada);
       if (!resultado) {
-        return responderError(c, "No se pudo crear el superadministrador", 500, {
-          codigo: "ERROR_CREACION",
-        });
+        return responderError(
+          c,
+          "No se pudo crear el superadministrador",
+          500,
+          {
+            codigo: "ERROR_CREACION",
+          },
+        );
       }
 
       return responderExito(c, resultado, 201);
@@ -73,9 +81,14 @@ export function crearRutasSuperadmins({
 
       const resultado = await repositorio.eliminarSuperadmin(id);
       if (!resultado.exito) {
-        return responderError(c, resultado.mensaje, resultado.codigo === "NO_ENCONTRADO" ? 404 : 400, {
-          codigo: resultado.codigo,
-        });
+        return responderError(
+          c,
+          resultado.mensaje,
+          resultado.codigo === "NO_ENCONTRADO" ? 404 : 400,
+          {
+            codigo: resultado.codigo,
+          },
+        );
       }
 
       return responderExito(c, { eliminado: true });

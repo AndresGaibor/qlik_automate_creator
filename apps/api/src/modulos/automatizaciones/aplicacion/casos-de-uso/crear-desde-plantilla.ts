@@ -1,21 +1,19 @@
+import crypto from "node:crypto";
 import type {
   CrearDesdePlantilla,
   ResultadoCrearDesdePlantilla,
 } from "@qlik/contratos/automatizaciones";
 import type { PuertoAuditoria } from "../../../../nucleo/auditoria/puerto-auditoria.js";
+import { ErrorAplicacion } from "../../../../nucleo/errores/error-aplicacion.js";
 import type { PuertoOutbox } from "../../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
-import {
-  ErrorAplicacion,
-} from "../../../../nucleo/errores/error-aplicacion.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
-import crypto from "node:crypto";
+import { copiarAutomatizacion } from "../servicios/servicio-copia-automatizacion.js";
 import {
-  verificarIdempotencia,
   completarIdempotencia,
   fallarIdempotencia,
+  verificarIdempotencia,
 } from "../servicios/servicio-idempotencia.js";
-import { copiarAutomatizacion } from "../servicios/servicio-copia-automatizacion.js";
 import { hashCanonico } from "../servicios/utilidades-automatizacion.js";
 
 export interface ContextoCreacionAutomatizacion {
@@ -46,7 +44,12 @@ export class CrearAutomatizacionDesdePlantilla {
     if (clave) {
       const { esNuevo, resultadoPrevio } = await verificarIdempotencia(
         this.idempotencia,
-        { organizacionId: contexto.organizacionId, alcance, clave, hashSolicitud },
+        {
+          organizacionId: contexto.organizacionId,
+          alcance,
+          clave,
+          hashSolicitud,
+        },
       );
       if (!esNuevo && resultadoPrevio) {
         return resultadoPrevio;

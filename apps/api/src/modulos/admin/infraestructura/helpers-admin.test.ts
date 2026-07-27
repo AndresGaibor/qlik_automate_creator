@@ -14,15 +14,13 @@ describe("mapearTenantQlik", () => {
       automatizacionBaseIdQlik: null,
       automatizacionBaseNombre: null,
       destinoApiUrl: "https://destino.empresa.test",
-      destinoApiKey: "api-key-secreta",
-      destinoApiKeyCifrada: "{\\\"cifrado\\\":\\\"...\\\"}",
+      destinoApiKeyCifrada: '{\\"cifrado\\":\\"...\\"}',
       destinoBaseDatos: null,
       impalaHost: "impala.empresa.test",
       impalaPort: 21050,
       impalaAuthMechanism: "PLAIN",
       impalaUser: "usuario",
-      impalaPassword: "password-secreta",
-      impalaPasswordCifrada: "{\\\"cifrado\\\":\\\"...\\\"}",
+      impalaPasswordCifrada: '{\\"cifrado\\":\\"...\\"}',
       impalaDatabase: "default",
       creadoEn: new Date(),
       actualizadoEn: new Date(),
@@ -34,9 +32,7 @@ describe("mapearTenantQlik", () => {
       tieneImpalaPassword: true,
       impalaPasswordMascara: "••••••••",
     });
-    expect(JSON.stringify(tenant)).not.toContain("api-key-secreta");
-    expect(JSON.stringify(tenant)).not.toContain("password-secreta");
-    expect(tenant).not.toHaveProperty("destinoApiKey");
-    expect(tenant).not.toHaveProperty("impalaPassword");
+    expect(tenant).not.toHaveProperty("destinoApiKeyCifrada");
+    expect(tenant).not.toHaveProperty("impalaPasswordCifrada");
   });
 });

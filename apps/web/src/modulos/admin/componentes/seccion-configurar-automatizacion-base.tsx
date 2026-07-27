@@ -1,11 +1,11 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TenantQlik } from "@/modulos/admin/api";
 import { listarAutomatizacionesParaAdmin } from "@/modulos/admin/api";
-import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
-import { useState } from "react";
 import { configurarAutomatizacionBaseTenant } from "@/modulos/admin/api";
+import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface Props {
   organizacionId: string;
@@ -41,9 +41,7 @@ export function SeccionConfigurarAutomatizacionBase({
       queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
-      mostrarExito(
-        "Automatización Base del Tenant configurada exitosamente",
-      );
+      mostrarExito("Automatización Base del Tenant configurada exitosamente");
     },
     onError: (err: Error) => mostrarError(err.message),
   });

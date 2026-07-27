@@ -31,7 +31,10 @@ export function obtenerAutomatizaciones() {
   return clienteApi.get<ResumenAutomatizacion[]>(RUTA);
 }
 
-export function obtenerAutomatizacionesConFiltros(espacioId?: string, busqueda?: string) {
+export function obtenerAutomatizacionesConFiltros(
+  espacioId?: string,
+  busqueda?: string,
+) {
   return clienteApi.get<ResumenAutomatizacion[]>(RUTA, {
     parametros: {
       ...(espacioId ? { espacioId } : {}),
@@ -63,7 +66,9 @@ export function detenerEjecucion(id: string, ejecucionId: string) {
 }
 
 export function crearAutomatizacionDesdePlantilla(
-  entrada: Omit<CrearDesdePlantilla, "plantillaIdQlik"> & { plantillaIdQlik?: string },
+  entrada: Omit<CrearDesdePlantilla, "plantillaIdQlik"> & {
+    plantillaIdQlik?: string;
+  },
 ) {
   const clave = entrada.claveIdempotencia ?? crypto.randomUUID();
   return clienteApi.post<ResultadoCrearDesdePlantilla>(

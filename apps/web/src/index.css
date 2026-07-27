@@ -2,7 +2,7 @@
    index.css · sistema de diseño "Automatizaciones"  (look Qlik Cloud)
    Tailwind v4 · los tokens VIVEN aquí, no en tailwind.config.js
    ===================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Source+Sans+3:opsz,wght@6..21,400;6..21,500;6..21,600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Source+Sans+3:opsz,wght@6..21,400;6..21,500;6..21,600&family=IBM+Plex+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------
@@ -10,57 +10,65 @@
    --------------------------------------------------------------------- */
 @theme {
   /* MARCA · el verde que todo lo une (único primario) */
-  --color-brand-700: #007A37;   /* press / hover fuerte            */
-  --color-brand-600: #009845;   /* PRIMARIO                        */
-  --color-brand-500: #18A957;   /* acento / glyph                  */
-  --color-brand-100: #E3F4EA;   /* fila activa / anillo de foco    */
-  --color-brand-50:  #F1FAF5;   /* banner éxito / selección suave  */
+  --color-brand-700: #007a37; /* press / hover fuerte            */
+  --color-brand-600: #009845; /* PRIMARIO                        */
+  --color-brand-500: #18a957; /* acento / glyph                  */
+  --color-brand-100: #e3f4ea; /* fila activa / anillo de foco    */
+  --color-brand-50: #f1faf5; /* banner éxito / selección suave  */
 
   /* OBJETO · azul que ETIQUETA, no que acciona (chips de espacio/tipo) */
-  --color-obj-600: #1464C0;
-  --color-obj-50:  #E8F0FB;
+  --color-obj-600: #1464c0;
+  --color-obj-50: #e8f0fb;
 
   /* TINTA · jerarquía del texto (4 escalones, ni uno más) */
   --color-ink-900: #202124;
-  --color-ink-700: #3C4043;
-  --color-ink-500: #5F6368;
-  --color-ink-400: #8A8F98;
-  --color-ink-300: #B8BCC4;
+  --color-ink-700: #3c4043;
+  --color-ink-500: #5f6368;
+  --color-ink-400: #8a8f98;
+  --color-ink-300: #b8bcc4;
 
   /* SUPERFICIES · lo que calla para que lo demás hable */
-  --color-surface: #FFFFFF;
-  --color-app:     #F6F7F8;
-  --color-hover:   #F2F4F6;
-  --color-line-200:#E1E3E6;     /* borde por defecto + divisores   */
-  --color-line-300:#C7CBD1;     /* borde en hover / foco suave     */
+  --color-surface: #ffffff;
+  --color-app: #f6f7f8;
+  --color-hover: #f2f4f6;
+  --color-line-200: #e1e3e6; /* borde por defecto + divisores   */
+  --color-line-300: #c7cbd1; /* borde en hover / foco suave     */
 
   /* SEMÁNTICA */
-  --color-danger-600: #D93025;
-  --color-warn-600:   #E8A317;
-  --color-avatar:     #57B894;  /* menta de avatar (no es marca)   */
+  --color-danger-600: #d93025;
+  --color-warn-600: #e8a317;
+  --color-avatar: #57b894; /* menta de avatar (no es marca)   */
 
   /* FORMA */
-  --radius-sm:   2px;
-  --radius-md:   4px;          /* DEFAULT de botones/inputs/nav   */
-  --radius-lg:   8px;          /* tarjetas / paneles              */
-  --radius-full: 999px;        /* avatares / badges / toggles     */
+  --radius-sm: 2px;
+  --radius-md: 4px; /* DEFAULT de botones/inputs/nav   */
+  --radius-lg: 8px; /* tarjetas / paneles              */
+  --radius-full: 999px; /* avatares / badges / toggles     */
 
-  --shadow-card:  0 1px 2px rgba(16,24,40,.04);
-  --shadow-panel: 0 1px 3px rgba(16,24,40,.08), 0 8px 24px rgba(16,24,40,.08);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-panel: 0 1px 3px rgba(16, 24, 40, 0.08), 0 8px 24px
+    rgba(16, 24, 40, 0.08);
   --shadow-focus: 0 0 0 3px var(--color-brand-100);
 
   /* TIPO · tres voces, un rol cada una */
-  --font-display: "Space Grotesk", system-ui, sans-serif;  /* titulares, wordmark, métricas */
-  --font-sans:    "Source Sans 3", system-ui, sans-serif;  /* TODO lo demás (histórica Qlik) */
-  --font-mono:    "IBM Plex Mono", ui-monospace, monospace; /* IDs / hosts / fechas técnicas */
+  --font-display: "Space Grotesk", system-ui, sans-serif; /* titulares, wordmark, métricas */
+  --font-sans: "Source Sans 3", system-ui, sans-serif; /* TODO lo demás (histórica Qlik) */
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace; /* IDs / hosts / fechas técnicas */
 
-  --text-xs:      12px;  --text-xs--line-height:      16px;
-  --text-sm:      13px;  --text-sm--line-height:      20px;
-  --text-base:    14px;  --text-base--line-height:    22px;
-  --text-md:      16px;  --text-md--line-height:      24px;
-  --text-lg:      18px;  --text-lg--line-height:      28px;
-  --text-xl:      22px;  --text-xl--line-height:      30px;
-  --text-display: 28px;  --text-display--line-height: 34px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 14px;
+  --text-base--line-height: 22px;
+  --text-md: 16px;
+  --text-md--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 22px;
+  --text-xl--line-height: 30px;
+  --text-display: 28px;
+  --text-display--line-height: 34px;
 
   /* DENSIDAD */
   --topbar-h: 56px;
@@ -68,22 +76,47 @@
   --sidebar-w-collapsed: 56px;
 
   /* MOVIMIENTO · animaciones con nombre → generan animate-* */
-  --ease: cubic-bezier(.2,.7,.2,1);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --animate-dot-pulse: dot-pulse 2.4s var(--ease) infinite;
 }
 
-@keyframes dot-pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
-@keyframes reveal-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 
 /* utilidad de easing reutilizable (transition-timing-function) */
-@utility ease-soft { transition-timing-function: cubic-bezier(.2,.7,.2,1); }
+@utility ease-soft {
+  transition-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
 
 /* ---------------------------------------------------------------------
    BASE · el suelo
    --------------------------------------------------------------------- */
 @layer base {
-  *, *::before, *::after { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     margin: 0;
     background: var(--color-app);
@@ -94,13 +127,32 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
-  h1,h2,h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
-  code, .mono { font-family: var(--font-mono); }
-  a { color: var(--color-ink-700); text-decoration: none; }
-  button { font-family: inherit; cursor: pointer; }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    margin: 0;
+  }
+  code,
+  .mono {
+    font-family: var(--font-mono);
+  }
+  a {
+    color: var(--color-ink-700);
+    text-decoration: none;
+  }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
 
   /* foco accesible global: anillo verde, NUNCA el outline negro del navegador */
-  :focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: var(--radius-md); }
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+    border-radius: var(--radius-md);
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -108,28 +160,67 @@
    --------------------------------------------------------------------- */
 @layer components {
   /* Fondo ambient: dot-grid tenue + UN glow verde esquinero (no aurora) */
-  .ambient { position: relative; isolation: isolate; }
+  .ambient {
+    position: relative;
+    isolation: isolate;
+  }
   .ambient::before {
-    content: ""; position: absolute; inset: 0; z-index: -2;
-    background-image: radial-gradient(var(--color-line-200) 1px, transparent 1px);
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background-image: radial-gradient(
+      var(--color-line-200) 1px,
+      transparent 1px
+    );
     background-size: 22px 22px;
-    -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 75%);
-            mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 75%);
-    opacity: .5;
+    -webkit-mask-image: radial-gradient(
+      120% 90% at 50% 0%,
+      #000 30%,
+      transparent 75%
+    );
+    mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 75%);
+    opacity: 0.5;
   }
   .ambient::after {
-    content: ""; position: absolute; z-index: -1; pointer-events: none;
-    top: -16%; right: -8%; width: min(52vw, 720px); aspect-ratio: 1;
-    background: radial-gradient(circle at center, var(--color-brand-100) 0%, transparent 62%);
-    filter: blur(26px); opacity: .5;
+    content: "";
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    top: -16%;
+    right: -8%;
+    width: min(52vw, 720px);
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle at center,
+      var(--color-brand-100) 0%,
+      transparent 62%
+    );
+    filter: blur(26px);
+    opacity: 0.5;
   }
 
   /* Scroll-reveal: entra con fade + 8px cuando el observer lo marca .in */
-  .rv { opacity: 0; transform: translateY(10px); }
-  .rv.in { opacity: 1; transform: none; transition: opacity .55s var(--ease), transform .55s var(--ease); }
+  .rv {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  .rv.in {
+    opacity: 1;
+    transform: none;
+    transition: opacity .55s var(--ease), transform .55s var(--ease);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rv { opacity: 1 !important; transform: none !important; }
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  .rv {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
 }

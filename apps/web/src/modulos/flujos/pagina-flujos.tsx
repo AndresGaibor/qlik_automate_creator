@@ -1,7 +1,7 @@
-import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
+import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { ModalSeleccionarTenantQlik } from "@/compartido/componentes/ui/modal-seleccionar-tenant-qlik";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
@@ -11,20 +11,26 @@ import { useManejoError } from "@/compartido/hooks/use-manejo-error";
 import { usePaginacion } from "@/compartido/hooks/use-paginacion";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import { construirUrlCrearFlujoQlik } from "@/compartido/utiles/qlik-urls";
-import { obtenerEspacios, obtenerFlujosConFiltros, type ResumenFlujo } from "@/modulos/flujos/api";
-import { BarraFiltrosFlujos } from "./componentes/barra-filtros-flujos";
-import { ListaFlujos } from "./componentes/lista-flujos";
+import {
+  type ResumenFlujo,
+  obtenerEspacios,
+  obtenerFlujosConFiltros,
+} from "@/modulos/flujos/api";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { BarraFiltrosFlujos } from "./componentes/barra-filtros-flujos";
+import { ListaFlujos } from "./componentes/lista-flujos";
 
 export function PaginaFlujos() {
   const { mostrarError } = useNotificaciones();
-  const { espacioId, establecerEspacioId } = useFiltroEspacioConPersistencia();
+  const { tenant: tenantActivo, tenants } = useTenantActivo();
+  const { espacioId, establecerEspacioId } = useFiltroEspacioConPersistencia(
+    tenantActivo?.id,
+  );
   const espacioFiltrado = espacioId.trim() || undefined;
   const [modalTenantsAbierto, setModalTenantsAbierto] = useState(false);
-
-  const { tenant: tenantActivo, tenants } = useTenantActivo();
-  const { busquedaTemp, setBusquedaTemp, busquedaActiva, buscar, limpiar } = useBusqueda();
+  const { busquedaTemp, setBusquedaTemp, busquedaActiva, buscar, limpiar } =
+    useBusqueda();
 
   const {
     data: flujos,
@@ -33,13 +39,24 @@ export function PaginaFlujos() {
     error,
     refetch,
   } = useQuery<ResumenFlujo[]>({
-    queryKey: ["flujos", espacioFiltrado, busquedaActiva],
+    queryKey: ["flujos", tenantActivo?.id, espacioFiltrado, busquedaActiva],
     queryFn: () => obtenerFlujosConFiltros(espacioFiltrado, busquedaActiva),
     retry: false,
   });
 
+  const { data: automatizaciones = [] } = useQuery<
+    import("@qlik/contratos/automatizaciones").ResumenAutomatizacion[]
+  >({
+    queryKey: ["automatizaciones", tenantActivo?.id],
+    queryFn: () =>
+      import("@/modulos/automatizaciones/api").then((m) =>
+        m.obtenerAutomatizaciones(),
+      ),
+    retry: false,
+  });
+
   const espacios = useQuery({
-    queryKey: ["automatizaciones", "espacios"],
+    queryKey: ["flujos", "espacios", tenantActivo?.id],
     queryFn: obtenerEspacios,
     retry: false,
   });
@@ -54,11 +71,12 @@ export function PaginaFlujos() {
     }
   }, [isError, error, manejar]);
 
-  const { paginaActual, totalPaginas, elementosPagina: flujosPaginados, irPagina, reset } = usePaginacion(flujos ?? []);
-
-  useEffect(() => {
-    reset();
-  }, [reset, espacioId, busquedaActiva]);
+  const {
+    paginaActual,
+    totalPaginas,
+    elementosPagina: flujosPaginados,
+    irPagina,
+  } = usePaginacion(flujos ?? []);
 
   if (isLoading) {
     return <EstadoCarga mensaje="Cargando flujos de datos..." />;
@@ -69,25 +87,27 @@ export function PaginaFlujos() {
   }
 
   const targetHost = tenantActivo?.host;
-  const targetUrlCrear = targetHost ? construirUrlCrearFlujoQlik(targetHost, espacioId) : "#";
+  const targetUrlCrear = targetHost
+    ? construirUrlCrearFlujoQlik(targetHost, espacioId)
+    : "#";
 
   return (
     <PageLayout>
       <PageHeader
-        title="Flujos de Datos (Dataflows)"
-        description="Explora, busca y selecciona los Dataflows de Qlik Cloud para vincularlos a tus automatizaciones."
+        title="Dataflows de Qlik"
+        description="Revisa los Dataflows que ya conectaste desde Qlik Cloud, mira cómo se transforman tus datos, y crea una automatización en un par de clics."
         actions={
           tenants.length > 1 ? (
-            <Button
-              onClick={() => setModalTenantsAbierto(true)}
-            >
+            <Button onClick={() => setModalTenantsAbierto(true)}>
               + Crear flujo en Qlik Cloud ↗
             </Button>
           ) : targetHost ? (
-            <Button
-              asChild
-            >
-              <a href={targetUrlCrear} target="_blank" rel="noopener noreferrer">
+            <Button asChild>
+              <a
+                href={targetUrlCrear}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 + Crear flujo en Qlik Cloud ↗
               </a>
             </Button>
@@ -101,20 +121,21 @@ export function PaginaFlujos() {
         buscar={buscar}
         limpiar={limpiar}
         espacios={espacios.data ?? []}
+        errorEspacios={espacios.isError}
         espacioFiltrado={espacioFiltrado}
         onEspacioChange={establecerEspacioId}
-        onCrear={() => {}}
-        puedeCrear={!!targetHost}
       />
 
       <ListaFlujos
         flujos={flujosPaginados}
-        onVer={() => {}}
+        automatizaciones={automatizaciones}
         targetHost={targetHost}
         espacioId={espacioId}
         paginaActual={paginaActual}
         totalPaginas={totalPaginas}
         onPageChange={irPagina}
+        total={flujos?.length ?? 0}
+        hayFiltros={Boolean(espacioFiltrado || busquedaActiva)}
       />
 
       <ModalSeleccionarTenantQlik

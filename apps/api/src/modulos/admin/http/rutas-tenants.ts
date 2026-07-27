@@ -1,9 +1,12 @@
 import {
-  esquemaCrearTenant,
   esquemaActualizarTenant,
+  esquemaCrearTenant,
 } from "@qlik/contratos/admin";
 import { type Context, Hono } from "hono";
-import { responderError, responderExito } from "../../../nucleo/http/respuestas.js";
+import {
+  responderError,
+  responderExito,
+} from "../../../nucleo/http/respuestas.js";
 import { actualizarTenant } from "../aplicacion/casos-de-uso/actualizar-tenant.js";
 import { crearTenant } from "../aplicacion/casos-de-uso/crear-tenant.js";
 import { eliminarTenant } from "../aplicacion/casos-de-uso/eliminar-tenant.js";
@@ -12,9 +15,9 @@ import { obtenerDetalleTenant } from "../aplicacion/casos-de-uso/obtener-detalle
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
 import type { ResolverContextoAdmin } from "./rutas-comunes.js";
 import {
+  exigirAccesoOrganizacion,
   responderErrorAdmin,
   servicioAdmin,
-  exigirAccesoOrganizacion,
 } from "./rutas-comunes.js";
 
 export interface DependenciasRutasTenants {

@@ -29,3 +29,12 @@ export function descifrarSecretoPersistido(
   }
   return cifrado.descifrar(paquete.cifrado, paquete.iv, paquete.tag);
 }
+
+export function leerSecretoCifrado(
+  cifrado: Descifrador,
+  secretoPersistido: string | null | undefined,
+): string | undefined {
+  return secretoPersistido
+    ? descifrarSecretoPersistido(cifrado, secretoPersistido)
+    : undefined;
+}

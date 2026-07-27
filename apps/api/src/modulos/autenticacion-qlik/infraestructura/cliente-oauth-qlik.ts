@@ -28,6 +28,8 @@ export class ClienteOAuthQlik implements PuertoOAuthQlik {
     private readonly scopes = process.env.QLIK_OAUTH_SCOPES ??
       SCOPES_PREDETERMINADOS,
     private readonly fetchFn: typeof fetch = fetch,
+    private readonly timeoutMs = Number(process.env.QLIK_OAUTH_TIMEOUT_MS) ||
+      10_000,
   ) {
     const hostNormalizado = /^https?:\/\//i.test(host)
       ? host
@@ -72,6 +74,7 @@ export class ClienteOAuthQlik implements PuertoOAuthQlik {
     const respuesta = await this.fetchFn(new URL("/oauth/token", this.origen), {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      signal: AbortSignal.timeout(this.timeoutMs),
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code: codigo,
@@ -114,6 +117,7 @@ export class ClienteOAuthQlik implements PuertoOAuthQlik {
           Authorization: `Bearer ${tokenAcceso}`,
           Accept: "application/json",
         },
+        signal: AbortSignal.timeout(this.timeoutMs),
       },
     );
     const datos = await leerJsonSeguro(respuesta);

@@ -1,5 +1,5 @@
-import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
+import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { aplicarReemplazosEnWorkspace } from "./servicio-reemplazo-workspace.js";
 
 export interface ResultadoCopiaAutomatizacion {
@@ -26,7 +26,9 @@ export async function copiarAutomatizacion(
   }
 
   // ── Extracción dinámica si viene flujoId / tablaId ───────────────────────
-  const reemplazosEntrantes = [...(entrada.reemplazosWorkspace as Array<{ ruta: string; valor: unknown }>)];
+  const reemplazosEntrantes = [
+    ...(entrada.reemplazosWorkspace as Array<{ ruta: string; valor: unknown }>),
+  ];
 
   if (entrada.flujoId) {
     try {
@@ -34,17 +36,25 @@ export async function copiarAutomatizacion(
       const scriptTexto = scriptRes.script || "";
 
       // Regex para buscar: STORE [Filtro 1_DEFAULT] INTO [lib://Bancolombia prueba:SFTP//upload/ventas_incremental1.csv] (txt);
-      const matchStore = scriptTexto.match(/STORE\s+.*?\s+INTO\s+\[lib:\/\/.*?\/\/.*?\/(.*?)\.(csv|txt|qvd|json)\]/i);
-      
-      const archivoEntrada = matchStore ? matchStore[1].trim() : "ventas_incremental1";
+      const matchStore = scriptTexto.match(
+        /STORE\s+.*?\s+INTO\s+\[lib:\/\/.*?\/\/.*?\/(.*?)\.(csv|txt|qvd|json)\]/i,
+      );
+
+      const archivoEntrada = matchStore
+        ? matchStore[1].trim()
+        : "ventas_incremental1";
       const extension = matchStore ? matchStore[2].trim() : "csv";
       const appId = entrada.flujoId;
       const dataset = archivoEntrada;
-      const tablaDestino = entrada.tablaId ? entrada.tablaId.trim() : "ventas_filtro_curados";
+      const tablaDestino = entrada.tablaId
+        ? entrada.tablaId.trim()
+        : "ventas_filtro_curados";
 
       // Modificar workspace de forma directa inteligente
       const automatizacion = await qlik.obtenerAutomatizacion(id);
-      const workspace = structuredClone(automatizacion.workspace ?? {}) as Record<string, unknown>;
+      const workspace = structuredClone(
+        automatizacion.workspace ?? {},
+      ) as Record<string, unknown>;
 
       modificarWorkspaceConParametrosFlujo(workspace, {
         appId,
@@ -66,17 +76,12 @@ export async function copiarAutomatizacion(
         description: automatizacion.description ?? "",
         maxConcurrentRuns: automatizacion.maxConcurrentRuns ?? 1,
       });
-
     } catch (e) {
       errorReemplazos = e;
     }
   } else if (reemplazosEntrantes.length > 0) {
     try {
-      await aplicarReemplazos(
-        qlik,
-        id,
-        reemplazosEntrantes,
-      );
+      await aplicarReemplazos(qlik, id, reemplazosEntrantes);
     } catch (e) {
       errorReemplazos = e;
     }
@@ -107,7 +112,9 @@ function modificarWorkspaceConParametrosFlujo(
     extension: string;
   },
 ): void {
-  const blocks = (Array.isArray(workspace.blocks) ? workspace.blocks : []) as Record<string, unknown>[];
+  const blocks = (
+    Array.isArray(workspace.blocks) ? workspace.blocks : []
+  ) as Record<string, unknown>[];
 
   // Map de valores para variables
   const mapaValores: Record<string, string> = {
@@ -124,7 +131,9 @@ function modificarWorkspaceConParametrosFlujo(
 
     // Configurar listApps (Qlik Cloud Services - List Apps) con el espacio/app si aplica
     if (name === "listApps" || type === "EndpointBlock") {
-      const inputs = (Array.isArray(block.inputs) ? block.inputs : []) as Record<string, unknown>[];
+      const inputs = (
+        Array.isArray(block.inputs) ? block.inputs : []
+      ) as Record<string, unknown>[];
       for (const input of inputs) {
         if (input.id === "8ce4fad0-107b-11ec-a6ac-2bd407ad134b") {
           input.value = params.appId;
@@ -135,7 +144,9 @@ function modificarWorkspaceConParametrosFlujo(
     // Configurar bloques VariableBlock (DataflowNombre, Appid, Dataset, ArchivoEntrada, TablaDestino, Extension)
     if (type === "VariableBlock" && name in mapaValores) {
       const valorNuevo = mapaValores[name];
-      const operations = (Array.isArray(block.operations) ? block.operations : []) as Record<string, unknown>[];
+      const operations = (
+        Array.isArray(block.operations) ? block.operations : []
+      ) as Record<string, unknown>[];
       if (operations.length > 0) {
         operations[0].value = valorNuevo;
       } else {
@@ -152,7 +163,9 @@ function modificarWorkspaceConParametrosFlujo(
   }
 
   // Actualizar también la declaración global en la propiedad variables si existe
-  const variables = (Array.isArray(workspace.variables) ? workspace.variables : []) as Record<string, unknown>[];
+  const variables = (
+    Array.isArray(workspace.variables) ? workspace.variables : []
+  ) as Record<string, unknown>[];
   for (const v of variables) {
     const vName = String(v.name || "");
     if (vName in mapaValores) {

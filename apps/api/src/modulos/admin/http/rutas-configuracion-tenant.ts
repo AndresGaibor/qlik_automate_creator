@@ -4,10 +4,17 @@ import {
   esquemaConfigurarImpalaTenant,
 } from "@qlik/contratos/admin";
 import { type Context, Hono } from "hono";
-import { responderError, responderExito } from "../../../nucleo/http/respuestas.js";
+import {
+  responderError,
+  responderExito,
+} from "../../../nucleo/http/respuestas.js";
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
 import type { ResolverContextoAdmin } from "./rutas-comunes.js";
-import { responderErrorAdmin, exigirAccesoOrganizacion } from "./rutas-comunes.js";
+import {
+  exigirAccesoOrganizacion,
+  obtenerParametroRequerido,
+  responderErrorAdmin,
+} from "./rutas-comunes.js";
 
 export interface DependenciasRutasConfiguracionTenant {
   repositorio: RepositorioAdministracion;
@@ -22,8 +29,8 @@ export function crearRutasConfiguracionTenant({
 
   const handlerAutomatizacionBase = async (c: Context) => {
     try {
-      const organizacionId = c.req.param("id")!;
-      const tenantQlikId = c.req.param("tenantQlikId")!;
+      const organizacionId = obtenerParametroRequerido(c, "id");
+      const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");
       const contexto = await resolverContexto(c);
       exigirAccesoOrganizacion(contexto, organizacionId);
 
@@ -60,8 +67,8 @@ export function crearRutasConfiguracionTenant({
 
   const handlerDestino = async (c: Context) => {
     try {
-      const organizacionId = c.req.param("id")!;
-      const tenantQlikId = c.req.param("tenantQlikId")!;
+      const organizacionId = obtenerParametroRequerido(c, "id");
+      const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");
       const contexto = await resolverContexto(c);
       exigirAccesoOrganizacion(contexto, organizacionId);
 
@@ -92,15 +99,12 @@ export function crearRutasConfiguracionTenant({
     "/organizaciones/:id/tenants-qlik/:tenantQlikId/destino",
     handlerDestino,
   );
-  rutas.put(
-    "/tenants/:id/qlik/:tenantQlikId/destino",
-    handlerDestino,
-  );
+  rutas.put("/tenants/:id/qlik/:tenantQlikId/destino", handlerDestino);
 
   const handlerImpala = async (c: Context) => {
     try {
-      const organizacionId = c.req.param("id")!;
-      const tenantQlikId = c.req.param("tenantQlikId")!;
+      const organizacionId = obtenerParametroRequerido(c, "id");
+      const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");
       const contexto = await resolverContexto(c);
       exigirAccesoOrganizacion(contexto, organizacionId);
 
@@ -129,10 +133,7 @@ export function crearRutasConfiguracionTenant({
     "/organizaciones/:id/tenants-qlik/:tenantQlikId/impala",
     handlerImpala,
   );
-  rutas.put(
-    "/tenants/:id/qlik/:tenantQlikId/impala",
-    handlerImpala,
-  );
+  rutas.put("/tenants/:id/qlik/:tenantQlikId/impala", handlerImpala);
 
   return rutas;
 }

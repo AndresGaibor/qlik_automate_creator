@@ -62,13 +62,15 @@ export const esquemaTenantQlik = z.object({
   automatizacionBaseIdQlik: z.string().nullable().optional(),
   automatizacionBaseNombre: z.string().nullable().optional(),
   destinoApiUrl: z.string().nullable().optional(),
-  destinoApiKey: z.string().nullable().optional(),
+  tieneDestinoApiKey: z.boolean(),
+  destinoApiKeyMascara: z.string().nullable(),
   destinoBaseDatos: z.string().nullable().optional(),
   impalaHost: z.string().nullable().optional(),
   impalaPort: z.number().nullable().optional(),
   impalaAuthMechanism: z.string().nullable().optional(),
   impalaUser: z.string().nullable().optional(),
-  impalaPassword: z.string().nullable().optional(),
+  tieneImpalaPassword: z.boolean(),
+  impalaPasswordMascara: z.string().nullable(),
   impalaDatabase: z.string().nullable().optional(),
   creadoEn: z.string(),
 });
@@ -85,20 +87,43 @@ export const esquemaConfigurarAutomatizacionBase = z.object({
 });
 
 export const esquemaConfigurarDestinoTenant = z.object({
-  destinoApiUrl: z.string().min(1),
-  destinoApiKey: z.string().min(1),
+  destinoApiUrl: z.string().trim().url().max(2048),
+  destinoApiKey: z.string().trim().max(2000).optional(),
   destinoBaseDatos: z.string().optional(),
 });
 
+const identificadorImpala = z
+  .string()
+  .trim()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "Identificador de Impala inválido");
+
+const hostImpala = z
+  .string()
+  .trim()
+  .min(1)
+  .max(253)
+  .refine(
+    (host) =>
+      /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)$/.test(
+        host,
+      ) ||
+      /^(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(
+        host,
+      ),
+    "Host de Impala inválido",
+  );
+
 export const esquemaConfigurarImpalaTenant = z.object({
-  impalaHost: z.string().min(1),
-  impalaPort: z.number().int().positive().default(21050),
+  impalaHost: hostImpala,
+  impalaPort: z.number().int().min(1).max(65535).default(21050),
   impalaAuthMechanism: z
     .enum(["NOSASL", "PLAIN", "LDAP", "KERBEROS"])
     .default("NOSASL"),
-  impalaUser: z.string().optional(),
-  impalaPassword: z.string().optional(),
-  impalaDatabase: z.string().default("default"),
+  impalaUser: identificadorImpala.optional(),
+  impalaPassword: z.string().trim().max(2000).optional(),
+  impalaDatabase: identificadorImpala.default("default"),
 });
 
 export type TenantQlik = z.infer<typeof esquemaTenantQlik>;
@@ -154,3 +179,20 @@ export type ConfigurarOauthQlik = z.infer<typeof esquemaConfigurarOauthQlik>;
 export type ConfiguracionOauthQlik = z.infer<
   typeof esquemaConfiguracionOauthQlik
 >;
+
+export const esquemaSuperadmin = z.object({
+  id: z.string(),
+  nombre: z.string(),
+  correo: z.string().nullable(),
+  estado: z.enum(["activo", "suspendido"]),
+  esSuperadmin: z.boolean(),
+  creadoEn: z.string(),
+});
+
+export const esquemaAgregarSuperadmin = z.object({
+  nombre: z.string().min(1).max(255),
+  correo: z.string().email("Debe ser un correo electrónico válido"),
+});
+
+export type Superadmin = z.infer<typeof esquemaSuperadmin>;
+export type AgregarSuperadmin = z.infer<typeof esquemaAgregarSuperadmin>;

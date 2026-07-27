@@ -3,10 +3,7 @@ import { sesionesUsuario } from "../../../plataforma/persistencia/esquema.js";
 import type { ConexionDb } from "../aplicacion/puertos/repositorio-autenticacion.js";
 import { hash } from "./hashing-postgres.js";
 
-export async function buscarSesionValida(
-  db: ConexionDb,
-  tokenSesion: string,
-) {
+export async function buscarSesionValida(db: ConexionDb, tokenSesion: string) {
   return db.query.sesionesUsuario.findFirst({
     where: and(
       eq(sesionesUsuario.tokenSesionHash, hash(tokenSesion)),

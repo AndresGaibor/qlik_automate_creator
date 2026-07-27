@@ -2046,8 +2046,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "destino_api_key": {
-          "name": "destino_api_key",
+        "destino_api_key_cifrada": {
+          "name": "destino_api_key_cifrada",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -2082,8 +2082,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "impala_password": {
-          "name": "impala_password",
+        "impala_password_cifrada": {
+          "name": "impala_password_cifrada",
           "type": "text",
           "primaryKey": false,
           "notNull": false

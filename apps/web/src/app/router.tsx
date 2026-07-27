@@ -3,6 +3,8 @@ import { crearRutasAutenticacion } from "@/modulos/autenticacion/publico";
 import { crearRutasAutomatizaciones } from "@/modulos/automatizaciones/publico";
 import { crearRutasFlujos } from "@/modulos/flujos/publico";
 import { crearRutasInicio } from "@/modulos/inicio/publico";
+import { crearRutasSetup } from "@/modulos/setup/publico";
+import { crearRutasTablas } from "@/modulos/tablas/rutas";
 import { createRootRoute, createRouter } from "@tanstack/react-router";
 import { LayoutPrincipal } from "./layout-principal";
 
@@ -12,7 +14,9 @@ const arbolRutas = rutaRaiz.addChildren([
   ...crearRutasAutenticacion(rutaRaiz),
   ...crearRutasFlujos(rutaRaiz),
   ...crearRutasAutomatizaciones(rutaRaiz),
+  ...crearRutasTablas(rutaRaiz),
   ...crearRutasAdmin(rutaRaiz),
+  ...crearRutasSetup(rutaRaiz),
 ]);
 
 export const router = createRouter({ routeTree: arbolRutas });

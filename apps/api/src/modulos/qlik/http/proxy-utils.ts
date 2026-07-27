@@ -1,4 +1,5 @@
-import { type Context } from "hono";
+import { esquemaIdQlik } from "@qlik/contratos/qlik";
+import type { Context } from "hono";
 import { type ZodType, z } from "zod";
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { ReenviarSolicitudQlik } from "../aplicacion/casos-de-uso/reenviar-solicitud-qlik.js";
@@ -7,7 +8,6 @@ import type {
   PuertoQlik,
   SolicitudQlik,
 } from "../aplicacion/puertos/puerto-qlik.js";
-import { esquemaIdQlik } from "@qlik/contratos/qlik";
 
 export type ResolverClienteQlik = (c: Context) => Promise<PuertoQlik>;
 
@@ -81,7 +81,10 @@ export function rutaEspacio(c: Context): string {
   return `/api/v1/spaces/${id(c, "spaceId")}`;
 }
 
-export async function leerJson(c: Context, opcional: boolean): Promise<unknown> {
+export async function leerJson(
+  c: Context,
+  opcional: boolean,
+): Promise<unknown> {
   const texto = await c.req.text();
   if (!texto.trim()) {
     if (opcional) return undefined;

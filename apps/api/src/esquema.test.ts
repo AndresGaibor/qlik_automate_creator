@@ -80,6 +80,16 @@ describe("Esquema Drizzle", () => {
     expect(idxNames(config)).toContain("uq_configuracion_oauth_por_tenant");
   });
 
+  it("mantiene columnas cifradas separadas sin borrar secretos heredados durante la migración", async () => {
+    const contenido = await Bun.file(
+      new URL("../drizzle/0009_secretos_destino_impala.sql", import.meta.url),
+    ).text();
+
+    expect(contenido).toContain("destino_api_key_cifrada");
+    expect(contenido).toContain("impala_password_cifrada");
+    expect(contenido).not.toContain("DROP COLUMN");
+  });
+
   it("identidadesQlik tiene las columnas esperadas", () => {
     const cols = colNames(getTableConfig(identidadesQlik));
     expect(cols).toContain("usuario_id_qlik");

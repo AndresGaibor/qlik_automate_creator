@@ -94,6 +94,54 @@ export class RepositorioConfiguracionOAuthPostgres
       })
       .where(eq(configuracionesOauthQlik.id, configuracionId));
   }
+
+  async guardarOAuthInicial(
+    tenantQlikId: string,
+    clienteId: string,
+    clienteSecreto: string,
+    scopes: string[],
+  ): Promise<string> {
+    const cifradoPaquete = this.cifrado.cifrar(clienteSecreto);
+    const clienteSecretoCifrado = JSON.stringify({
+      cifrado: cifradoPaquete.cifrado,
+      iv: cifradoPaquete.iv,
+      tag: cifradoPaquete.tag,
+    });
+    const secretoSufijo = clienteSecreto.slice(-4);
+    const ahora = new Date();
+
+    const [fila] = await this.db
+      .insert(configuracionesOauthQlik)
+      .values({
+        tenantQlikId,
+        clienteId,
+        clienteSecretoCifrado,
+        secretoSufijo,
+        scopes,
+        estado: "pendiente",
+        verificadaEn: null,
+        ultimoError: null,
+        creadoPorUsuarioId: null,
+        actualizadoPorUsuarioId: null,
+        actualizadoEn: ahora,
+      })
+      .onConflictDoUpdate({
+        target: configuracionesOauthQlik.tenantQlikId,
+        set: {
+          clienteId,
+          clienteSecretoCifrado,
+          secretoSufijo,
+          scopes,
+          estado: "pendiente",
+          verificadaEn: null,
+          ultimoError: null,
+          actualizadoEn: ahora,
+        },
+      })
+      .returning();
+
+    return fila.id;
+  }
 }
 
 function leerPaqueteCifrado(valor: string): {

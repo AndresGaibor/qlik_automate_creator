@@ -1,4 +1,4 @@
-import { type Context } from "hono";
+import type { Context } from "hono";
 import { responderError } from "../../../nucleo/http/respuestas.js";
 import {
   type ContextoSesion,
@@ -16,6 +16,12 @@ export function exigirAccesoOrganizacion(
   if (!servicioAdmin.puedeAcceder(contexto, organizacionId)) {
     throw new Error("No tienes permisos para acceder a este tenant");
   }
+}
+
+export function obtenerParametroRequerido(c: Context, nombre: string): string {
+  const valor = c.req.param(nombre);
+  if (!valor) throw new Error(`Falta el parámetro requerido: ${nombre}`);
+  return valor;
 }
 
 export function responderErrorAdmin(c: Context, error: unknown) {

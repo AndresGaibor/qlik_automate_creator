@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function useManejoError(onMostrarError: (msg: string) => void) {
   const msgRef = useRef<string | null>(null);

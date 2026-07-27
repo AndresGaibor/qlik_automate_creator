@@ -12,7 +12,9 @@ function crearRegistradorPrueba(): Registrador {
 
 describe("API", () => {
   it("expone el estado de salud con el contrato común", async () => {
-    const app = crearAplicacion({ registrador: crearRegistradorPrueba() });
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+    });
     const respuesta = await app.request("/api/salud");
     const cuerpo = await respuesta.json();
 
@@ -24,7 +26,9 @@ describe("API", () => {
   });
 
   it("normaliza rutas inexistentes", async () => {
-    const app = crearAplicacion({ registrador: crearRegistradorPrueba() });
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+    });
     const respuesta = await app.request("/api/inexistente");
     const cuerpo = await respuesta.json();
 
@@ -38,8 +42,65 @@ describe("API", () => {
     });
   });
 
+  it("aplica cabeceras defensivas a las respuestas", async () => {
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      configuracion: {
+        NODE_ENV: "production",
+        PORT: 3000,
+        FRONTEND_URL: "https://app.example.com",
+        DATABASE_URL: "postgres://usuario:clave@localhost:5432/app",
+        QLIK_REDIRECT_URI: "https://api.example.com/api/auth/qlik/callback",
+        QLIK_OAUTH_TIMEOUT_MS: 10_000,
+      },
+    });
+
+    const respuesta = await app.request("/api/salud");
+
+    expect(respuesta.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(respuesta.headers.get("x-frame-options")).toBe("DENY");
+    expect(respuesta.headers.get("referrer-policy")).toBe(
+      "strict-origin-when-cross-origin",
+    );
+    expect(respuesta.headers.get("strict-transport-security")).toContain(
+      "max-age=",
+    );
+  });
+
+  it("rechaza mutaciones sin Origin o con Origin ajeno al frontend", async () => {
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+    });
+
+    const sinOrigen = await app.request("/api/auth/qlik/cerrar-sesion", {
+      method: "POST",
+    });
+    const origenAjeno = await app.request("/api/auth/qlik/cerrar-sesion", {
+      method: "POST",
+      headers: { Origin: "https://evil.example" },
+    });
+
+    expect(sinOrigen.status).toBe(403);
+    expect(origenAjeno.status).toBe(403);
+  });
+
+  it("permite mutaciones del FRONTEND_URL", async () => {
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+    });
+
+    const respuesta = await app.request("/api/auth/qlik/cerrar-sesion", {
+      method: "POST",
+      headers: { Origin: "http://localhost:5173" },
+    });
+
+    expect(respuesta.status).toBe(200);
+  });
+
   it("mapea errores no controlados sin exponer detalles", async () => {
-    const app = crearAplicacion({ registrador: crearRegistradorPrueba() });
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+    });
     app.get("/api/__prueba-error", () => {
       throw new Error("secreto interno");
     });
@@ -55,7 +116,7 @@ describe("API", () => {
   });
 
   it("permite invocar las rutas PUT de automatización base en admin", async () => {
-    const app = crearAplicacion({
+    const app = await crearAplicacion({
       registrador: crearRegistradorPrueba(),
       resolverContextoAdmin: async () => ({
         esSuperadmin: true,
@@ -89,6 +150,10 @@ describe("API", () => {
           esPrincipal: true,
           automatizacionBaseIdQlik: "auto1",
           automatizacionBaseNombre: "Base Auto",
+          tieneDestinoApiKey: false,
+          destinoApiKeyMascara: null,
+          tieneImpalaPassword: false,
+          impalaPasswordMascara: null,
           creadoEn: new Date(),
         }),
         eliminarTenantQlik: async () => "ELIMINADO",
@@ -97,6 +162,16 @@ describe("API", () => {
         obtenerConfiguracionOAuth: async () => null,
         guardarConfiguracionOAuth: async () => null,
         eliminarConfiguracionOAuth: async () => false,
+        listarSuperadmins: async () => [],
+        agregarSuperadmin: async () => ({
+          id: "1",
+          nombre: "Admin",
+          correo: "a@b.com",
+          esSuperadmin: true,
+          estado: "activo",
+          creadoEn: new Date(),
+        }),
+        eliminarSuperadmin: async () => ({ exito: true }),
       },
     });
 
@@ -104,7 +179,10 @@ describe("API", () => {
       "/api/admin/tenants/org1/qlik/t1/automatizacion-base",
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://localhost:5173",
+        },
         body: JSON.stringify({
           automatizacionBaseIdQlik: "auto1",
           automatizacionBaseNombre: "Base Auto",
@@ -117,7 +195,10 @@ describe("API", () => {
       "/api/admin/organizaciones/org1/tenants-qlik/t1/automatizacion-base",
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://localhost:5173",
+        },
         body: JSON.stringify({
           automatizacionBaseIdQlik: "auto1",
           automatizacionBaseNombre: "Base Auto",

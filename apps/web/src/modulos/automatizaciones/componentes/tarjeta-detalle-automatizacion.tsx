@@ -7,7 +7,10 @@ import {
 } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { formatearFechaYHora } from "@/compartido/utiles/formateador-fechas";
-import type { DetalleAutomatizacion, EjecucionResumen } from "@/modulos/automatizaciones/api";
+import type {
+  DetalleAutomatizacion,
+  EjecucionResumen,
+} from "@/modulos/automatizaciones/api";
 import { VisorWorkspaceModal } from "./visor-workspace-modal";
 
 interface Props {
@@ -62,7 +65,11 @@ export function TarjetaDetalleAutomatizacion({
                       : "bg-ink-400"
                 }`}
               />
-              {enEjecucion ? "En Ejecución" : auto.activa ? "Activa" : "Inactiva"}
+              {enEjecucion
+                ? "En Ejecución"
+                : auto.activa
+                  ? "Activa"
+                  : "Inactiva"}
             </span>
 
             <VisorWorkspaceModal
@@ -71,7 +78,12 @@ export function TarjetaDetalleAutomatizacion({
             />
 
             {urlQlik && (
-              <Button variant="outline" size="sm" asChild className="text-xs gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="text-xs gap-1.5"
+              >
                 <a href={urlQlik} target="_blank" rel="noopener noreferrer">
                   <Icon name="ext" size="sm" />
                   Abrir en Qlik Cloud
@@ -118,34 +130,54 @@ export function TarjetaDetalleAutomatizacion({
       <CardContent className="pt-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-line-200 bg-app/40 p-3.5">
-            <span className="text-xs font-semibold text-ink-500 block uppercase tracking-wide">Espacio</span>
+            <span className="text-xs font-semibold text-ink-500 block uppercase tracking-wide">
+              Espacio
+            </span>
             <div className="mt-1 flex items-center gap-2">
               <Icon name="cloud" size="sm" className="text-obj-600" />
-              <span className="font-semibold text-ink-900 text-sm truncate">{auto.espacioNombre || "Personal"}</span>
+              <span className="font-semibold text-ink-900 text-sm truncate">
+                {auto.espacioNombre || "Personal"}
+              </span>
             </div>
           </div>
 
           <div className="rounded-lg border border-line-200 bg-app/40 p-3.5">
-            <span className="text-xs font-semibold text-ink-500 block uppercase tracking-wide">Propietario</span>
+            <span className="text-xs font-semibold text-ink-500 block uppercase tracking-wide">
+              Propietario
+            </span>
             <div className="mt-1 flex items-center gap-2">
               <Icon name="users" size="sm" className="text-ink-400" />
-              <span className="font-semibold text-ink-900 text-sm truncate">{auto.propietarioNombre}</span>
+              <span className="font-semibold text-ink-900 text-sm truncate">
+                {auto.propietarioNombre}
+              </span>
             </div>
           </div>
 
           <div className="rounded-lg border border-line-200 bg-app/40 p-3.5">
-            <span className="text-xs font-semibold text-ink-500 block uppercase tracking-wide">Modo Disparador</span>
+            <span className="text-xs font-semibold text-ink-500 block uppercase tracking-wide">
+              Modo Disparador
+            </span>
             <div className="mt-1 flex items-center gap-2">
               <Icon name="zap" size="sm" className="text-brand-600" />
-              <span className="font-semibold text-ink-900 text-sm">{auto.modoEjecucion || "Manual"}</span>
+              <span className="font-semibold text-ink-900 text-sm">
+                {auto.modoEjecucion || "Manual"}
+              </span>
             </div>
           </div>
 
           <div className="rounded-lg border border-line-200 bg-app/40 p-3.5">
-            <span className="text-xs font-semibold text-ink-500 block uppercase tracking-wide">Fechas</span>
+            <span className="text-xs font-semibold text-ink-500 block uppercase tracking-wide">
+              Fechas
+            </span>
             <div className="mt-1 text-xs text-ink-700 space-y-0.5">
-              <div><span className="text-ink-400">Creado:</span> {formatearFechaYHora(auto.creadoEn)}</div>
-              <div><span className="text-ink-400">Modificado:</span> {formatearFechaYHora(auto.modificadoEn)}</div>
+              <div>
+                <span className="text-ink-400">Creado:</span>{" "}
+                {formatearFechaYHora(auto.creadoEn)}
+              </div>
+              <div>
+                <span className="text-ink-400">Modificado:</span>{" "}
+                {formatearFechaYHora(auto.modificadoEn)}
+              </div>
             </div>
           </div>
         </div>

@@ -1,21 +1,24 @@
-import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
-import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
-import { Icon } from "@/compartido/componentes/ui/icon";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
-import { ModalAgregarUsuario } from "./modal-agregar-usuario";
+import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
+import { Icon } from "@/compartido/componentes/ui/icon";
+import { useState } from "react";
 import type { DetalleTenant } from "../api";
+import { ModalAgregarUsuario } from "./modal-agregar-usuario";
 
 type UsuarioTenant = DetalleTenant["usuarios"][number];
 
 interface Props {
   usuarios: UsuarioTenant[];
-  onActualizarRol: (params: { usuarioId: string; rol: "admin" | "usuario" }) => void;
+  onActualizarRol: (params: {
+    usuarioId: string;
+    rol: "admin" | "usuario";
+  }) => void;
   onEliminarUsuario: (usuarioId: string) => void;
   onAbrirModalAgregar: () => void;
   modalAgregar: {
@@ -54,7 +57,9 @@ export function SeccionUsuarios({
                 Integrantes y Permisos de la Organización
               </CardTitle>
               <p className="text-xs text-ink-500 mt-1">
-                Los usuarios registrados aquí podrán ingresar con su correo corporativo. Un usuario puede pertenecer a múltiples organizaciones al mismo tiempo.
+                Los usuarios registrados aquí podrán ingresar con su correo
+                corporativo. Un usuario puede pertenecer a múltiples
+                organizaciones al mismo tiempo.
               </p>
             </div>
             <Button
@@ -73,9 +78,13 @@ export function SeccionUsuarios({
               <thead>
                 <tr className="border-b border-line-200 text-xs text-ink-500 uppercase tracking-wider bg-app/60 font-semibold">
                   <th className="py-3 px-4 font-semibold">Usuario</th>
-                  <th className="py-3 px-4 font-semibold">Correo Electrónico</th>
+                  <th className="py-3 px-4 font-semibold">
+                    Correo Electrónico
+                  </th>
                   <th className="py-3 px-4 font-semibold">Rol / Permisos</th>
-                  <th className="py-3 px-4 font-semibold text-right">Acciones</th>
+                  <th className="py-3 px-4 font-semibold text-right">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line-200">
@@ -91,7 +100,9 @@ export function SeccionUsuarios({
                       <select
                         value={usr.rol}
                         onChange={(e) => {
-                          const nuevoRol = e.target.value as "admin" | "usuario";
+                          const nuevoRol = e.target.value as
+                            | "admin"
+                            | "usuario";
                           if (nuevoRol !== usr.rol) {
                             onActualizarRol({
                               usuarioId: usr.id,

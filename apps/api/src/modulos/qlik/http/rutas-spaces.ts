@@ -10,7 +10,12 @@ import {
   esquemaParcheEspacioQlik,
 } from "@qlik/contratos/qlik";
 import { Hono } from "hono";
-import { reenviar, rutaEspacio, id, type ResolverClienteQlik } from "./proxy-utils.js";
+import {
+  type ResolverClienteQlik,
+  id,
+  reenviar,
+  rutaEspacio,
+} from "./proxy-utils.js";
 
 export function crearRutasSpaces(resolverCliente: ResolverClienteQlik) {
   const rutas = new Hono();

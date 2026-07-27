@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import type { TenantSesionDisponible } from "@qlik/contratos/autenticacion";
+import { useQuery } from "@tanstack/react-query";
 
 export function useTenantActivo() {
   const { data: sesion } = useQuery({
@@ -10,7 +10,8 @@ export function useTenantActivo() {
   });
 
   const tenants = sesion?.tenantsDisponibles ?? [];
-  const activo = tenants.find((t) => t.id === sesion?.tenantActivoId) ?? tenants[0];
+  const activo =
+    tenants.find((t) => t.id === sesion?.tenantActivoId) ?? tenants[0];
 
   return { tenant: activo, tenants };
 }

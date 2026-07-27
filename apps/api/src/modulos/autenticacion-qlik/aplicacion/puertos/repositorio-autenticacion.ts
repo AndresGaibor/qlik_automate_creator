@@ -1,3 +1,4 @@
+import type { ConexionDb as ConexionDbPostgres } from "../../../../plataforma/persistencia/conexion.js";
 import type {
   CredencialesQlik,
   InfoSesion,
@@ -6,20 +7,7 @@ import type {
   UsuarioOAuthQlik,
 } from "../../dominio/modelos.js";
 
-export interface ConexionDb {
-  query: {
-    [key: string]: {
-      findFirst: (opts?: any) => Promise<any>;
-      findMany: (opts?: any) => Promise<any[]>;
-    };
-  };
-  transaction<T>(fn: (tx: any) => Promise<T>): Promise<T>;
-  insert(table: any): any;
-  update(table: any): any;
-  delete(table: any): any;
-  select(...args: any[]): any;
-  execute(...args: any[]): any;
-}
+export type ConexionDb = ConexionDbPostgres;
 
 export interface ServicioCifradoPuerto {
   cifrar(valor: string): { cifrado: string; iv: string; tag: string };

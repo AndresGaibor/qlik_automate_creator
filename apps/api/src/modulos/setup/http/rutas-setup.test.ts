@@ -36,7 +36,9 @@ describe("rutas de setup", () => {
 
     expect(respuesta.status).toBe(500);
     expect(cuerpo.error.codigo).toBe("SETUP_ERROR");
-    expect(cuerpo.error.mensaje).toBe("No se pudo completar la configuración inicial");
+    expect(cuerpo.error.mensaje).toBe(
+      "No se pudo completar la configuración inicial",
+    );
     expect(JSON.stringify(cuerpo)).not.toContain("secreto-super-privado");
     expect(JSON.stringify(cuerpo)).not.toContain("postgres");
   });

@@ -51,4 +51,27 @@ describe("ClienteOAuthQlik", () => {
       scopes: ["automations", "spaces:read"],
     });
   });
+
+  it("limita el tiempo de las llamadas a OAuth", async () => {
+    let senal: AbortSignal | undefined;
+    const cliente = new ClienteOAuthQlik(
+      "cliente",
+      "secreto",
+      "https://app.example.com/api/auth/qlik/callback",
+      "tenant.eu.qlikcloud.com",
+      undefined,
+      (async (_entrada, init) => {
+        senal = init?.signal as AbortSignal;
+        return new Response(
+          JSON.stringify({ access_token: "acceso", expires_in: 3600 }),
+          { status: 200 },
+        );
+      }) as typeof fetch,
+      1_000,
+    );
+
+    await cliente.intercambiarCodigo("codigo", "verificador");
+
+    expect(senal).toBeInstanceOf(AbortSignal);
+  });
 });

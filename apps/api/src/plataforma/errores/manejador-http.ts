@@ -1,9 +1,9 @@
 import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { ZodError } from "zod";
+import { ErrorAplicacion } from "../../nucleo/errores/error-aplicacion.js";
 import { responderError } from "../../nucleo/http/respuestas.js";
 import type { Registrador } from "../observabilidad/registrador.js";
-import { ErrorAplicacion } from "../../nucleo/errores/error-aplicacion.js";
 
 interface ErrorRemotoConEstado extends Error {
   estadoHttp: number;

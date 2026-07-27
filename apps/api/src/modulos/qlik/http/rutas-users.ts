@@ -6,7 +6,7 @@ import {
   esquemaInvitarUsuariosQlik,
 } from "@qlik/contratos/qlik";
 import { Hono } from "hono";
-import { reenviar, id, type ResolverClienteQlik } from "./proxy-utils.js";
+import { type ResolverClienteQlik, id, reenviar } from "./proxy-utils.js";
 
 export function crearRutasUsers(resolverCliente: ResolverClienteQlik) {
   const rutas = new Hono();

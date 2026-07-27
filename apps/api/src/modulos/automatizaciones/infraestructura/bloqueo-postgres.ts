@@ -1,9 +1,8 @@
 import { sql } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import type { PuertoBloqueoEjecucion } from "../aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 
-type DbType = {
-  transaction<T>(fn: (tx: any) => Promise<T>): Promise<T>;
-};
+type DbType = ConexionDb;
 
 export class BloqueoEjecucionPostgres implements PuertoBloqueoEjecucion {
   constructor(private readonly db: DbType) {}

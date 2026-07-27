@@ -6,7 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
-import { iniciarSesion, iniciarSesionPorCorreo } from "@/modulos/autenticacion/api";
+import {
+  iniciarSesion,
+  iniciarSesionPorCorreo,
+} from "@/modulos/autenticacion/api";
 import { useEffect, useState } from "react";
 
 // Mensajes seguros permitidos (mapeo de errores del backend)
@@ -91,7 +94,8 @@ export function PaginaLogin() {
             Iniciar sesión
           </CardTitle>
           <p className="text-sm text-gray-500 mt-1">
-            Usa tu correo corporativo y te redirigiremos automáticamente a tu entorno de Qlik Cloud.
+            Usa tu correo corporativo y te redirigiremos automáticamente a tu
+            entorno de Qlik Cloud.
           </p>
         </CardHeader>
         <CardContent>
@@ -151,7 +155,9 @@ export function PaginaLogin() {
                 cargando || (modoAvanzado ? !hostManual.trim() : !correo.trim())
               }
             >
-              {cargando ? "Redirigiendo a Qlik Cloud…" : "Continuar con Qlik Cloud →"}
+              {cargando
+                ? "Redirigiendo a Qlik Cloud…"
+                : "Continuar con Qlik Cloud →"}
             </Button>
 
             <div className="pt-2 text-center">

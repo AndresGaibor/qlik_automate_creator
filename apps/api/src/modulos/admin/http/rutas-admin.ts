@@ -7,6 +7,7 @@ import {
   crearRutasConfiguracionOAuth,
 } from "./rutas-configuracion-oauth.js";
 import { crearRutasConfiguracionTenant } from "./rutas-configuracion-tenant.js";
+import { crearRutasSuperadmins } from "./rutas-superadmins.js";
 import { crearRutasTenantsQlik } from "./rutas-tenants-qlik.js";
 import { crearRutasTenants } from "./rutas-tenants.js";
 import { crearRutasUsuarios } from "./rutas-usuarios.js";
@@ -45,6 +46,7 @@ export function crearRutasAdmin({
       auditoria,
     }),
   );
+  rutas.route("/", crearRutasSuperadmins({ repositorio, resolverContexto }));
 
   return rutas;
 }

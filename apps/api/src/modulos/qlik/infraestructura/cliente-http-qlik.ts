@@ -283,7 +283,7 @@ export class ClienteHttpQlik implements ServicioQlik {
 
   obtenerScriptApp(
     appId: string,
-    scriptId: string = "current",
+    scriptId = "current",
   ): Promise<{ script: string; versionMessage?: string }> {
     return this.solicitarJson<{ script: string; versionMessage?: string }>({
       metodo: "GET",

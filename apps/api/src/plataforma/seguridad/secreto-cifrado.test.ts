@@ -1,9 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { ServicioCifrado } from "./servicio-cifrado.js";
 import {
   cifrarSecretoParaPersistencia,
   descifrarSecretoPersistido,
+  leerSecretoCifrado,
 } from "./secreto-cifrado.js";
+import { ServicioCifrado } from "./servicio-cifrado.js";
 
 describe("secreto cifrado persistido", () => {
   it("serializa el secreto cifrado y permite recuperarlo solo en el servidor", () => {
@@ -14,5 +15,13 @@ describe("secreto cifrado persistido", () => {
     expect(descifrarSecretoPersistido(cifrado, persistido)).toBe(
       "secreto-impala",
     );
+  });
+
+  it("lee únicamente secretos almacenados cifrados", () => {
+    const cifrado = new ServicioCifrado(Buffer.alloc(32, 7).toString("base64"));
+    const persistido = cifrarSecretoParaPersistencia(cifrado, "secreto-impala");
+
+    expect(leerSecretoCifrado(cifrado, persistido)).toBe("secreto-impala");
+    expect(leerSecretoCifrado(cifrado, undefined)).toBeUndefined();
   });
 });

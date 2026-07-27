@@ -16,8 +16,9 @@ export function AlertaConfiguracionTenant({ onVolver }: Props) {
             Falta configurar la plantilla base
           </h3>
           <p className="text-sm text-amber-800 mt-0.5">
-            Para poder crear automatizaciones, el administrador primero debe configurar una{" "}
-            <strong>automatización base (plantilla)</strong> en la sección de administración.
+            Para poder crear automatizaciones, el administrador primero debe
+            configurar una <strong>automatización base (plantilla)</strong> en
+            la sección de administración.
           </p>
         </div>
       </div>

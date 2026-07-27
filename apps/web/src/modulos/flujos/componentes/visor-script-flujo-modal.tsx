@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { VisorJsonInteractivo } from "@/compartido/componentes/ui/visor-json-interactivo";
-import { obtenerScriptFlujo, type ResumenFlujo } from "@/modulos/flujos/api";
+import { type ResumenFlujo, obtenerScriptFlujo } from "@/modulos/flujos/api";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface Props {
   flujo: ResumenFlujo;
@@ -15,7 +15,12 @@ export function VisorScriptFlujoModal({ flujo }: Props) {
   const [copiadoScript, setCopiadoScript] = useState(false);
   const [copiadoMeta, setCopiadoMeta] = useState(false);
 
-  const { data: datosScript, isLoading: cargandoScript, isError: errorScript, error } = useQuery({
+  const {
+    data: datosScript,
+    isLoading: cargandoScript,
+    isError: errorScript,
+    error,
+  } = useQuery({
     queryKey: ["flujo-script", flujo.id],
     queryFn: () => obtenerScriptFlujo(flujo.id),
     enabled: abierto,
@@ -120,8 +125,13 @@ export function VisorScriptFlujoModal({ flujo }: Props) {
                 <div className="space-y-4 max-w-4xl mx-auto">
                   <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-xs">
                     <span className="text-slate-600 font-medium flex items-center gap-2">
-                      <Icon name="sparkles" size="sm" className="text-brand-600" />
-                      Script original extraído vía Qlik REST API (/api/v1/apps/{flujo.id}/scripts/current)
+                      <Icon
+                        name="sparkles"
+                        size="sm"
+                        className="text-brand-600"
+                      />
+                      Script original extraído vía Qlik REST API (/api/v1/apps/
+                      {flujo.id}/scripts/current)
                     </span>
 
                     <button
@@ -138,15 +148,24 @@ export function VisorScriptFlujoModal({ flujo }: Props) {
                   {cargandoScript && (
                     <div className="flex min-h-[300px] flex-col items-center justify-center gap-2">
                       <div className="h-7 w-7 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
-                      <p className="text-sm text-ink-500 font-medium">Extrayendo script de carga del Dataflow desde Qlik Cloud...</p>
+                      <p className="text-sm text-ink-500 font-medium">
+                        Extrayendo script de carga del Dataflow desde Qlik
+                        Cloud...
+                      </p>
                     </div>
                   )}
 
                   {errorScript && (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 space-y-2">
-                      <p className="font-semibold">⚠️ Nota sobre el Script de este Dataflow:</p>
+                      <p className="font-semibold">
+                        ⚠️ Nota sobre el Script de este Dataflow:
+                      </p>
                       <p className="leading-relaxed">
-                        {(error as Error)?.message || "No se pudo recuperar el script directamente."} Si el Dataflow utiliza transformación exclusivamente visual en Qlik Cloud, la lógica se almacena en la definición del pipeline QIX del proyecto.
+                        {(error as Error)?.message ||
+                          "No se pudo recuperar el script directamente."}{" "}
+                        Si el Dataflow utiliza transformación exclusivamente
+                        visual en Qlik Cloud, la lógica se almacena en la
+                        definición del pipeline QIX del proyecto.
                       </p>
                     </div>
                   )}
@@ -160,7 +179,8 @@ export function VisorScriptFlujoModal({ flujo }: Props) {
                       )}
 
                       <pre className="font-mono text-xs text-slate-800 bg-slate-50 p-4 rounded-xl border border-slate-200 overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[500px]">
-                        {datosScript.script || "// El script de carga está vacío."}
+                        {datosScript.script ||
+                          "// El script de carga está vacío."}
                       </pre>
                     </div>
                   )}
@@ -170,25 +190,41 @@ export function VisorScriptFlujoModal({ flujo }: Props) {
               {pestana === "metadata" && (
                 <div className="space-y-4 max-w-4xl mx-auto">
                   <div className="rounded-xl border border-line-200 bg-surface p-4 shadow-sm space-y-3">
-                    <h4 className="font-semibold text-sm text-ink-900">Metadatos del Flujo de Datos</h4>
+                    <h4 className="font-semibold text-sm text-ink-900">
+                      Metadatos del Flujo de Datos
+                    </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-ink-600">
                       <div>
-                        <span className="text-ink-400 block">ID Artefacto:</span>
-                        <span className="font-mono text-ink-800">{flujo.id}</span>
-                      </div>
-                      <div>
-                        <span className="text-ink-400 block">Espacio:</span>
-                        <span className="font-semibold text-ink-800">{flujo.espacioNombre || "Espacio Personal"}</span>
-                      </div>
-                      <div>
-                        <span className="text-ink-400 block">Última Modificación:</span>
+                        <span className="text-ink-400 block">
+                          ID Artefacto:
+                        </span>
                         <span className="font-mono text-ink-800">
-                          {flujo.modificadoEn ? new Date(flujo.modificadoEn).toLocaleString() : "—"}
+                          {flujo.id}
                         </span>
                       </div>
                       <div>
-                        <span className="text-ink-400 block">Tipo Qlik Item:</span>
-                        <span className="font-mono text-brand-600">qix-df (Dataflow QIX Engine)</span>
+                        <span className="text-ink-400 block">Espacio:</span>
+                        <span className="font-semibold text-ink-800">
+                          {flujo.espacioNombre || "Espacio Personal"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-ink-400 block">
+                          Última Modificación:
+                        </span>
+                        <span className="font-mono text-ink-800">
+                          {flujo.modificadoEn
+                            ? new Date(flujo.modificadoEn).toLocaleString()
+                            : "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-ink-400 block">
+                          Tipo Qlik Item:
+                        </span>
+                        <span className="font-mono text-brand-600">
+                          qix-df (Dataflow QIX Engine)
+                        </span>
                       </div>
                     </div>
                   </div>

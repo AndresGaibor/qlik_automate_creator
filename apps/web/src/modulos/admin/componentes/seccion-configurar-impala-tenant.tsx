@@ -1,9 +1,9 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { TenantQlik } from "@/modulos/admin/api";
+import type { ConfigurarImpalaTenant, TenantQlik } from "@/modulos/admin/api";
 import { configurarImpalaTenant } from "@/modulos/admin/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 interface Props {
@@ -19,11 +19,15 @@ export function SeccionConfigurarImpalaTenant({
   const queryClient = useQueryClient();
   const [host, setHost] = useState(tenantQlik.impalaHost || "");
   const [port, setPort] = useState(tenantQlik.impalaPort || 21050);
-  const [authMechanism, setAuthMechanism] = useState(
-    tenantQlik.impalaAuthMechanism || "NOSASL",
+  const [authMechanism, setAuthMechanism] = useState<
+    NonNullable<ConfigurarImpalaTenant["impalaAuthMechanism"]>
+  >(
+    (tenantQlik.impalaAuthMechanism as NonNullable<
+      ConfigurarImpalaTenant["impalaAuthMechanism"]
+    >) || "NOSASL",
   );
   const [user, setUser] = useState(tenantQlik.impalaUser || "");
-  const [password, setPassword] = useState(tenantQlik.impalaPassword || "");
+  const [password, setPassword] = useState("");
   const [database, setDatabase] = useState(
     tenantQlik.impalaDatabase || "default",
   );
@@ -55,11 +59,14 @@ export function SeccionConfigurarImpalaTenant({
       {/* Fila 1: host + puerto */}
       <div className="grid grid-cols-2 gap-2">
         <div className="col-span-2">
-          <label className="block text-xs font-semibold text-ink-700 mb-1">
-            Host o IP del servidor{" "}
-            <span className="text-danger-600">*</span>
+          <label
+            htmlFor="impala-host"
+            className="block text-xs font-semibold text-ink-700 mb-1"
+          >
+            Host o IP del servidor <span className="text-danger-600">*</span>
           </label>
           <input
+            id="impala-host"
             type="text"
             value={host}
             onChange={(e) => setHost(e.target.value)}
@@ -69,10 +76,14 @@ export function SeccionConfigurarImpalaTenant({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-ink-700 mb-1">
+          <label
+            htmlFor="impala-puerto"
+            className="block text-xs font-semibold text-ink-700 mb-1"
+          >
             Puerto
           </label>
           <input
+            id="impala-puerto"
             type="number"
             value={port}
             onChange={(e) => setPort(Number(e.target.value))}
@@ -81,10 +92,14 @@ export function SeccionConfigurarImpalaTenant({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-ink-700 mb-1">
+          <label
+            htmlFor="impala-base-datos"
+            className="block text-xs font-semibold text-ink-700 mb-1"
+          >
             Base de datos
           </label>
           <input
+            id="impala-base-datos"
             type="text"
             value={database}
             onChange={(e) => setDatabase(e.target.value)}
@@ -96,12 +111,22 @@ export function SeccionConfigurarImpalaTenant({
 
       {/* Fila 2: autenticación */}
       <div>
-        <label className="block text-xs font-semibold text-ink-700 mb-1">
+        <label
+          htmlFor="impala-autenticacion"
+          className="block text-xs font-semibold text-ink-700 mb-1"
+        >
           Método de autenticación
         </label>
         <select
+          id="impala-autenticacion"
           value={authMechanism}
-          onChange={(e) => setAuthMechanism(e.target.value)}
+          onChange={(e) =>
+            setAuthMechanism(
+              e.target.value as NonNullable<
+                ConfigurarImpalaTenant["impalaAuthMechanism"]
+              >,
+            )
+          }
           className="w-full px-3 py-1.5 text-xs border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
         >
           <option value="NOSASL">Sin autenticación (NOSASL)</option>
@@ -115,10 +140,14 @@ export function SeccionConfigurarImpalaTenant({
       {necesitaCredenciales && (
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-xs font-semibold text-ink-700 mb-1">
+            <label
+              htmlFor="impala-usuario"
+              className="block text-xs font-semibold text-ink-700 mb-1"
+            >
               Usuario
             </label>
             <input
+              id="impala-usuario"
               type="text"
               value={user}
               onChange={(e) => setUser(e.target.value)}
@@ -127,16 +156,29 @@ export function SeccionConfigurarImpalaTenant({
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-ink-700 mb-1">
+            <label
+              htmlFor="impala-contrasena"
+              className="block text-xs font-semibold text-ink-700 mb-1"
+            >
               Contraseña
             </label>
             <input
+              id="impala-contrasena"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Contraseña de Impala"
+              placeholder={
+                tenantQlik.tieneImpalaPassword
+                  ? `Conservada como ${tenantQlik.impalaPasswordMascara}; deja vacío para mantenerla`
+                  : "Contraseña de Impala"
+              }
               className="w-full px-3 py-1.5 text-xs border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
             />
+            {tenantQlik.tieneImpalaPassword && (
+              <p className="mt-1 text-xs text-ink-500">
+                Déjala vacía para conservar la contraseña actual.
+              </p>
+            )}
           </div>
         </div>
       )}

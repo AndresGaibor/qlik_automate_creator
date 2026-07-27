@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
-import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
-import { Icon } from "@/compartido/componentes/ui/icon";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
+import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
+import { Icon } from "@/compartido/componentes/ui/icon";
+import { useState } from "react";
 import type { TenantQlik } from "../api";
 
 interface Props {
@@ -48,16 +48,23 @@ export function SeccionQlikCloud({
             Conexión con Qlik Cloud
           </CardTitle>
           <p className="text-xs text-ink-500 mt-1">
-            Agrega la dirección web de tu entorno Qlik Cloud (ej: <code>miempresa.us.qlikcloud.com</code>). Puedes conectar varios entornos a la misma organización.
+            Agrega la dirección web de tu entorno Qlik Cloud (ej:{" "}
+            <code>miempresa.us.qlikcloud.com</code>). Puedes conectar varios
+            entornos a la misma organización.
           </p>
         </CardHeader>
         <CardContent className="pt-6 space-y-6">
           <div className="bg-app/50 p-4 rounded-lg border border-line-200 grid gap-3 sm:grid-cols-3 items-end">
             <div>
-              <label className="block text-xs font-semibold text-ink-700 mb-1">
-                Dirección del entorno Qlik Cloud <span className="text-danger-600">*</span>
+              <label
+                htmlFor="host-qlik"
+                className="block text-xs font-semibold text-ink-700 mb-1"
+              >
+                Dirección del entorno Qlik Cloud{" "}
+                <span className="text-danger-600">*</span>
               </label>
               <input
+                id="host-qlik"
                 value={hostQlik}
                 onChange={(evento) => setHostQlik(evento.target.value)}
                 placeholder="ej: miempresa.us.qlikcloud.com"
@@ -65,10 +72,14 @@ export function SeccionQlikCloud({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-ink-700 mb-1">
+              <label
+                htmlFor="nombre-tenant-qlik"
+                className="block text-xs font-semibold text-ink-700 mb-1"
+              >
                 Alias o nombre descriptivo (opcional)
               </label>
               <input
+                id="nombre-tenant-qlik"
                 value={nombreTenantQlik}
                 onChange={(evento) => setNombreTenantQlik(evento.target.value)}
                 placeholder="ej: Producción, Pruebas, BanCol"
@@ -122,7 +133,11 @@ export function SeccionQlikCloud({
                         </span>
                         {tQlik.esPrincipal && (
                           <span className="inline-flex items-center gap-1 rounded bg-brand-50 border border-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
-                            <Icon name="star" size="sm" className="text-brand-600" />
+                            <Icon
+                              name="star"
+                              size="sm"
+                              className="text-brand-600"
+                            />
                             Conexión Principal
                           </span>
                         )}

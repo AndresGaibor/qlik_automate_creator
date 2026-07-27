@@ -1,16 +1,15 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
-import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
+import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
-import { ModalCrearOrganizacion } from "./componentes/modal-crear-organizacion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -20,6 +19,7 @@ import {
   eliminarTenant,
   obtenerTenants,
 } from "./api";
+import { ModalCrearOrganizacion } from "./componentes/modal-crear-organizacion";
 
 export function PaginaListaTenants() {
   const navegar = useNavigate();
@@ -66,10 +66,7 @@ export function PaginaListaTenants() {
         title="Organizaciones"
         description="Cada organización agrupa un entorno de Qlik Cloud, sus usuarios autorizados y la configuración de Impala."
         actions={
-          <Button
-            onClick={() => setModalCrear(true)}
-            font-medium
-          >
+          <Button onClick={() => setModalCrear(true)} font-medium>
             + Nueva organización
           </Button>
         }
@@ -102,13 +99,18 @@ export function PaginaListaTenants() {
               <div className="space-y-3">
                 <div className="text-xs text-[var(--color-ink-700)] grid grid-cols-2 gap-2 bg-[var(--color-app)] p-3 rounded-md border border-[var(--color-line-200)]">
                   <div>
-                    <span className="text-[11px] text-[var(--color-ink-500)] block font-sans">Usuarios Autorizados</span>
+                    <span className="text-[11px] text-[var(--color-ink-500)] block font-sans">
+                      Usuarios Autorizados
+                    </span>
                     <span className="font-semibold text-[var(--color-ink-900)]">
-                      {tenant.cantidadUsuarios} {tenant.cantidadUsuarios === 1 ? "usuario" : "usuarios"}
+                      {tenant.cantidadUsuarios}{" "}
+                      {tenant.cantidadUsuarios === 1 ? "usuario" : "usuarios"}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[11px] text-[var(--color-ink-500)] block font-sans">Identificador</span>
+                    <span className="text-[11px] text-[var(--color-ink-500)] block font-sans">
+                      Identificador
+                    </span>
                     <span className="font-mono text-xs text-[var(--color-ink-700)]">
                       {tenant.slug}
                     </span>
@@ -159,7 +161,8 @@ export function PaginaListaTenants() {
               Aún no has creado ninguna organización
             </p>
             <p className="text-xs text-gray-400 mb-4">
-              Crea tu primera organización para conectar un entorno de Qlik Cloud y agregar usuarios.
+              Crea tu primera organización para conectar un entorno de Qlik
+              Cloud y agregar usuarios.
             </p>
             <Button size="sm" onClick={() => setModalCrear(true)}>
               + Crear Organización

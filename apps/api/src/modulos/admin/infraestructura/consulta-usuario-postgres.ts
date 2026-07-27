@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   membresiasOrganizacion,
   usuarios,
@@ -8,18 +9,7 @@ import type {
   UsuarioAdministrable,
 } from "../aplicacion/puertos/repositorio-administracion.js";
 
-type DbType = {
-  query: {
-    [key: string]: {
-      findFirst: (opts?: any) => Promise<any>;
-      findMany: (opts?: any) => Promise<any[]>;
-    };
-  };
-  insert(table: any): any;
-  update(table: any): any;
-  delete(table: any): any;
-  select(...args: any[]): any;
-};
+type DbType = ConexionDb;
 
 const normalizarRol = (rol: string): RolAdministracion =>
   rol === "admin" || rol === "administrador" ? "admin" : "usuario";

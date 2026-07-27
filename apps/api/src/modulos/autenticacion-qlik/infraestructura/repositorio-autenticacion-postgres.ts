@@ -107,6 +107,27 @@ export class RepositorioAutenticacionPostgres
       });
 
       if (!usuario && !esSuperadmin) {
+        const superadminDeOrg = await tx.query.usuarios.findFirst({
+          where: and(
+            eq(usuarios.esSuperadmin, true),
+            eq(usuarios.estado, "activo"),
+          ),
+        });
+        if (superadminDeOrg) {
+          const membresiaSuperadmin =
+            await tx.query.membresiasOrganizacion.findFirst({
+              where: and(
+                eq(membresiasOrganizacion.usuarioId, superadminDeOrg.id),
+                eq(membresiasOrganizacion.organizacionId, organizacionId),
+              ),
+            });
+          if (membresiaSuperadmin) {
+            usuario = superadminDeOrg;
+          }
+        }
+      }
+
+      if (!usuario && !esSuperadmin) {
         throw new Error(
           "Acceso denegado. Tu correo no ha sido pre-registrado por el administrador del tenant.",
         );

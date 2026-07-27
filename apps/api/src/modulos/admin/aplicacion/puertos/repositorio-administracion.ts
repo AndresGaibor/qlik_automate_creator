@@ -20,13 +20,15 @@ export interface TenantQlikAdministrable {
   automatizacionBaseIdQlik?: string | null;
   automatizacionBaseNombre?: string | null;
   destinoApiUrl?: string | null;
-  destinoApiKey?: string | null;
+  tieneDestinoApiKey: boolean;
+  destinoApiKeyMascara: string | null;
   destinoBaseDatos?: string | null;
   impalaHost?: string | null;
   impalaPort?: number | null;
   impalaAuthMechanism?: string | null;
   impalaUser?: string | null;
-  impalaPassword?: string | null;
+  tieneImpalaPassword: boolean;
+  impalaPasswordMascara: string | null;
   impalaDatabase?: string | null;
   creadoEn: Date;
 }
@@ -70,6 +72,7 @@ export interface EntradaGuardarConfiguracionOauth {
 
 export interface ServicioCifradoAdministracion {
   cifrar(valor: string): { cifrado: string; iv: string; tag: string };
+  descifrar(cifrado: string, iv: string, tag: string): string;
 }
 
 export interface EntradaConfigurarImpala {
@@ -80,6 +83,23 @@ export interface EntradaConfigurarImpala {
   impalaPassword?: string;
   impalaDatabase?: string;
 }
+
+export interface SuperadminAdministrable {
+  id: string;
+  nombre: string;
+  correo: string | null;
+  estado: "activo" | "suspendido";
+  esSuperadmin: boolean;
+  creadoEn: Date;
+}
+
+export type ResultadoEliminarSuperadmin =
+  | { exito: true }
+  | {
+      exito: false;
+      mensaje: string;
+      codigo: "NO_ENCONTRADO" | "ULTIMO_SUPERADMIN" | "NO_ES_SUPERADMIN";
+    };
 
 export interface RepositorioAdministracion {
   listarOrganizaciones(): Promise<
@@ -125,7 +145,7 @@ export interface RepositorioAdministracion {
     organizacionId: string,
     tenantQlikId: string,
     destinoApiUrl: string,
-    destinoApiKey: string,
+    destinoApiKey?: string,
     destinoBaseDatos?: string,
   ): Promise<TenantQlikAdministrable | null>;
   configurarImpalaTenant(
@@ -150,4 +170,10 @@ export interface RepositorioAdministracion {
     organizacionId: string,
     tenantQlikId: string,
   ): Promise<boolean>;
+  listarSuperadmins(): Promise<SuperadminAdministrable[]>;
+  agregarSuperadmin(entrada: {
+    nombre: string;
+    correo: string;
+  }): Promise<SuperadminAdministrable | null>;
+  eliminarSuperadmin(id: string): Promise<ResultadoEliminarSuperadmin>;
 }

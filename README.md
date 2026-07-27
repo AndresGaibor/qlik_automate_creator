@@ -133,8 +133,10 @@ bun run dev
 
 ```env
 DATABASE_URL=postgres://qlik_app:desarrollo@localhost:5432/qlik_automatizaciones
+FRONTEND_URL=http://localhost:5173
 QLIK_REDIRECT_URI=http://localhost:3000/api/auth/qlik/callback
 QLIK_OAUTH_SCOPES="user_default offline_access identity.name:read identity.email:read identity.subject:read identity.picture:read automations automations.private automations.shared spaces:read apps:read data-integration"
+QLIK_OAUTH_TIMEOUT_MS=10000
 # Fallback temporal; puede quedar vacío cuando los tenants se configuran desde la app.
 QLIK_CLIENT_ID=...
 QLIK_CLIENT_SECRET=...
@@ -148,6 +150,13 @@ Genera la clave de cifrado con:
 ```bash
 openssl rand -base64 32
 ```
+
+## Protección HTTP
+
+- Las mutaciones `POST`, `PUT`, `PATCH` y `DELETE` exigen el encabezado `Origin` exactamente igual a `FRONTEND_URL`; por tanto, las solicitudes sin `Origin` y los clientes no navegador se rechazan por defecto. No hay rutas técnicas exceptuadas actualmente.
+- El callback OAuth es `GET`, por lo que queda fuera de esa validación de mutaciones. Los inicios y callback OAuth, y el cierre del setup, tienen límites por IP en memoria.
+- La API añade cabeceras defensivas; HSTS solo se emite en producción. Cada llamada saliente OAuth vence tras `QLIK_OAUTH_TIMEOUT_MS` (10 s por defecto).
+- Las entradas Node y Bun interceptan `SIGTERM`/`SIGINT`, detienen el servidor y cierran PostgreSQL antes de finalizar.
 
 ## Configuración OAuth por tenant
 

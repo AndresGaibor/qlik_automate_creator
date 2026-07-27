@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const textoOpcional = z.preprocess(
+  (valor) =>
+    typeof valor === "string" && valor.trim() === "" ? undefined : valor,
+  z.string().optional(),
+);
+
 const esquemaEntorno = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
@@ -7,11 +13,20 @@ const esquemaEntorno = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   FRONTEND_URL: z.string().url().default("http://localhost:5173"),
   DATABASE_URL: z.string().min(1),
-  QLIK_CLIENT_ID: z.string().optional(),
-  QLIK_CLIENT_SECRET: z.string().optional(),
-  QLIK_REDIRECT_URI: z.string().url().default("http://localhost:3000/api/auth/qlik/callback"),
+  QLIK_CLIENT_ID: textoOpcional,
+  QLIK_CLIENT_SECRET: textoOpcional,
+  QLIK_REDIRECT_URI: z
+    .string()
+    .url()
+    .default("http://localhost:3000/api/auth/qlik/callback"),
   QLIK_TENANT_HOST: z.string().min(1).transform(normalizarHostQlik).optional(),
   QLIK_OAUTH_SCOPES: z.string().optional(),
+  QLIK_OAUTH_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(60_000)
+    .default(10_000),
   CIFRADO_CLAVE_PRINCIPAL: z.string().optional(),
   REMOTE_API_URL: z.string().url().optional(),
   REMOTE_API_KEY: z.string().optional(),

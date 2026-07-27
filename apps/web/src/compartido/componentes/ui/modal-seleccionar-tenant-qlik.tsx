@@ -1,4 +1,5 @@
 import { construirUrlCrearFlujoQlik } from "@/compartido/utiles/qlik-urls";
+import { useEffect, useId, useRef } from "react";
 import { Button } from "./button";
 
 export interface TenantQlikOpcion {
@@ -23,14 +24,59 @@ export function ModalSeleccionarTenantQlik({
   tenantActivoId,
   espacioId,
 }: ModalSeleccionarTenantQlikProps) {
+  const cerrarRef = useRef<HTMLButtonElement>(null);
+  const dialogoRef = useRef<HTMLDialogElement>(null);
+  const tituloId = useId();
+  useEffect(() => {
+    if (!abierto) return;
+    const previo = document.activeElement as HTMLElement | null;
+    cerrarRef.current?.focus();
+    const alTeclado = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape") {
+        evento.preventDefault();
+        onCerrar();
+      }
+      if (evento.key === "Tab" && dialogoRef.current) {
+        const focos =
+          dialogoRef.current.querySelectorAll<HTMLElement>("button, [href]");
+        if (!focos.length) return;
+        const primero = focos[0];
+        const ultimo = focos[focos.length - 1];
+        if (evento.shiftKey && document.activeElement === primero) {
+          evento.preventDefault();
+          ultimo.focus();
+        } else if (!evento.shiftKey && document.activeElement === ultimo) {
+          evento.preventDefault();
+          primero.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", alTeclado);
+    return () => {
+      document.removeEventListener("keydown", alTeclado);
+      previo?.focus();
+    };
+  }, [abierto, onCerrar]);
   if (!abierto) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl border border-gray-100 relative">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onCerrar();
+      }}
+    >
+      <dialog
+        ref={dialogoRef}
+        open
+        aria-labelledby={tituloId}
+        className="relative w-full max-w-2xl rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl sm:p-8"
+      >
         <button
+          ref={cerrarRef}
           type="button"
           onClick={onCerrar}
+          aria-label="Cerrar selector de tenant"
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition text-sm"
         >
           ✕
@@ -40,11 +86,12 @@ export function ModalSeleccionarTenantQlik({
           <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
             🟢
           </div>
-          <h3 className="text-2xl font-bold text-gray-900">
+          <h3 id={tituloId} className="text-2xl font-bold text-gray-900">
             ¿En qué entorno de Qlik quieres crear el flujo?
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Tienes acceso a múItiples entornos de Qlik Cloud. Elige uno para ser redirigido y crear tu nuevo Dataflow.
+            Tienes acceso a múItiples entornos de Qlik Cloud. Elige uno para ser
+            redirigido y crear tu nuevo Dataflow.
           </p>
         </div>
 
@@ -88,9 +135,7 @@ export function ModalSeleccionarTenantQlik({
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
-                  <span className="flex items-center gap-1">
-                    🇺🇸 Qlik Cloud
-                  </span>
+                  <span className="flex items-center gap-1">🇺🇸 Qlik Cloud</span>
                   <span className="text-green-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                     Ir y crear ↗
                   </span>
@@ -105,7 +150,7 @@ export function ModalSeleccionarTenantQlik({
             Cancelar
           </Button>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }

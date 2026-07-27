@@ -2,12 +2,16 @@ import { clienteApi } from "@/compartido/api/cliente";
 import type {
   ActualizarTenant,
   ActualizarUsuario,
+  AgregarSuperadmin,
   AgregarUsuario,
   ConfiguracionOauthQlik,
+  ConfigurarDestinoTenant,
+  ConfigurarImpalaTenant,
   ConfigurarOauthQlik,
   CrearTenant,
   CrearTenantQlik,
   DetalleTenant,
+  Superadmin,
   TenantQlik,
   TenantResumen,
 } from "@qlik/contratos/admin";
@@ -15,16 +19,20 @@ import type {
 const RUTA = "/admin/tenants";
 
 export type {
+  AgregarSuperadmin,
   AgregarUsuario,
   ActualizarTenant,
   CrearTenant,
   ConfiguracionOauthQlik,
   ConfigurarOauthQlik,
   DetalleTenant,
+  Superadmin,
   TenantResumen,
   ActualizarUsuario,
   TenantQlik,
   CrearTenantQlik,
+  ConfigurarDestinoTenant,
+  ConfigurarImpalaTenant,
 };
 
 export function obtenerTenants() {
@@ -139,31 +147,18 @@ export function configurarAutomatizacionBaseTenant(
 export function configurarDestinoTenant(
   organizacionId: string,
   tenantQlikId: string,
-  destinoApiUrl: string,
-  destinoApiKey: string,
-  destinoBaseDatos?: string,
+  entrada: ConfigurarDestinoTenant,
 ) {
   return clienteApi.put<TenantQlik>(
     `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/destino`,
-    {
-      destinoApiUrl,
-      destinoApiKey,
-      destinoBaseDatos,
-    },
+    entrada,
   );
 }
 
 export function configurarImpalaTenant(
   organizacionId: string,
   tenantQlikId: string,
-  datos: {
-    impalaHost: string;
-    impalaPort?: number;
-    impalaAuthMechanism?: string;
-    impalaUser?: string;
-    impalaPassword?: string;
-    impalaDatabase?: string;
-  },
+  datos: ConfigurarImpalaTenant,
 ) {
   return clienteApi.put<TenantQlik>(
     `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/impala`,
@@ -205,5 +200,19 @@ export function eliminarConfiguracionOauthTenant(
 ) {
   return clienteApi.delete<{ eliminado: boolean }>(
     `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/oauth`,
+  );
+}
+
+export function obtenerSuperadmins() {
+  return clienteApi.get<Superadmin[]>("/admin/superadmins");
+}
+
+export function agregarSuperadmin(entrada: AgregarSuperadmin) {
+  return clienteApi.post<Superadmin>("/admin/superadmins", entrada);
+}
+
+export function eliminarSuperadmin(id: string) {
+  return clienteApi.delete<{ eliminado: boolean }>(
+    `/admin/superadmins/${encodeURIComponent(id)}`,
   );
 }

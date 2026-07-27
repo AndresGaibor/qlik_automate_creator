@@ -1,8 +1,8 @@
 import type { ResumenAutomatizacion } from "@/modulos/automatizaciones/api";
 
 export function estadoVisual(auto: ResumenAutomatizacion): string {
-  if (auto.ejecucionActiva) return "En ejecución";
-  return auto.activa ? "Activa" : "Inactiva";
+  if (auto.ejecucionActiva) return "En proceso";
+  return auto.activa ? "Funcionando" : "Necesita atención";
 }
 
 export function claseEstado(auto: ResumenAutomatizacion): string {

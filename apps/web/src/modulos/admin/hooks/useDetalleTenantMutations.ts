@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import type { ActualizarUsuario } from "@/modulos/admin/api";
 import {
@@ -10,6 +9,7 @@ import {
   eliminarUsuarioTenant,
   marcarTenantQlikPrincipal,
 } from "@/modulos/admin/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface UseDetalleTenantMutationsProps {
   tenantId: string;
@@ -28,8 +28,10 @@ export function useDetalleTenantMutations({
   const { mostrarExito, mostrarError } = useNotificaciones();
 
   const actualizar = useMutation({
-    mutationFn: (cambios: { nombre?: string; estado?: "activa" | "suspendida" }) =>
-      actualizarTenant(tenantId, cambios),
+    mutationFn: (cambios: {
+      nombre?: string;
+      estado?: "activa" | "suspendida";
+    }) => actualizarTenant(tenantId, cambios),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tenant", tenantId] });
       queryClient.invalidateQueries({ queryKey: ["admin-tenants"] });

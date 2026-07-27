@@ -1,11 +1,21 @@
 import { Button } from "@/compartido/componentes/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/compartido/componentes/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
-import type { ConfiguracionTenant, TablaImpala } from "@/modulos/automatizaciones/api";
+import type {
+  ConfiguracionTenant,
+  TablaImpala,
+} from "@/modulos/automatizaciones/api";
 import type { ResumenFlujo } from "@qlik/contratos";
-import { type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
+import type { FormEvent } from "react";
+
+import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
 
 interface Props {
   flujoId: string;
@@ -16,6 +26,7 @@ interface Props {
   setNombre: (v: string) => void;
   flujos: ResumenFlujo[];
   tablas: TablaImpala[];
+  automatizaciones?: ResumenAutomatizacion[];
   espacioId?: string;
   isLoadingFlujos: boolean;
   isLoadingTablas: boolean;
@@ -34,6 +45,7 @@ export function FormularioCrearAutomatizacion({
   setNombre,
   flujos,
   tablas,
+  automatizaciones = [],
   espacioId,
   isLoadingFlujos,
   isLoadingTablas,
@@ -42,17 +54,35 @@ export function FormularioCrearAutomatizacion({
   puedeCrear,
   configTenant,
 }: Props) {
-  const opcionesFlujos = flujos.map((f) => ({
-    id: f.id,
-    nombre: f.nombre,
-    espacioNombre: f.espacioNombre || "Espacio Personal",
-  }));
+  const opcionesFlujos = flujos.map((f) => {
+    const autoVinculada = automatizaciones.find(
+      (a) =>
+        a.nombre.toLowerCase().includes(f.nombre.toLowerCase()) ||
+        a.nombre.includes(f.id),
+    );
+    return {
+      id: f.id,
+      nombre: f.nombre,
+      espacioNombre: f.espacioNombre || "Espacio Personal",
+      badgeAviso: autoVinculada
+        ? `⚠️ Este Dataflow ya se usa en: "${autoVinculada.nombre.slice(0, 25)}"`
+        : undefined,
+    };
+  });
 
-  const opcionesTablas = tablas.map((t) => ({
-    id: t.nombre,
-    nombre: t.nombre,
-    espacioNombre: "Impala",
-  }));
+  const opcionesTablas = tablas.map((t) => {
+    const autoVinculada = automatizaciones.find((a) =>
+      a.nombre.toLowerCase().includes(t.nombre.toLowerCase()),
+    );
+    return {
+      id: t.nombre,
+      nombre: t.nombre,
+      espacioNombre: "Impala",
+      badgeAviso: autoVinculada
+        ? `⚠️ Esta tabla ya se usa en: "${autoVinculada.nombre.slice(0, 25)}"`
+        : undefined,
+    };
+  });
 
   function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -68,14 +98,18 @@ export function FormularioCrearAutomatizacion({
           className="inline-flex items-center gap-2 text-sm text-ink-500 hover:text-ink-900 transition-colors font-medium"
         >
           <Icon name="chev" size="sm" className="rotate-180" />
-          Volver a automatizaciones
+          Volver a automatizaciones (Qlik Automate)
         </Link>
       </div>
 
       <div>
-        <h2 className="font-display text-2xl font-semibold text-ink-900 tracking-tight">Crear nueva automatización</h2>
+        <h2 className="font-display text-2xl font-semibold text-ink-900 tracking-tight">
+          Crear automatización en Qlik Automate
+        </h2>
         <p className="mt-1 text-sm text-ink-500">
-          Elige el Dataflow de Qlik que quieres automatizar y la tabla de Impala donde se escribirán los datos. El nombre se sugiere automáticamente.
+          Elige el Dataflow de Qlik del que vienen tus datos y la tabla en
+          Impala a la que quieres que lleguen. Nosotros configuramos el resto
+          por ti.
         </p>
       </div>
 
@@ -109,8 +143,8 @@ export function FormularioCrearAutomatizacion({
         <CardContent className="pt-6">
           <form className="space-y-6" onSubmit={enviar}>
             <SelectBuscable
-              etiqueta="1. ¿Qué Dataflow quieres automatizar?"
-              placeholder="Selecciona un flujo de datos…"
+              etiqueta="1. Dataflow de origen (Qlik Cloud)"
+              placeholder="Elige un Dataflow de Qlik Cloud..."
               searchPlaceholder="Busca por nombre o espacio…"
               emptyText="No encontramos flujos con ese nombre. Verifica el nombre e inténtalo de nuevo."
               opciones={opcionesFlujos}
@@ -121,8 +155,8 @@ export function FormularioCrearAutomatizacion({
 
             <div>
               <SelectBuscable
-                etiqueta="2. ¿En qué tabla de Impala escribirá los datos?"
-                placeholder="Selecciona una tabla de destino…"
+                etiqueta="2. Tabla destino (Impala)"
+                placeholder="Elige dónde guardar el resultado en Impala..."
                 searchPlaceholder="Busca la tabla por nombre…"
                 emptyText="No se encontraron tablas. Verifica que la conexión a Impala esté configurada correctamente."
                 opciones={opcionesTablas}
@@ -133,19 +167,24 @@ export function FormularioCrearAutomatizacion({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-ink-900 mb-1.5">
-                3. Nombre de la automatización
+              <label
+                htmlFor="nombre-automatizacion"
+                className="block text-sm font-semibold text-ink-900 mb-1.5"
+              >
+                3. Ponle un nombre a tu automatización
               </label>
               <input
+                id="nombre-automatizacion"
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej. Auto - Dataflow Ventas → tabla_ventas_diarias"
+                placeholder="Ej. Dataflow Ventas hacia tabla_ventas_diarias"
                 className="w-full px-3.5 py-2.5 text-sm border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none shadow-card"
                 required
               />
               <p className="mt-1.5 text-xs text-ink-400">
-                Se sugiere automáticamente al elegir el flujo y la tabla. Puedes cambiarlo si lo deseas.
+                Se sugiere automáticamente al elegir el flujo y la tabla. Puedes
+                cambiarlo si lo deseas.
               </p>
             </div>
 
@@ -168,7 +207,7 @@ export function FormularioCrearAutomatizacion({
                 ) : (
                   <>
                     <Icon name="sparkles" size="sm" />
-                    Crear Automatización
+                    Crear automatización
                   </>
                 )}
               </Button>

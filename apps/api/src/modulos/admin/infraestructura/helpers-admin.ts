@@ -8,9 +8,20 @@ import { validarYNormalizarHost } from "../dominio/validador-host-qlik.js";
 export function mapearTenantQlik(
   fila: typeof tenantsQlik.$inferSelect,
 ): TenantQlikAdministrable {
+  const tieneDestinoApiKey = Boolean(fila.destinoApiKeyCifrada);
+  const tieneImpalaPassword = Boolean(fila.impalaPasswordCifrada);
+  const {
+    destinoApiKeyCifrada: _destinoApiKeyCifrada,
+    impalaPasswordCifrada: _impalaPasswordCifrada,
+    ...tenant
+  } = fila;
   return {
-    ...fila,
+    ...tenant,
     estado: fila.estado as EstadoTenantQlik,
+    tieneDestinoApiKey,
+    destinoApiKeyMascara: tieneDestinoApiKey ? "••••••••" : null,
+    tieneImpalaPassword,
+    impalaPasswordMascara: tieneImpalaPassword ? "••••••••" : null,
   };
 }
 

@@ -1,16 +1,15 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
-import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
+import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
-import { ModalAgregarSuperadmin } from "./componentes/modal-agregar-superadmin";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -19,6 +18,7 @@ import {
   eliminarSuperadmin,
   obtenerSuperadmins,
 } from "./api";
+import { ModalAgregarSuperadmin } from "./componentes/modal-agregar-superadmin";
 
 export function PaginaSuperadmins() {
   const { mostrarExito, mostrarError } = useNotificaciones();

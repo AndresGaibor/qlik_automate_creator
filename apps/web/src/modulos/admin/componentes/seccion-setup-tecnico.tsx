@@ -1,3 +1,10 @@
+import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { Button } from "@/compartido/componentes/ui/button";
+import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
+import { Icon } from "@/compartido/componentes/ui/icon";
+import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
+import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 /**
  * SeccionSetupTecnico
  *
@@ -12,24 +19,14 @@
  * - Cualquier paso puede abrirse manualmente haciendo clic.
  * - Los pasos sin prerequisito cumplido aparecen "atenuados" (no bloqueantes).
  */
-import { useState, useEffect } from "react";
-import { Button } from "@/compartido/componentes/ui/button";
-import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
-import { Icon } from "@/compartido/componentes/ui/icon";
-import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
-import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { useEffect, useState } from "react";
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
+  type ConfigurarImpalaTenant,
   type TenantQlik,
-  listarAutomatizacionesParaAdmin,
   configurarAutomatizacionBaseTenant,
   configurarImpalaTenant,
+  listarAutomatizacionesParaAdmin,
 } from "../api";
-import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
 
 /* ─────────────────────────────────────────────
    Tipos / Props raíz
@@ -104,9 +101,7 @@ function PasoAccordion({
   return (
     <div
       className={`rounded-xl border transition-all duration-200 ${
-        expandido
-          ? "border-brand-200 shadow-sm"
-          : "border-line-200"
+        expandido ? "border-brand-200 shadow-sm" : "border-line-200"
       } bg-surface overflow-hidden`}
     >
       {/* Cabecera del paso (siempre visible) */}
@@ -121,8 +116,8 @@ function PasoAccordion({
             listo
               ? "bg-brand-600 text-white"
               : expandido
-              ? "bg-ink-900 text-white"
-              : "bg-line-200 text-ink-500"
+                ? "bg-ink-900 text-white"
+                : "bg-line-200 text-ink-500"
           }`}
         >
           {listo ? "✓" : numero}
@@ -139,10 +134,14 @@ function PasoAccordion({
             />
 
             {/* Tooltip info */}
-            <span
+            <button
+              type="button"
+              aria-label={`Más información sobre ${titulo}`}
               className="relative inline-flex"
               onMouseEnter={() => setMostrandoTooltip(true)}
               onMouseLeave={() => setMostrandoTooltip(false)}
+              onFocus={() => setMostrandoTooltip(true)}
+              onBlur={() => setMostrandoTooltip(false)}
               onClick={(e) => e.stopPropagation()}
             >
               <span className="text-ink-300 hover:text-ink-500 cursor-default text-xs select-none">
@@ -153,7 +152,7 @@ function PasoAccordion({
                   {tooltipInfo}
                 </div>
               )}
-            </span>
+            </button>
           </div>
 
           {/* Resumen compacto cuando está colapsado y listo */}
@@ -162,7 +161,9 @@ function PasoAccordion({
           )}
           {/* Descripción cuando está colapsado y pendiente */}
           {!expandido && !listo && (
-            <p className="text-xs text-ink-400 mt-0.5 truncate">{descripcionCorta}</p>
+            <p className="text-xs text-ink-400 mt-0.5 truncate">
+              {descripcionCorta}
+            </p>
           )}
         </div>
 
@@ -178,9 +179,7 @@ function PasoAccordion({
 
       {/* Contenido expandible */}
       {expandido && (
-        <div className="border-t border-line-200 px-5 py-5">
-          {children}
-        </div>
+        <div className="border-t border-line-200 px-5 py-5">{children}</div>
       )}
     </div>
   );
@@ -221,10 +220,14 @@ function PasoQlikCloud({
       {/* Formulario agregar */}
       <div className="grid gap-3 sm:grid-cols-3 items-end rounded-lg border border-line-200 bg-app/40 p-4">
         <div className="sm:col-span-1">
-          <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+          <label
+            htmlFor="setup-host-qlik"
+            className="block text-xs font-semibold text-ink-700 mb-1.5"
+          >
             Dirección del entorno <span className="text-danger-600">*</span>
           </label>
           <input
+            id="setup-host-qlik"
             value={host}
             onChange={(e) => setHost(e.target.value)}
             placeholder="empresa.us.qlikcloud.com"
@@ -232,10 +235,14 @@ function PasoQlikCloud({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+          <label
+            htmlFor="setup-alias-qlik"
+            className="block text-xs font-semibold text-ink-700 mb-1.5"
+          >
             Alias (opcional)
           </label>
           <input
+            id="setup-alias-qlik"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             placeholder="ej: Producción"
@@ -245,7 +252,10 @@ function PasoQlikCloud({
         <Button
           disabled={!host.trim() || crear.isPending}
           onClick={() => {
-            onCrearQlik({ host: host.trim(), nombre: nombre.trim() || undefined });
+            onCrearQlik({
+              host: host.trim(),
+              nombre: nombre.trim() || undefined,
+            });
             setHost("");
             setNombre("");
           }}
@@ -353,7 +363,9 @@ function PasoPlantillaBase({
   const { mostrarExito, mostrarError } = useNotificaciones();
   const queryClient = useQueryClient();
 
-  const { data: automatizaciones = [], isLoading } = useQuery<ResumenAutomatizacion[]>({
+  const { data: automatizaciones = [], isLoading } = useQuery<
+    ResumenAutomatizacion[]
+  >({
     queryKey: ["automatizaciones-admin-list"],
     queryFn: listarAutomatizacionesParaAdmin,
   });
@@ -373,7 +385,9 @@ function PasoPlantillaBase({
         auto.nombre,
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-tenants-qlik", organizacionId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-tenants-qlik", organizacionId],
+      });
       mostrarExito("Plantilla base actualizada correctamente");
     },
     onError: (err: Error) => mostrarError(err.message),
@@ -400,7 +414,9 @@ function PasoPlantillaBase({
             <span className="font-semibold text-ink-900 text-sm">
               {tQlik.nombre || tQlik.host}
             </span>
-            <span className="font-mono text-xs text-ink-400">{tQlik.nombre ? `· ${tQlik.host}` : ""}</span>
+            <span className="font-mono text-xs text-ink-400">
+              {tQlik.nombre ? `· ${tQlik.host}` : ""}
+            </span>
           </div>
 
           {/* Plantilla activa */}
@@ -474,10 +490,18 @@ function ImpalaPorEntorno({
 
   const [host, setHost] = useState(tenantQlik.impalaHost || "");
   const [port, setPort] = useState(tenantQlik.impalaPort || 21050);
-  const [authMechanism, setAuthMechanism] = useState(tenantQlik.impalaAuthMechanism || "NOSASL");
+  const [authMechanism, setAuthMechanism] = useState<
+    NonNullable<ConfigurarImpalaTenant["impalaAuthMechanism"]>
+  >(
+    (tenantQlik.impalaAuthMechanism as NonNullable<
+      ConfigurarImpalaTenant["impalaAuthMechanism"]
+    >) || "NOSASL",
+  );
   const [user, setUser] = useState(tenantQlik.impalaUser || "");
-  const [password, setPassword] = useState(tenantQlik.impalaPassword || "");
-  const [database, setDatabase] = useState(tenantQlik.impalaDatabase || "default");
+  const [password, setPassword] = useState("");
+  const [database, setDatabase] = useState(
+    tenantQlik.impalaDatabase || "default",
+  );
 
   const guardar = useMutation({
     mutationFn: () =>
@@ -490,20 +514,25 @@ function ImpalaPorEntorno({
         impalaDatabase: database.trim() || "default",
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-tenants-qlik", organizacionId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-tenants-qlik", organizacionId],
+      });
       mostrarExito("Conexión Impala guardada correctamente");
     },
     onError: (err: Error) => mostrarError(err.message),
   });
 
-  const necesitaCredenciales = authMechanism === "PLAIN" || authMechanism === "LDAP";
+  const necesitaCredenciales =
+    authMechanism === "PLAIN" || authMechanism === "LDAP";
 
   return (
     <div className="rounded-lg border border-line-200 bg-app/30 p-4 space-y-4">
       {/* Cabecera del entorno */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Entorno:</span>
+          <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider">
+            Entorno:
+          </span>
           <span className="font-semibold text-ink-900 text-sm">
             {tenantQlik.nombre || tenantQlik.host}
           </span>
@@ -519,10 +548,14 @@ function ImpalaPorEntorno({
       {/* Campos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+          <label
+            htmlFor="setup-impala-host"
+            className="block text-xs font-semibold text-ink-700 mb-1.5"
+          >
             Host o IP <span className="text-danger-600">*</span>
           </label>
           <input
+            id="setup-impala-host"
             type="text"
             value={host}
             onChange={(e) => setHost(e.target.value)}
@@ -531,10 +564,14 @@ function ImpalaPorEntorno({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+          <label
+            htmlFor="setup-impala-puerto"
+            className="block text-xs font-semibold text-ink-700 mb-1.5"
+          >
             Puerto
           </label>
           <input
+            id="setup-impala-puerto"
             type="number"
             value={port}
             onChange={(e) => setPort(Number(e.target.value))}
@@ -542,10 +579,14 @@ function ImpalaPorEntorno({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+          <label
+            htmlFor="setup-impala-base-datos"
+            className="block text-xs font-semibold text-ink-700 mb-1.5"
+          >
             Base de datos
           </label>
           <input
+            id="setup-impala-base-datos"
             type="text"
             value={database}
             onChange={(e) => setDatabase(e.target.value)}
@@ -554,12 +595,22 @@ function ImpalaPorEntorno({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+          <label
+            htmlFor="setup-impala-autenticacion"
+            className="block text-xs font-semibold text-ink-700 mb-1.5"
+          >
             Autenticación
           </label>
           <select
+            id="setup-impala-autenticacion"
             value={authMechanism}
-            onChange={(e) => setAuthMechanism(e.target.value)}
+            onChange={(e) =>
+              setAuthMechanism(
+                e.target.value as NonNullable<
+                  ConfigurarImpalaTenant["impalaAuthMechanism"]
+                >,
+              )
+            }
             className="w-full px-3 py-2 text-sm border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
           >
             <option value="NOSASL">Sin autenticación</option>
@@ -572,10 +623,14 @@ function ImpalaPorEntorno({
         {necesitaCredenciales && (
           <>
             <div>
-              <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+              <label
+                htmlFor="setup-impala-usuario"
+                className="block text-xs font-semibold text-ink-700 mb-1.5"
+              >
                 Usuario
               </label>
               <input
+                id="setup-impala-usuario"
                 type="text"
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
@@ -584,14 +639,22 @@ function ImpalaPorEntorno({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-ink-700 mb-1.5">
+              <label
+                htmlFor="setup-impala-contrasena"
+                className="block text-xs font-semibold text-ink-700 mb-1.5"
+              >
                 Contraseña
               </label>
               <input
+                id="setup-impala-contrasena"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Contraseña de Impala"
+                placeholder={
+                  tenantQlik.tieneImpalaPassword
+                    ? `Conservada como ${tenantQlik.impalaPasswordMascara}; deja vacío para mantenerla`
+                    : "Contraseña de Impala"
+                }
                 className="w-full px-3 py-2 text-sm border border-line-200 rounded-md bg-surface text-ink-900 focus:border-brand-600 focus:outline-none"
               />
             </div>
@@ -632,16 +695,22 @@ export function SeccionSetupTecnico({
   const tieneImpala = tenantsQlik.some((t) => !!t.impalaHost);
 
   // Determina qué paso abrir automáticamente al montar
-  const primerPasoAbierto = !tieneQlik ? 0 : !tienePlantilla ? 1 : !tieneImpala ? 2 : -1;
+  const primerPasoAbierto = !tieneQlik
+    ? 0
+    : !tienePlantilla
+      ? 1
+      : !tieneImpala
+        ? 2
+        : -1;
   const [pasoAbierto, setPasoAbierto] = useState<number>(primerPasoAbierto);
 
-  const toggle = (i: number) =>
-    setPasoAbierto((prev) => (prev === i ? -1 : i));
+  const toggle = (i: number) => setPasoAbierto((prev) => (prev === i ? -1 : i));
 
   const pasos = [
     {
       titulo: "Conexión Qlik Cloud",
-      descripcionCorta: "Vincula al menos un entorno Qlik Cloud a esta organización.",
+      descripcionCorta:
+        "Vincula al menos un entorno Qlik Cloud a esta organización.",
       tooltipInfo:
         "El host es la dirección web de tu entorno Qlik Cloud (ej: miempresa.us.qlikcloud.com). Puedes conectar múltiples entornos a la misma organización.",
       listo: tieneQlik,
@@ -674,7 +743,10 @@ export function SeccionSetupTecnico({
       listo: tienePlantilla,
       resumen: tienePlantilla ? (
         <p className="text-xs text-ink-500 truncate">
-          {tenantsQlik.find((t) => t.automatizacionBaseNombre)?.automatizacionBaseNombre}
+          {
+            tenantsQlik.find((t) => t.automatizacionBaseNombre)
+              ?.automatizacionBaseNombre
+          }
         </p>
       ) : null,
       contenido: tieneQlik ? (
@@ -701,10 +773,7 @@ export function SeccionSetupTecnico({
         </p>
       ) : null,
       contenido: tieneQlik ? (
-        <PasoImpala
-          organizacionId={tenant.id}
-          tenantsQlik={tenantsQlik}
-        />
+        <PasoImpala organizacionId={tenant.id} tenantsQlik={tenantsQlik} />
       ) : (
         <p className="text-sm text-ink-400 py-2">
           Primero conecta un entorno Qlik Cloud en el paso 1.
@@ -737,10 +806,15 @@ export function SeccionSetupTecnico({
           </span>
           <div>
             <p className="text-sm font-semibold text-amber-900">
-              Completa los {3 - [tieneQlik, tienePlantilla, tieneImpala].filter(Boolean).length} pasos pendientes
+              Completa los{" "}
+              {3 -
+                [tieneQlik, tienePlantilla, tieneImpala].filter(Boolean)
+                  .length}{" "}
+              pasos pendientes
             </p>
             <p className="text-xs text-amber-700">
-              Los usuarios no podrán crear automatizaciones hasta que todo esté configurado.
+              Los usuarios no podrán crear automatizaciones hasta que todo esté
+              configurado.
             </p>
           </div>
         </div>
@@ -749,7 +823,7 @@ export function SeccionSetupTecnico({
       {/* Accordion de pasos */}
       {pasos.map((paso, i) => (
         <PasoAccordion
-          key={i}
+          key={paso.titulo}
           numero={i + 1}
           titulo={paso.titulo}
           descripcionCorta={paso.descripcionCorta}

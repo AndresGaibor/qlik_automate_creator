@@ -1,4 +1,5 @@
 import { count, eq } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   membresiasOrganizacion,
   organizaciones,
@@ -8,19 +9,7 @@ import type {
   OrganizacionAdministrable,
 } from "../aplicacion/puertos/repositorio-administracion.js";
 
-type DbType = {
-  query: {
-    [key: string]: {
-      findFirst: (opts?: any) => Promise<any>;
-      findMany: (opts?: any) => Promise<any[]>;
-    };
-  };
-  insert(table: any): any;
-  update(table: any): any;
-  delete(table: any): any;
-  select(...args: any[]): any;
-  execute(...args: any[]): any;
-};
+type DbType = ConexionDb;
 
 export const ConsultaOrganizacion = {
   async listarOrganizaciones(db: DbType) {
@@ -45,7 +34,10 @@ export const ConsultaOrganizacion = {
       where: eq(organizaciones.id, id),
     });
     return fila
-      ? ({ ...fila, estado: fila.estado as EstadoOrganizacion } as OrganizacionAdministrable)
+      ? ({
+          ...fila,
+          estado: fila.estado as EstadoOrganizacion,
+        } as OrganizacionAdministrable)
       : null;
   },
 
@@ -69,7 +61,10 @@ export const ConsultaOrganizacion = {
       .where(eq(organizaciones.id, id))
       .returning();
     return fila
-      ? ({ ...fila, estado: fila.estado as EstadoOrganizacion } as OrganizacionAdministrable)
+      ? ({
+          ...fila,
+          estado: fila.estado as EstadoOrganizacion,
+        } as OrganizacionAdministrable)
       : null;
   },
 

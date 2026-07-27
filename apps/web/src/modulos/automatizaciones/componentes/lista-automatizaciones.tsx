@@ -5,10 +5,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
-import { claseEstado, estadoVisual } from "@/compartido/utiles/automatizaciones";
+import { Icon } from "@/compartido/componentes/ui/icon";
+import {
+  claseEstado,
+  estadoVisual,
+} from "@/compartido/utiles/automatizaciones";
 import { formatearFechaSeguro } from "@/compartido/utiles/formateador-fechas";
 import { construirUrlVerAutomatizacionQlik } from "@/compartido/utiles/qlik-urls";
-import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ResumenAutomatizacion } from "@/modulos/automatizaciones/api";
 
 interface Props {
@@ -16,6 +19,8 @@ interface Props {
   idEjecutando: string | null;
   espacioFiltrado?: string;
   onEjecutar: (id: string) => void;
+  targetHost?: string;
+  hayFiltros: boolean;
 }
 
 export function ListaAutomatizaciones({
@@ -23,18 +28,23 @@ export function ListaAutomatizaciones({
   idEjecutando,
   espacioFiltrado,
   onEjecutar,
+  targetHost,
+  hayFiltros,
 }: Props) {
   const busqueda = espacioFiltrado ? `?espacio=${espacioFiltrado}` : "";
-  const targetHost = "l676lvg3emfvcq2.us.qlikcloud.com";
 
   if (automatizaciones.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
         <p className="text-gray-500 font-medium mb-1">
-          No hay automatizaciones aquí
+          {hayFiltros
+            ? "No hay automatizaciones con esos filtros"
+            : "Aún no hay automatizaciones"}
         </p>
         <p className="text-xs text-gray-400 mb-4">
-          Intenta cambiar el espacio o la búsqueda, o crea una automatización nueva.
+          {hayFiltros
+            ? "Cambia el espacio o la búsqueda, o limpia los filtros."
+            : "Crea una automatización para verla aquí."}
         </p>
         <Button size="sm" asChild className="bg-blue-600 text-white">
           <a href={`/automatizaciones/nueva${busqueda}`}>
@@ -48,7 +58,10 @@ export function ListaAutomatizaciones({
   return (
     <div className="grid grid-cols-1 gap-4">
       {automatizaciones.map((auto) => (
-        <Card key={auto.id} className="hover:shadow-md transition border-gray-200">
+        <Card
+          key={auto.id}
+          className="hover:shadow-md transition border-gray-200"
+        >
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-3">
               <CardTitle className="text-lg font-bold">
@@ -90,7 +103,9 @@ export function ListaAutomatizaciones({
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block">Última modificación</span>
+                  <span className="text-gray-400 block">
+                    Última modificación
+                  </span>
                   <span className="font-mono text-gray-700">
                     {formatearFechaSeguro(auto.modificadoEn)}
                   </span>
@@ -98,25 +113,26 @@ export function ListaAutomatizaciones({
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="text-xs gap-1.5"
-                >
-                  <a
-                    href={construirUrlVerAutomatizacionQlik(
-                      targetHost,
-                      auto.id,
-                      "edit",
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                {targetHost && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1.5"
                   >
-                    <Icon name="ext" size="sm" />
-                    Abrir en Qlik Cloud
-                  </a>
-                </Button>
+                    <a
+                      href={construirUrlVerAutomatizacionQlik(
+                        targetHost,
+                        auto.id,
+                        "edit",
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Icon name="ext" size="sm" /> Abrir en Qlik Cloud
+                    </a>
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -129,10 +145,15 @@ export function ListaAutomatizaciones({
                   {idEjecutando === auto.id
                     ? "Ejecutando…"
                     : auto.ejecucionActiva
-                      ? "En ejecución"
-                      : "Ejecutar"}
+                      ? "En proceso"
+                      : "Ejecutar ahora"}
                 </Button>
-                <Button variant="outline" size="sm" asChild className="text-xs gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="text-xs gap-1.5"
+                >
                   <a href={`/automatizaciones/${auto.id}${busqueda}`}>
                     <Icon name="edit" size="sm" />
                     Ver detalle

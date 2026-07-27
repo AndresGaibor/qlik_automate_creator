@@ -1,10 +1,14 @@
+import { eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
+import { usuarios } from "../../../plataforma/persistencia/esquema.js";
 import type {
   EntradaGuardarConfiguracionOauth,
   EstadoOrganizacion,
   RepositorioAdministracion,
+  ResultadoEliminarSuperadmin,
   RolAdministracion,
   ServicioCifradoAdministracion,
+  SuperadminAdministrable,
   TenantQlikAdministrable,
   UsuarioAdministrable,
 } from "../aplicacion/puertos/repositorio-administracion.js";
@@ -134,11 +138,12 @@ export class RepositorioAdministracionPostgres
     organizacionId: string,
     tenantQlikId: string,
     destinoApiUrl: string,
-    destinoApiKey: string,
+    destinoApiKey?: string,
     destinoBaseDatos?: string,
   ): Promise<TenantQlikAdministrable | null> {
     return ConsultaTenantQlik.configurarDestinoTenant(
       this.db,
+      this.cifrado,
       organizacionId,
       tenantQlikId,
       destinoApiUrl,
@@ -161,6 +166,7 @@ export class RepositorioAdministracionPostgres
   ): Promise<TenantQlikAdministrable | null> {
     return ConsultaTenantQlik.configurarImpalaTenant(
       this.db,
+      this.cifrado,
       organizacionId,
       tenantQlikId,
       datos,
@@ -201,5 +207,117 @@ export class RepositorioAdministracionPostgres
     tenantQlikId: string,
   ) {
     return eliminarConfiguracionOauth(this.db, organizacionId, tenantQlikId);
+  }
+
+  async listarSuperadmins(): Promise<SuperadminAdministrable[]> {
+    const rows = await this.db.query.usuarios.findMany({
+      where: eq(usuarios.esSuperadmin, true),
+    });
+    return rows.map((u) => ({
+      id: u.id,
+      nombre: u.nombre,
+      correo: u.correo,
+      estado: u.estado as "activo" | "suspendido",
+      esSuperadmin: u.esSuperadmin,
+      creadoEn: u.creadoEn,
+    }));
+  }
+
+  async agregarSuperadmin(entrada: {
+    nombre: string;
+    correo: string;
+  }): Promise<SuperadminAdministrable | null> {
+    const existente = await this.db.query.usuarios.findFirst({
+      where: eq(usuarios.correo, entrada.correo.toLowerCase()),
+    });
+
+    if (existente) {
+      if (existente.esSuperadmin) {
+        throw new Error("Ya existe un superadministrador con este correo");
+      }
+      const [actualizado] = await this.db
+        .update(usuarios)
+        .set({
+          nombre: entrada.nombre,
+          estado: "activo",
+          esSuperadmin: true,
+          actualizadoEn: new Date(),
+        })
+        .where(eq(usuarios.id, existente.id))
+        .returning();
+      if (!actualizado) return null;
+      return {
+        id: actualizado.id,
+        nombre: actualizado.nombre,
+        correo: actualizado.correo,
+        estado: actualizado.estado as "activo" | "suspendido",
+        esSuperadmin: actualizado.esSuperadmin,
+        creadoEn: actualizado.creadoEn,
+      };
+    }
+
+    const [nuevo] = await this.db
+      .insert(usuarios)
+      .values({
+        nombre: entrada.nombre,
+        correo: entrada.correo.toLowerCase(),
+        estado: "activo",
+        esSuperadmin: true,
+      })
+      .returning();
+    if (!nuevo) return null;
+    return {
+      id: nuevo.id,
+      nombre: nuevo.nombre,
+      correo: nuevo.correo,
+      estado: nuevo.estado as "activo" | "suspendido",
+      esSuperadmin: nuevo.esSuperadmin,
+      creadoEn: nuevo.creadoEn,
+    };
+  }
+
+  async eliminarSuperadmin(id: string): Promise<ResultadoEliminarSuperadmin> {
+    const superadmin = await this.db.query.usuarios.findFirst({
+      where: eq(usuarios.id, id),
+    });
+
+    if (!superadmin) {
+      return {
+        exito: false,
+        mensaje: "Superadministrador no encontrado",
+        codigo: "NO_ENCONTRADO",
+      };
+    }
+
+    if (!superadmin.esSuperadmin) {
+      return {
+        exito: false,
+        mensaje: "El usuario no es un superadministrador",
+        codigo: "NO_ES_SUPERADMIN",
+      };
+    }
+
+    const todosSuperadmins = await this.db.query.usuarios.findMany({
+      where: eq(usuarios.esSuperadmin, true),
+    });
+
+    if (todosSuperadmins.length <= 1) {
+      return {
+        exito: false,
+        mensaje: "No puedes eliminar al último superadministrador",
+        codigo: "ULTIMO_SUPERADMIN",
+      };
+    }
+
+    await this.db
+      .update(usuarios)
+      .set({
+        esSuperadmin: false,
+        estado: "suspendido",
+        actualizadoEn: new Date(),
+      })
+      .where(eq(usuarios.id, id));
+
+    return { exito: true };
   }
 }

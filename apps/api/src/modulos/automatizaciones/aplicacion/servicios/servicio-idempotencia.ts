@@ -1,8 +1,8 @@
-import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
 import type { ResultadoCrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
-import { ErrorConflicto } from "../../../../nucleo/errores/error-aplicacion.js";
-import { hashCanonico } from "./utilidades-automatizacion.js";
 import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
+import { ErrorConflicto } from "../../../../nucleo/errores/error-aplicacion.js";
+import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
+import { hashCanonico } from "./utilidades-automatizacion.js";
 
 export interface ContextoIdempotencia {
   organizacionId: string;
@@ -15,7 +15,10 @@ export interface ContextoIdempotencia {
 export async function verificarIdempotencia(
   idempotencia: PuertoIdempotencia,
   contexto: ContextoIdempotencia,
-): Promise<{ esNuevo: boolean; resultadoPrevio?: ResultadoCrearDesdePlantilla }> {
+): Promise<{
+  esNuevo: boolean;
+  resultadoPrevio?: ResultadoCrearDesdePlantilla;
+}> {
   const { organizacionId, alcance, clave } = contexto;
   const existente = await idempotencia.obtener(organizacionId, alcance, clave);
 
@@ -26,7 +29,10 @@ export async function verificarIdempotencia(
       );
     }
     if (existente.estado === "completada") {
-      return { esNuevo: false, resultadoPrevio: existente.respuesta as ResultadoCrearDesdePlantilla };
+      return {
+        esNuevo: false,
+        resultadoPrevio: existente.respuesta as ResultadoCrearDesdePlantilla,
+      };
     }
     throw new ErrorConflicto(
       "La solicitud con esta clave todavía está en curso o falló",
@@ -39,14 +45,21 @@ export async function verificarIdempotencia(
   );
 
   if (inicio === "existente") {
-    const concurrente = await idempotencia.obtener(organizacionId, alcance, clave);
+    const concurrente = await idempotencia.obtener(
+      organizacionId,
+      alcance,
+      clave,
+    );
     if (concurrente?.hashSolicitud !== contexto.hashSolicitud) {
       throw new ErrorConflicto(
         "La clave de idempotencia ya fue usada con otra solicitud",
       );
     }
     if (concurrente?.estado === "completada") {
-      return { esNuevo: false, resultadoPrevio: concurrente.respuesta as ResultadoCrearDesdePlantilla };
+      return {
+        esNuevo: false,
+        resultadoPrevio: concurrente.respuesta as ResultadoCrearDesdePlantilla,
+      };
     }
     throw new ErrorConflicto(
       "La solicitud con esta clave ya está siendo procesada",

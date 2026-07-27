@@ -34,20 +34,25 @@ import {
   type ServicioQlik,
   crearRutasProxyQlik,
 } from "./modulos/qlik/publico.js";
-import { crearRutasSetup } from "./modulos/setup/publico.js";
 import { ConfiguracionAppPostgres } from "./modulos/setup/infraestructura/configuracion-app-postgres.js";
+import { crearRutasSetup } from "./modulos/setup/publico.js";
 import type { PuertoAuditoria } from "./nucleo/auditoria/puerto-auditoria.js";
 import { ErrorNoAutorizado } from "./nucleo/errores/error-aplicacion.js";
 import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "./nucleo/idempotencia/puerto-idempotencia.js";
+import { ejecutarBootstrap } from "./plataforma/bootstrap/bootstrap.js";
+import { RepositorioBootstrapPostgres } from "./plataforma/bootstrap/repositorio-bootstrap-postgres.js";
 import type { ConfiguracionAplicacion } from "./plataforma/configuracion/entorno.js";
 import {
   type ContextoSolicitudAutenticado,
   construirContextoSolicitud,
 } from "./plataforma/contexto/contexto-solicitud.js";
 import { crearManejadorErrores } from "./plataforma/errores/manejador-http.js";
+import { crearMiddlewareCabecerasSeguridad } from "./plataforma/http/middlewares/cabeceras-seguridad.js";
 import { crearMiddlewareCors } from "./plataforma/http/middlewares/cors.js";
+import { crearMiddlewareLimiteSolicitudes } from "./plataforma/http/middlewares/limite-solicitudes.js";
 import { crearMiddlewareObservabilidad } from "./plataforma/http/middlewares/observabilidad.js";
+import { crearMiddlewareOrigenCsrf } from "./plataforma/http/middlewares/origen-csrf.js";
 import {
   responderError,
   responderExito,
@@ -61,10 +66,8 @@ import { db, dbHolder } from "./plataforma/persistencia/conexion.js";
 import { appConfig, tenantsQlik } from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
 import { OutboxPostgres } from "./plataforma/persistencia/outbox-postgres.js";
-import { servicioCifrado } from "./plataforma/seguridad/servicio-cifrado.js";
 import { leerSecretoCifrado } from "./plataforma/seguridad/secreto-cifrado.js";
-import { ejecutarBootstrap } from "./plataforma/bootstrap/bootstrap.js";
-import { RepositorioBootstrapPostgres } from "./plataforma/bootstrap/repositorio-bootstrap-postgres.js";
+import { servicioCifrado } from "./plataforma/seguridad/servicio-cifrado.js";
 
 export interface DependenciasAplicacion {
   configuracion?: ConfiguracionAplicacion;
@@ -98,7 +101,10 @@ export async function crearAplicacion(
         .values({ clave, valor: valor as Record<string, unknown> })
         .onConflictDoUpdate({
           target: appConfig.clave,
-          set: { valor: valor as Record<string, unknown>, actualizadoEn: new Date() },
+          set: {
+            valor: valor as Record<string, unknown>,
+            actualizadoEn: new Date(),
+          },
         });
     },
     async obtener(clave) {
@@ -222,8 +228,39 @@ export async function crearAplicacion(
     .split(/\s+/)
     .filter(Boolean);
 
-  aplicacion.use("*", crearMiddlewareCors(frontendUrl));
+  aplicacion.use("*", crearMiddlewareCors(db, frontendUrl));
+  aplicacion.use("*", crearMiddlewareCabecerasSeguridad(produccion));
   aplicacion.use("*", crearMiddlewareObservabilidad(registrador));
+  aplicacion.use("*", crearMiddlewareOrigenCsrf(frontendUrl));
+  aplicacion.use(
+    "*",
+    crearMiddlewareLimiteSolicitudes([
+      {
+        ruta: "/api/auth/qlik/iniciar",
+        metodos: ["GET"],
+        maximo: 10,
+        ventanaMs: 60_000,
+      },
+      {
+        ruta: "/api/auth/qlik/iniciar-por-correo",
+        metodos: ["GET"],
+        maximo: 10,
+        ventanaMs: 60_000,
+      },
+      {
+        ruta: "/api/auth/qlik/callback",
+        metodos: ["GET"],
+        maximo: 20,
+        ventanaMs: 60_000,
+      },
+      {
+        ruta: "/api/setup/complete",
+        metodos: ["POST"],
+        maximo: 5,
+        ventanaMs: 60_000,
+      },
+    ]),
+  );
 
   aplicacion.get("/api/salud", (c) =>
     responderExito(c, {
@@ -355,6 +392,9 @@ function crearServicioAutenticacionDiferido(
           credenciales.scopes.length
             ? credenciales.scopes.join(" ")
             : undefined,
+          undefined,
+          configuracion?.QLIK_OAUTH_TIMEOUT_MS ??
+            (Number(process.env.QLIK_OAUTH_TIMEOUT_MS) || 10_000),
         ),
         configuracionId: credenciales.configuracionId,
         origen: credenciales.origen,

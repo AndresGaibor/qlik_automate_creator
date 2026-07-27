@@ -1,10 +1,14 @@
-import { useState } from "react";
-import { Button } from "@/compartido/componentes/ui/button";
-import { Icon } from "@/compartido/componentes/ui/icon";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { Button } from "@/compartido/componentes/ui/button";
+import { Icon, type IconName } from "@/compartido/componentes/ui/icon";
 import { VisorJsonInteractivo } from "@/compartido/componentes/ui/visor-json-interactivo";
-import { actualizarWorkspaceAutomatizacion, obtenerWorkspaceAutomatizacion, type WorkspaceAutomatizacion } from "../api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import {
+  type WorkspaceAutomatizacion,
+  actualizarWorkspaceAutomatizacion,
+  obtenerWorkspaceAutomatizacion,
+} from "../api";
 
 interface Props {
   automatizacionId: string;
@@ -19,7 +23,9 @@ function VisorEditorJsonTab({
   workspaceInicial: Record<string, unknown>;
 }) {
   const [modoEdicion, setModoEdicion] = useState(false);
-  const [jsonTexto, setJsonTexto] = useState(() => JSON.stringify(workspaceInicial, null, 2));
+  const [jsonTexto, setJsonTexto] = useState(() =>
+    JSON.stringify(workspaceInicial, null, 2),
+  );
   const [errorJson, setErrorJson] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
 
@@ -33,8 +39,12 @@ function VisorEditorJsonTab({
       mostrarExito("Workspace actualizado correctamente en Qlik Cloud");
       setModoEdicion(false);
       setErrorJson(null);
-      queryClient.invalidateQueries({ queryKey: ["automatizacion-workspace", automatizacionId] });
-      queryClient.invalidateQueries({ queryKey: ["automatizacion", automatizacionId] });
+      queryClient.invalidateQueries({
+        queryKey: ["automatizacion-workspace", automatizacionId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["automatizacion", automatizacionId],
+      });
     },
     onError: (err: Error) => {
       mostrarError(`Error al guardar workspace: ${err.message}`);
@@ -49,8 +59,10 @@ function VisorEditorJsonTab({
       }
       setErrorJson(null);
       mutationGuardar.mutate(objetoParsed);
-    } catch (err: any) {
-      setErrorJson(err?.message || "JSON sintácticamente inválido");
+    } catch (err: unknown) {
+      setErrorJson(
+        err instanceof Error ? err.message : "JSON sintácticamente inválido",
+      );
     }
   };
 
@@ -114,7 +126,9 @@ function VisorEditorJsonTab({
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
               >
                 <Icon name="check" size="sm" />
-                {mutationGuardar.isPending ? "Guardando en Qlik..." : "Guardar Cambios"}
+                {mutationGuardar.isPending
+                  ? "Guardando en Qlik..."
+                  : "Guardar Cambios"}
               </button>
             </>
           )}
@@ -166,24 +180,36 @@ interface BloqueProcesado {
   disabled?: boolean;
 }
 
-export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: Props) {
+export function VisorWorkspaceModal({
+  automatizacionId,
+  nombreAutomatizacion,
+}: Props) {
   const [abierto, setAbierto] = useState(false);
   const [pestana, setPestana] = useState<"bloques" | "json">("bloques");
-  const [bloqueSeleccionado, setBloqueSeleccionado] = useState<string | null>(null);
+  const [bloqueSeleccionado, setBloqueSeleccionado] = useState<string | null>(
+    null,
+  );
   const [copiado, setCopiado] = useState(false);
 
-  const { data, isLoading, isError, error } = useQuery<WorkspaceAutomatizacion>({
-    queryKey: ["automatizacion-workspace", automatizacionId],
-    queryFn: () => obtenerWorkspaceAutomatizacion(automatizacionId),
-    enabled: abierto,
-    staleTime: 60 * 1000,
-  });
+  const { data, isLoading, isError, error } = useQuery<WorkspaceAutomatizacion>(
+    {
+      queryKey: ["automatizacion-workspace", automatizacionId],
+      queryFn: () => obtenerWorkspaceAutomatizacion(automatizacionId),
+      enabled: abierto,
+      staleTime: 60 * 1000,
+    },
+  );
 
   const workspaceObj = data?.workspace || {};
-  const bloquesRaw = (Array.isArray(workspaceObj.blocks) ? workspaceObj.blocks : []) as Record<string, unknown>[];
+  const bloquesRaw = (
+    Array.isArray(workspaceObj.blocks) ? workspaceObj.blocks : []
+  ) as Record<string, unknown>[];
 
   const bloques: BloqueProcesado[] = bloquesRaw.map((b) => {
-    const rawInputs = (Array.isArray(b.inputs) ? b.inputs : []) as Record<string, unknown>[];
+    const rawInputs = (Array.isArray(b.inputs) ? b.inputs : []) as Record<
+      string,
+      unknown
+    >[];
     const inputs: InputParam[] = rawInputs.map((inp) => ({
       id: String(inp.id || inp.name || ""),
       label: inp.label ? String(inp.label) : String(inp.id || inp.name || ""),
@@ -194,11 +220,21 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
     return {
       id: String(b.id || ""),
       type: String(b.type || b.blockType || "Block"),
-      title: String(b.displayName || b.name || b.title || b.type || "Bloque sin título"),
-      connector: b.connector || b.connectorId ? String(b.connector || b.connectorId) : undefined,
-      operation: b.operation || b.action ? String(b.operation || b.action) : undefined,
+      title: String(
+        b.displayName || b.name || b.title || b.type || "Bloque sin título",
+      ),
+      connector:
+        b.connector || b.connectorId
+          ? String(b.connector || b.connectorId)
+          : undefined,
+      operation:
+        b.operation || b.action ? String(b.operation || b.action) : undefined,
       childId: b.childId ? String(b.childId) : undefined,
-      nextBlockId: b.nextBlockId ? String(b.nextBlockId) : b.childId ? String(b.childId) : undefined,
+      nextBlockId: b.nextBlockId
+        ? String(b.nextBlockId)
+        : b.childId
+          ? String(b.childId)
+          : undefined,
       inputs,
       comment: typeof b.comment === "string" ? b.comment : null,
       disabled: Boolean(b.disabled),
@@ -212,12 +248,38 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
     setTimeout(() => setCopiado(false), 2000);
   };
 
-  const getTipoBadges = (type: string) => {
-    if (type.includes("Start")) return { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: "play", label: "Inicio / Disparador" };
-    if (type.includes("Endpoint")) return { bg: "bg-sky-50 text-sky-700 border-sky-200", icon: "zap", label: "Acción API / Conector" };
-    if (type.includes("Show") || type.includes("Output")) return { bg: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: "sparkles", label: "Salida / Output" };
-    if (type.includes("Stop")) return { bg: "bg-rose-50 text-rose-700 border-rose-200", icon: "x", label: "Fin de Flujo" };
-    return { bg: "bg-slate-100 text-slate-700 border-slate-200", icon: "flow", label: type };
+  const getTipoBadges = (
+    type: string,
+  ): { bg: string; icon: IconName; label: string } => {
+    if (type.includes("Start"))
+      return {
+        bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        icon: "play",
+        label: "Inicio / Disparador",
+      };
+    if (type.includes("Endpoint"))
+      return {
+        bg: "bg-sky-50 text-sky-700 border-sky-200",
+        icon: "zap",
+        label: "Acción API / Conector",
+      };
+    if (type.includes("Show") || type.includes("Output"))
+      return {
+        bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+        icon: "sparkles",
+        label: "Salida / Output",
+      };
+    if (type.includes("Stop"))
+      return {
+        bg: "bg-rose-50 text-rose-700 border-rose-200",
+        icon: "x",
+        label: "Fin de Flujo",
+      };
+    return {
+      bg: "bg-slate-100 text-slate-700 border-slate-200",
+      icon: "flow",
+      label: type,
+    };
   };
 
   return (
@@ -262,7 +324,7 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                         : "text-ink-500 hover:text-ink-900"
                     }`}
                   >
-                    Diagrama Visual ({bloques.length})
+                    Pasos de la automatización ({bloques.length})
                   </button>
                   <button
                     type="button"
@@ -273,7 +335,7 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                         : "text-ink-500 hover:text-ink-900"
                     }`}
                   >
-                    JSON Raw / Interactivo
+                    Edición avanzada (JSON)
                   </button>
                 </div>
 
@@ -292,14 +354,20 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
               {isLoading && (
                 <div className="flex min-h-[350px] flex-col items-center justify-center gap-2">
                   <div className="h-7 w-7 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
-                  <p className="text-sm text-ink-500 font-medium">Cargando la topología de la automatización...</p>
+                  <p className="text-sm text-ink-500 font-medium">
+                    Cargando la topología de la automatización...
+                  </p>
                 </div>
               )}
 
               {isError && (
                 <div className="rounded-lg border border-danger-200 bg-red-50 p-4 text-sm text-danger-700">
-                  <p className="font-semibold mb-1">Error al obtener el workspace:</p>
-                  <p className="font-mono text-xs">{(error as Error)?.message || "Error desconocido"}</p>
+                  <p className="font-semibold mb-1">
+                    Error al obtener el workspace:
+                  </p>
+                  <p className="font-mono text-xs">
+                    {(error as Error)?.message || "Error desconocido"}
+                  </p>
                 </div>
               )}
 
@@ -309,7 +377,11 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                     <div className="space-y-6 max-w-3xl mx-auto">
                       <div className="flex items-center justify-between text-xs text-slate-500 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                         <span className="flex items-center gap-2 font-medium text-slate-700">
-                          <Icon name="flow" size="sm" className="text-brand-600" />
+                          <Icon
+                            name="flow"
+                            size="sm"
+                            className="text-brand-600"
+                          />
                           Secuencia ejecutable de bloques conectados
                         </span>
                         <div className="flex items-center gap-2">
@@ -326,18 +398,25 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
 
                       {bloques.length === 0 ? (
                         <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500 text-sm bg-white">
-                          No se encontraron bloques explícitos en este workspace o el script está vacío.
+                          No se encontraron bloques explícitos en este workspace
+                          o el script está vacío.
                         </div>
                       ) : (
                         <div className="relative space-y-0">
                           {bloques.map((bloque, idx) => {
-                            const estaSeleccionado = bloqueSeleccionado === bloque.id;
-                            const datosBloqueRaw = bloquesRaw.find((b) => String(b.id) === bloque.id);
+                            const estaSeleccionado =
+                              bloqueSeleccionado === bloque.id;
+                            const datosBloqueRaw = bloquesRaw.find(
+                              (b) => String(b.id) === bloque.id,
+                            );
                             const badge = getTipoBadges(bloque.type);
                             const esUltimo = idx === bloques.length - 1;
 
                             return (
-                              <div key={bloque.id || idx} className="relative flex flex-col items-center">
+                              <div
+                                key={bloque.id || idx}
+                                className="relative flex flex-col items-center"
+                              >
                                 {/* Card del Bloque */}
                                 <div
                                   className={`w-full rounded-2xl border transition-all duration-200 bg-white shadow-sm hover:shadow-md ${
@@ -356,27 +435,39 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                                         <h4 className="font-display font-semibold text-slate-900 text-base flex items-center gap-2">
                                           {bloque.title}
                                           {bloque.disabled && (
-                                            <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-normal">Deshabilitado</span>
+                                            <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-normal">
+                                              Deshabilitado
+                                            </span>
                                           )}
                                         </h4>
                                         {bloque.comment && (
-                                          <p className="text-xs text-slate-500 italic mt-0.5">💬 "{bloque.comment}"</p>
+                                          <p className="text-xs text-slate-500 italic mt-0.5">
+                                            💬 "{bloque.comment}"
+                                          </p>
                                         )}
                                       </div>
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                      <span className={`inline-flex items-center gap-1.5 border px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.bg}`}>
-                                        <Icon name={badge.icon as any} size="sm" />
+                                      <span
+                                        className={`inline-flex items-center gap-1.5 border px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.bg}`}
+                                      >
+                                        <Icon name={badge.icon} size="sm" />
                                         {badge.label}
                                       </span>
 
                                       <button
                                         type="button"
-                                        onClick={() => setBloqueSeleccionado(estaSeleccionado ? null : bloque.id)}
+                                        onClick={() =>
+                                          setBloqueSeleccionado(
+                                            estaSeleccionado ? null : bloque.id,
+                                          )
+                                        }
                                         className="text-xs font-medium text-brand-600 hover:text-brand-800 hover:bg-brand-50 px-2.5 py-1 rounded-lg transition-colors border border-transparent hover:border-brand-100 ml-1"
                                       >
-                                        {estaSeleccionado ? "Ocultar JSON" : "Ver JSON"}
+                                        {estaSeleccionado
+                                          ? "Ocultar JSON"
+                                          : "Ver JSON"}
                                       </button>
                                     </div>
                                   </div>
@@ -387,7 +478,8 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                                     {bloque.inputs.length > 0 ? (
                                       <div className="space-y-2">
                                         <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
-                                          Parámetros y Entradas ({bloque.inputs.length})
+                                          Parámetros y Entradas (
+                                          {bloque.inputs.length})
                                         </span>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                           {bloque.inputs.map((inp) => (
@@ -395,13 +487,21 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                                               key={inp.id}
                                               className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs flex flex-col justify-between"
                                             >
-                                              <span className="text-slate-500 font-medium text-[11px] block">{inp.label}:</span>
+                                              <span className="text-slate-500 font-medium text-[11px] block">
+                                                {inp.label}:
+                                              </span>
                                               <span className="font-mono text-slate-800 font-semibold mt-0.5 truncate break-all">
-                                                {inp.value === null || inp.value === undefined
-                                                  ? <span className="text-slate-400 italic">sin configurar</span>
-                                                  : typeof inp.value === "object"
-                                                    ? JSON.stringify(inp.value)
-                                                    : String(inp.value)}
+                                                {inp.value === null ||
+                                                inp.value === undefined ? (
+                                                  <span className="text-slate-400 italic">
+                                                    sin configurar
+                                                  </span>
+                                                ) : typeof inp.value ===
+                                                  "object" ? (
+                                                  JSON.stringify(inp.value)
+                                                ) : (
+                                                  String(inp.value)
+                                                )}
                                               </span>
                                             </div>
                                           ))}
@@ -418,7 +518,8 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                                       <span>ID: {bloque.id}</span>
                                       {bloque.nextBlockId && (
                                         <span className="text-brand-600 font-semibold bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-md">
-                                          Conectado a ➔ {bloque.nextBlockId.substring(0, 8)}…
+                                          Conectado a ➔{" "}
+                                          {bloque.nextBlockId.substring(0, 8)}…
                                         </span>
                                       )}
                                     </div>
@@ -429,19 +530,28 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                                     <div className="border-t border-slate-200 bg-slate-50 p-4 rounded-b-2xl">
                                       <div className="flex items-center justify-between text-xs text-slate-600 mb-2 border-b border-slate-200 pb-2">
                                         <span className="font-mono text-brand-700 font-semibold">
-                                          ESQUEMA JSON DEL BLOQUE [{bloque.title}]
+                                          ESQUEMA JSON DEL BLOQUE [
+                                          {bloque.title}]
                                         </span>
                                         <button
                                           type="button"
                                           onClick={() => {
-                                            navigator.clipboard.writeText(JSON.stringify(datosBloqueRaw, null, 2));
+                                            navigator.clipboard.writeText(
+                                              JSON.stringify(
+                                                datosBloqueRaw,
+                                                null,
+                                                2,
+                                              ),
+                                            );
                                           }}
                                           className="text-[11px] text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md shadow-sm font-medium"
                                         >
                                           Copiar Bloque
                                         </button>
                                       </div>
-                                      <VisorJsonInteractivo data={datosBloqueRaw} />
+                                      <VisorJsonInteractivo
+                                        data={datosBloqueRaw}
+                                      />
                                     </div>
                                   )}
                                 </div>
@@ -465,10 +575,17 @@ export function VisorWorkspaceModal({ automatizacionId, nombreAutomatizacion }: 
                   )}
 
                   {pestana === "json" && (
-                    <VisorEditorJsonTab
-                      automatizacionId={automatizacionId}
-                      workspaceInicial={workspaceObj}
-                    />
+                    <div className="space-y-4">
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 font-medium">
+                        ⚠️ Esta sección es para usuarios con experiencia técnica.
+                        Modificar el JSON directamente puede afectar el
+                        funcionamiento de la automatización.
+                      </div>
+                      <VisorEditorJsonTab
+                        automatizacionId={automatizacionId}
+                        workspaceInicial={workspaceObj}
+                      />
+                    </div>
                   )}
                 </>
               )}

@@ -5,16 +5,16 @@ import type { PuertoConsultaFlujos } from "../aplicacion/puertos/puerto-consulta
 
 export function crearRutasFlujos(
   resolverConsulta: (c: Context) => Promise<PuertoConsultaFlujos>,
-  resolverQlik?: (c: Context) => Promise<import("../../qlik/publico.js").ServicioQlik>,
+  resolverQlik?: (
+    c: Context,
+  ) => Promise<import("../../qlik/publico.js").ServicioQlik>,
 ) {
   const rutas = new Hono();
   rutas.get("/", async (c) => {
     const consulta = await resolverConsulta(c);
     const espacioId = c.req.query("espacioId")?.trim() || undefined;
     const q =
-      c.req.query("q")?.trim() ||
-      c.req.query("busqueda")?.trim() ||
-      undefined;
+      c.req.query("q")?.trim() || c.req.query("busqueda")?.trim() || undefined;
 
     let lista = await new ListarFlujos(consulta).ejecutar(espacioId);
     if (q) {
@@ -29,7 +29,13 @@ export function crearRutasFlujos(
 
   rutas.get("/:id/script", async (c) => {
     if (!resolverQlik) {
-      return c.json({ exito: false, error: { mensaje: "Cliente Qlik no configurado para flujos" } }, 500);
+      return c.json(
+        {
+          exito: false,
+          error: { mensaje: "Cliente Qlik no configurado para flujos" },
+        },
+        500,
+      );
     }
     const id = c.req.param("id");
     const qlik = await resolverQlik(c);
@@ -40,12 +46,15 @@ export function crearRutasFlujos(
         script: resultadoScript.script,
         versionMessage: resultadoScript.versionMessage ?? null,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       return c.json(
         {
           exito: false,
           error: {
-            mensaje: err?.message || "No se pudo recuperar el script del Dataflow desde Qlik Cloud",
+            mensaje:
+              err instanceof Error
+                ? err.message
+                : "No se pudo recuperar el script del Dataflow desde Qlik Cloud",
           },
         },
         404,

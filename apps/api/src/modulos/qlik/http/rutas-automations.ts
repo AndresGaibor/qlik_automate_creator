@@ -10,7 +10,12 @@ import {
   esquemaCrearEjecucionQlik,
 } from "@qlik/contratos/qlik";
 import { Hono } from "hono";
-import { reenviar, rutaAutomatizacion, rutaEjecucion, type ResolverClienteQlik } from "./proxy-utils.js";
+import {
+  type ResolverClienteQlik,
+  reenviar,
+  rutaAutomatizacion,
+  rutaEjecucion,
+} from "./proxy-utils.js";
 
 export function crearRutasAutomations(resolverCliente: ResolverClienteQlik) {
   const rutas = new Hono();

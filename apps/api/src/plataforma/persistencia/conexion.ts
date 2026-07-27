@@ -27,11 +27,24 @@ class DbHolder {
     }
     return this._db;
   }
+
+  async cerrar(): Promise<void> {
+    if (!this._client) return;
+    const cliente = this._client;
+    this._client = null;
+    this._db = null;
+    await cliente.end({ timeout: 5 });
+  }
 }
 
 const dbHolder = new DbHolder();
 export const db = dbHolder.db;
+export { dbHolder };
 export type ConexionDb = typeof db;
+
+export async function cerrarConexion(): Promise<void> {
+  await dbHolder.cerrar();
+}
 
 export async function asegurarEsquemaTablas(): Promise<void> {
   try {
@@ -40,13 +53,13 @@ export async function asegurarEsquemaTablas(): Promise<void> {
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_id_qlik TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_nombre TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS destino_api_url TEXT;
-      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS destino_api_key TEXT;
+      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS destino_api_key_cifrada TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS destino_base_datos TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS impala_host TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS impala_port INTEGER;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS impala_auth_mechanism TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS impala_user TEXT;
-      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS impala_password TEXT;
+      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS impala_password_cifrada TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS impala_database TEXT;
     `);
   } catch (error) {

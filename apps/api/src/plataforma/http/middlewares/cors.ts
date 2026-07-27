@@ -6,7 +6,7 @@ let cachedOrigin: string | null = null;
 
 export function crearMiddlewareCors(db: ConexionDb, origenEstatico?: string) {
   if (origenEstatico) {
-    return cors({ origin: origenEstatico, credentials: true });
+    return cors({ origin: new URL(origenEstatico).origin, credentials: true });
   }
 
   return cors({

@@ -7,9 +7,16 @@ import {
   esquemaCrearConexionAutomatizacion,
 } from "@qlik/contratos/qlik";
 import { Hono } from "hono";
-import { reenviar, rutaConexion, id, type ResolverClienteQlik } from "./proxy-utils.js";
+import {
+  type ResolverClienteQlik,
+  id,
+  reenviar,
+  rutaConexion,
+} from "./proxy-utils.js";
 
-export function crearRutasAutomationConnections(resolverCliente: ResolverClienteQlik) {
+export function crearRutasAutomationConnections(
+  resolverCliente: ResolverClienteQlik,
+) {
   const rutas = new Hono();
 
   rutas.get("/workflows/automation-connectors", (c) =>

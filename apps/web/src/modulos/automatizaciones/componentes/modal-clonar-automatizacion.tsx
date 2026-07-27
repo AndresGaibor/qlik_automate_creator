@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { useState } from "react";
 
 interface Props {
   open: boolean;
@@ -24,12 +24,18 @@ export function ModalClonarAutomatizacion({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
       <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-gray-100 relative">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Clonar Automatización</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">
+          Clonar Automatización
+        </h3>
         <p className="text-sm text-gray-600 mb-4">
-          Se creará una copia de esta automatización con todos sus nodos y configuración.
+          Se creará una copia de esta automatización con todos sus nodos y
+          configuración.
         </p>
 
-        <label htmlFor="nombre-clon" className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label
+          htmlFor="nombre-clon"
+          className="block text-sm font-medium text-gray-700 mb-1.5"
+        >
           Nombre de la copia
         </label>
         <input

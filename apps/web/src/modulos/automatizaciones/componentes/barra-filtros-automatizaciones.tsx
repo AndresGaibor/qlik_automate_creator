@@ -10,9 +10,9 @@ interface Props {
   buscar: (e: React.FormEvent) => void;
   limpiar: () => void;
   espacios: { id: string; nombre: string }[];
+  errorEspacios?: boolean;
   espacioFiltrado?: string;
   onEspacioChange: (id: string) => void;
-  onNueva: () => void;
 }
 
 export function BarraFiltrosAutomatizaciones({
@@ -21,17 +21,17 @@ export function BarraFiltrosAutomatizaciones({
   buscar,
   limpiar,
   espacios,
+  errorEspacios,
   espacioFiltrado,
   onEspacioChange,
-  onNueva,
 }: Props) {
   const busqueda = sufijoBusqueda(espacioFiltrado);
 
   return (
     <>
       <PageHeader
-        title="Automatizaciones"
-        description="Aquí encuentras todas tus automatizaciones activas. Puedes buscarlas por nombre, filtrarlas por espacio o crear una nueva en segundos."
+        title="Automatizaciones de Qlik Automate"
+        description="Crea procesos en Qlik Automate que actualizan tus datos automáticamente, sin que tengas que hacerlo tú cada vez."
         actions={
           <Button asChild font-medium>
             <a href={`/automatizaciones/nueva${busqueda}`}>
@@ -49,17 +49,22 @@ export function BarraFiltrosAutomatizaciones({
           emptyText="No encontramos ese espacio. Intenta con otro nombre."
           allowClear
           opciones={espacios}
+          error={errorEspacios}
           valorSeleccionado={espacioFiltrado ?? ""}
           onSeleccionar={onEspacioChange}
         />
 
         <form onSubmit={buscar}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="buscar-automatizaciones"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Buscar por nombre
           </label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input
+                id="buscar-automatizaciones"
                 type="text"
                 value={busquedaTemp}
                 onChange={(e) => setBusquedaTemp(e.target.value)}
@@ -76,11 +81,7 @@ export function BarraFiltrosAutomatizaciones({
                 </button>
               )}
             </div>
-            <Button
-              type="submit"
-              size="sm"
-              className="text-xs px-4 gap-1.5"
-            >
+            <Button type="submit" size="sm" className="text-xs px-4 gap-1.5">
               <Icon name="search" size="sm" />
               Buscar
             </Button>

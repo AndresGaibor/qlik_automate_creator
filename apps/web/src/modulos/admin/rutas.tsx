@@ -1,4 +1,5 @@
 import { type AnyRoute, createRoute, useParams } from "@tanstack/react-router";
+import { PaginaSuperadmins } from "./PaginaSuperadmins";
 import { PaginaDetalleTenant } from "./pagina-detalle-tenant";
 import { PaginaListaTenants } from "./pagina-lista-tenants";
 
@@ -18,5 +19,11 @@ export function crearRutasAdmin(rutaRaiz: AnyRoute) {
     },
   });
 
-  return [listado, detalle];
+  const superadmins = createRoute({
+    getParentRoute: () => rutaRaiz,
+    path: "/admin/superadmins",
+    component: PaginaSuperadmins,
+  });
+
+  return [listado, detalle, superadmins];
 }

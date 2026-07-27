@@ -2,10 +2,15 @@ export function normalizarHostQlikUrl(host: string): string {
   return host.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 }
 
-export function construirUrlCrearFlujoQlik(host: string, espacioId?: string): string {
+export function construirUrlCrearFlujoQlik(
+  host: string,
+  espacioId?: string,
+): string {
   const hostClean = normalizarHostQlikUrl(host);
   const base = `https://${hostClean}/analytics/prepare?resourceTypes=script%2Cdataset%2Cdataflow%2Ctablerecipe`;
-  return espacioId?.trim() ? `${base}&space_filter=${encodeURIComponent(espacioId.trim())}` : base;
+  return espacioId?.trim()
+    ? `${base}&space_filter=${encodeURIComponent(espacioId.trim())}`
+    : base;
 }
 
 export function construirUrlVerFlujoQlik(
@@ -17,7 +22,9 @@ export function construirUrlVerFlujoQlik(
   const base = `https://${hostClean}/dataflow/${encodeURIComponent(
     flujoId,
   )}/overview/summary?resourceTypes=script%2Cdataset%2Cdataflow%2Ctablerecipe`;
-  return espacioId?.trim() ? `${base}&space_filter=${encodeURIComponent(espacioId.trim())}` : base;
+  return espacioId?.trim()
+    ? `${base}&space_filter=${encodeURIComponent(espacioId.trim())}`
+    : base;
 }
 
 export function construirUrlVerAutomatizacionQlik(

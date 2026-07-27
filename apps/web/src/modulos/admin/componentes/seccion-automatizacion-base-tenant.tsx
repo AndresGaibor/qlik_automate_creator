@@ -74,8 +74,8 @@ export function SeccionAutomatizacionBaseTenant({
             Es una automatización en Qlik Cloud que actúa como molde. Cuando un
             usuario crea una nueva automatización, el sistema la{" "}
             <strong>clona automáticamente</strong> y la personaliza con el
-            Dataflow y la tabla Impala que eligió. Los usuarios finales nunca
-            la ven directamente.
+            Dataflow y la tabla Impala que eligió. Los usuarios finales nunca la
+            ven directamente.
           </p>
           <p className="mt-1.5 text-xs text-amber-700 font-medium flex items-center gap-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
@@ -128,7 +128,6 @@ export function SeccionAutomatizacionBaseTenant({
 
               {/* Grid de dos columnas — siempre visibles */}
               <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-line-200">
-
                 {/* ── PASO 1: Plantilla base ── */}
                 <div className="p-5 space-y-4">
                   <div className="flex items-center gap-3">
@@ -223,8 +222,7 @@ export function SeccionAutomatizacionBaseTenant({
                       </span>
                       {tQlik.impalaDatabase && (
                         <span className="text-xs text-ink-400 truncate">
-                          · base:{" "}
-                          <strong>{tQlik.impalaDatabase}</strong>
+                          · base: <strong>{tQlik.impalaDatabase}</strong>
                         </span>
                       )}
                     </div>

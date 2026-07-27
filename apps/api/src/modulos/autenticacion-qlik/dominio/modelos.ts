@@ -12,7 +12,10 @@ export interface UsuarioOAuthQlik {
   avatarUrl?: string;
 }
 
-export type { InfoSesion, SesionPublica } from "../../../nucleo/sesion/tipos-sesion.js";
+export type {
+  InfoSesion,
+  SesionPublica,
+} from "../../../nucleo/sesion/tipos-sesion.js";
 export type { TenantSesionDisponible } from "../../../nucleo/sesion/tipos-sesion.js";
 
 export interface CredencialesQlik {

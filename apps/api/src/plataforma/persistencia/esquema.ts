@@ -87,13 +87,13 @@ export const tenantsQlik = pgTable(
     automatizacionBaseIdQlik: text("automatizacion_base_id_qlik"),
     automatizacionBaseNombre: text("automatizacion_base_nombre"),
     destinoApiUrl: text("destino_api_url"),
-    destinoApiKey: text("destino_api_key"),
+    destinoApiKeyCifrada: text("destino_api_key_cifrada"),
     destinoBaseDatos: text("destino_base_datos"),
     impalaHost: text("impala_host"),
     impalaPort: integer("impala_port"),
     impalaAuthMechanism: text("impala_auth_mechanism"),
     impalaUser: text("impala_user"),
-    impalaPassword: text("impala_password"),
+    impalaPasswordCifrada: text("impala_password_cifrada"),
     impalaDatabase: text("impala_database"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
@@ -460,6 +460,13 @@ export const automatizacionesQlikCache = pgTable(
     ),
   }),
 );
+
+export const appConfig = pgTable("app_config", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clave: text("clave").notNull().unique(),
+  valor: jsonb("valor").notNull(),
+  actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+});
 
 export const solicitudesIdempotentes = pgTable(
   "solicitudes_idempotentes",

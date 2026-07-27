@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   membresiasOrganizacion,
   organizaciones,
@@ -50,6 +50,23 @@ export async function obtenerTenantPorCorreoUsuario(
   superadminMail?: string,
 ): Promise<TenantQlikAutenticable | null> {
   const correoNormalizado = correo.trim().toLowerCase();
+
+  let superadminCorreos = superadminMail ?? "";
+  if (!superadminCorreos) {
+    try {
+      const resultado = await db.execute(
+        sql`SELECT valor FROM app_config WHERE clave = 'superadmin_email' LIMIT 1`,
+      );
+      const fila = resultado[0] as
+        | { valor: Record<string, unknown> }
+        | undefined;
+      if (fila?.valor?.value) {
+        superadminCorreos = String(fila.valor.value);
+      }
+    } catch {
+      // app_config no existe todavía — ignorar
+    }
+  }
 
   const usuario = await db.query.usuarios.findFirst({
     where: eq(usuarios.correo, correoNormalizado),
