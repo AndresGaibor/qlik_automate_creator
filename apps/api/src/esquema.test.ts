@@ -4,6 +4,7 @@ import {
   auditoriaEventos,
   automatizacionesQlikCache,
   configuracionesAutomatizacion,
+  configuracionesOauthQlik,
   credencialesQlik,
   destinosCache,
   espaciosQlikCache,
@@ -44,6 +45,7 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("nombre");
     expect(cols).toContain("correo");
     expect(cols).toContain("estado");
+    expect(cols).toContain("es_superadmin");
   });
 
   it("membresiasOrganizacion tiene las columnas de FK", () => {
@@ -62,6 +64,20 @@ describe("Esquema Drizzle", () => {
     expect(idxNames(getTableConfig(tenantsQlik))).toContain(
       "uq_tenant_principal_por_organizacion",
     );
+  });
+
+  it("configuracionesOauthQlik protege secretos por tenant", () => {
+    const config = getTableConfig(configuracionesOauthQlik);
+    const cols = colNames(config);
+    expect(cols).toContain("tenant_qlik_id");
+    expect(cols).toContain("cliente_id");
+    expect(cols).toContain("cliente_secreto_cifrado");
+    expect(cols).toContain("secreto_sufijo");
+    expect(cols).toContain("scopes");
+    expect(cols).toContain("estado");
+    expect(cols).toContain("verificada_en");
+    expect(cols).toContain("ultimo_error");
+    expect(idxNames(config)).toContain("uq_configuracion_oauth_por_tenant");
   });
 
   it("identidadesQlik tiene las columnas esperadas", () => {

@@ -62,6 +62,10 @@ export interface PuertoQlik {
   listarFlujos(
     espacioId?: string,
   ): Promise<import("../../dominio/modelos-qlik.js").FlujoQlik[]>;
+  obtenerScriptApp(
+    appId: string,
+    scriptId?: string,
+  ): Promise<{ script: string; versionMessage?: string }>;
 }
 
 export type ServicioQlik = PuertoQlik;

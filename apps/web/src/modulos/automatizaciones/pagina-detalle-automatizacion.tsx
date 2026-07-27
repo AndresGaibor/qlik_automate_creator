@@ -3,17 +3,23 @@ import { estaEnCurso } from "@/compartido/utiles/estados-ejecucion";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type DetalleAutomatizacion,
   type EjecucionResumen,
+  type WorkspaceAutomatizacion,
+  clonarAutomatizacion,
   detenerEjecucion,
   ejecutarAutomatizacion,
   obtenerDetalleAutomatizacion,
+  obtenerWorkspaceAutomatizacion,
 } from "@/modulos/automatizaciones/api";
 import { TarjetaDetalleAutomatizacion } from "@/modulos/automatizaciones/componentes/tarjeta-detalle-automatizacion";
 import { ListaEjecuciones } from "@/modulos/automatizaciones/componentes/lista-ejecuciones";
+import { VisorWorkspace } from "@/modulos/automatizaciones/componentes/visor-workspace";
+import { ModalClonarAutomatizacion } from "@/modulos/automatizaciones/componentes/modal-clonar-automatizacion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
@@ -23,6 +29,8 @@ interface Props {
 export function PaginaDetalleAutomatizacion({ id }: Props) {
   const { mostrarError, mostrarExito } = useNotificaciones();
   const queryClient = useQueryClient();
+  const navegar = useNavigate();
+  const [modalClonarAbierto, setModalClonarAbierto] = useState(false);
 
   const { data: sesion } = useQuery({
     queryKey: ["sesion"],
@@ -74,6 +82,29 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     },
     onError: (err: Error) => {
       mostrarError(err.message);
+    },
+  });
+
+  const {
+    data: workspace,
+    isLoading: cargandoWorkspace,
+  } = useQuery<WorkspaceAutomatizacion>({
+    queryKey: ["workspace", id],
+    queryFn: () => obtenerWorkspaceAutomatizacion(id),
+    retry: false,
+  });
+
+  const mutationClonar = useMutation({
+    mutationFn: (nombre: string) => clonarAutomatizacion(id, { nombre }),
+    onSuccess: (resultado) => {
+      mostrarExito(`Automatización "${resultado.nombre}" clonada correctamente`);
+      setModalClonarAbierto(false);
+      queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
+      navegar({ to: `/automatizaciones/${resultado.id}` });
+    },
+    onError: (err: Error) => {
+      mostrarError(err.message);
+      setModalClonarAbierto(false);
     },
   });
 
@@ -131,9 +162,20 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
         onDetener={(runId) => mutationDetener.mutate(runId)}
         mutationEjecutar={mutationEjecutar}
         mutationDetener={mutationDetener}
+        onClonar={() => setModalClonarAbierto(true)}
       />
 
+      {workspace && <VisorWorkspace workspace={workspace} />}
+
       <ListaEjecuciones ejecuciones={ejecuciones ?? []} />
+
+      <ModalClonarAutomatizacion
+        open={modalClonarAbierto}
+        nombreOriginal={auto.nombre}
+        cargando={mutationClonar.isPending}
+        onConfirmar={(nombre) => mutationClonar.mutate(nombre)}
+        onCancelar={() => setModalClonarAbierto(false)}
+      />
     </div>
   );
 }

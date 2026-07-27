@@ -43,6 +43,35 @@ export interface UsuarioAdministrable {
   rol: RolAdministracion;
 }
 
+export type EstadoConfiguracionOauth =
+  | "pendiente"
+  | "verificada"
+  | "error"
+  | "desactivada";
+
+export interface ConfiguracionOauthAdministrable {
+  tenantQlikId: string;
+  clienteId: string;
+  secretoMascara: string;
+  scopes: string[];
+  estado: EstadoConfiguracionOauth;
+  origen: "tenant";
+  verificadaEn: Date | null;
+  ultimoError: string | null;
+  actualizadoEn: Date;
+}
+
+export interface EntradaGuardarConfiguracionOauth {
+  clienteId: string;
+  clienteSecreto?: string;
+  scopes: string[];
+  usuarioId?: string;
+}
+
+export interface ServicioCifradoAdministracion {
+  cifrar(valor: string): { cifrado: string; iv: string; tag: string };
+}
+
 export interface EntradaConfigurarImpala {
   impalaHost: string;
   impalaPort?: number;
@@ -108,4 +137,17 @@ export interface RepositorioAdministracion {
     organizacionId: string,
     tenantQlikId: string,
   ): Promise<ResultadoEliminarTenantQlik>;
+  obtenerConfiguracionOAuth(
+    organizacionId: string,
+    tenantQlikId: string,
+  ): Promise<ConfiguracionOauthAdministrable | null>;
+  guardarConfiguracionOAuth(
+    organizacionId: string,
+    tenantQlikId: string,
+    entrada: EntradaGuardarConfiguracionOauth,
+  ): Promise<ConfiguracionOauthAdministrable | null>;
+  eliminarConfiguracionOAuth(
+    organizacionId: string,
+    tenantQlikId: string,
+  ): Promise<boolean>;
 }

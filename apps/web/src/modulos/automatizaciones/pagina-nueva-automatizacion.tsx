@@ -69,6 +69,8 @@ export function PaginaNuevaAutomatizacion() {
       return crearAutomatizacionDesdePlantilla({
         nombre: nombre.trim() || `Auto - ${flujoObj.nombre} → ${tablaId}`,
         espacioIdQlik: espacioIdActual,
+        flujoId,
+        tablaId,
         reemplazosWorkspace: [],
       });
     },

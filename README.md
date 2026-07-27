@@ -133,11 +133,11 @@ bun run dev
 
 ```env
 DATABASE_URL=postgres://qlik_app:desarrollo@localhost:5432/qlik_automatizaciones
-QLIK_TENANT_HOST=miempresa.eu.qlikcloud.com
+QLIK_REDIRECT_URI=http://localhost:3000/api/auth/qlik/callback
+QLIK_OAUTH_SCOPES="user_default offline_access identity.name:read identity.email:read identity.subject:read identity.picture:read automations automations.private automations.shared spaces:read apps:read data-integration"
+# Fallback temporal; puede quedar vacío cuando los tenants se configuran desde la app.
 QLIK_CLIENT_ID=...
 QLIK_CLIENT_SECRET=...
-QLIK_REDIRECT_URI=http://localhost:3000/api/auth/qlik/callback
-QLIK_OAUTH_SCOPES="user_default offline_access identity.name:read identity.email:read identity.subject:read identity.picture:read automations automations.private automations.shared spaces:read"
 CIFRADO_CLAVE_PRINCIPAL=...
 REMOTE_API_URL=https://api.example.com
 REMOTE_API_KEY=...
@@ -149,6 +149,22 @@ Genera la clave de cifrado con:
 openssl rand -base64 32
 ```
 
+## Configuración OAuth por tenant
+
+El primer superadministrador se crea con `bun run db:seed`. El bootstrap marca su usuario como superadmin en PostgreSQL; `SUPERADMINMAIL` queda únicamente como mecanismo inicial y fallback de migración.
+
+Después del primer inicio de sesión:
+
+1. Abre **Administración** y entra al detalle de una organización.
+2. Registra el host de cada entorno Qlik Cloud.
+3. En **Acceso OAuth de Qlik**, sigue las instrucciones mostradas para crear un cliente Web en Qlik.
+4. Copia la URL de redirección exacta, el Client ID y el Client Secret.
+5. Pulsa **Guardar y conectar con Qlik** para ejecutar una verificación OAuth real.
+
+Cada tenant guarda su propio Client ID, scopes y secreto cifrado. El secreto no se devuelve al navegador ni se registra en auditoría. Mientras un tenant no tenga configuración propia, puede usar temporalmente `QLIK_CLIENT_ID` y `QLIK_CLIENT_SECRET` del entorno global.
+
+Los administradores de una organización pueden crear, actualizar y verificar OAuth de sus tenants. Solo un superadministrador puede eliminar una configuración OAuth.
+
 ## Calidad
 
 ```bash
@@ -158,7 +174,7 @@ bun run lint
 bun run build
 ```
 
-La migración `apps/api/drizzle/0001_arquitectura_modular.sql` agrega las tablas `solicitudes_idempotentes` y `eventos_outbox`.
+Las migraciones `0006_panoramic_plazm.sql` y `0007_superadmin_oauth_por_tenant.sql` incorporan el superadministrador persistido y la configuración OAuth cifrada por tenant.
 
 ## Cloudflare Worker
 

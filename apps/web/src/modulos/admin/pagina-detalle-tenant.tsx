@@ -1,16 +1,21 @@
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
-import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { type DetalleTenant, obtenerDetalleTenant, obtenerTenantsQlik } from "./api";
-import { SeccionInfoTenant } from "./componentes/seccion-info-tenant";
-import { SeccionQlikCloud } from "./componentes/seccion-qlik-cloud";
+import {
+  type DetalleTenant,
+  obtenerDetalleTenant,
+  obtenerTenantsQlik,
+} from "./api";
+import type { TenantQlik } from "./api";
 import { SeccionAutomatizacionBaseTenant } from "./componentes/seccion-automatizacion-base-tenant";
+import { SeccionInfoTenant } from "./componentes/seccion-info-tenant";
+import { SeccionOauthQlik } from "./componentes/seccion-oauth-qlik";
+import { SeccionQlikCloud } from "./componentes/seccion-qlik-cloud";
 import { SeccionUsuarios } from "./componentes/seccion-usuarios";
 import { useDetalleTenantMutations } from "./hooks/useDetalleTenantMutations";
-import type { TenantQlik } from "./api";
 
 interface Props {
   tenantId: string;
@@ -112,6 +117,8 @@ export function PaginaDetalleTenant({ tenantId }: Props) {
         eliminar={eliminarQlik}
         hacerPrincipal={hacerPrincipal}
       />
+
+      <SeccionOauthQlik organizacionId={tenantId} tenantsQlik={tenantsQlik} />
 
       <SeccionAutomatizacionBaseTenant
         organizacionId={tenantId}

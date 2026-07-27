@@ -126,6 +126,51 @@ export function crearRutasPanelAutomatizaciones(
     return responderExito(c, resultado, 201);
   });
 
+  rutas.get("/:id/workspace", async (c) => {
+    const id = esquemaIdQlik.parse(c.req.param("id"));
+    const qlik = await dependencias.resolverQlik(c);
+    const automatizacion = await qlik.obtenerAutomatizacion(id);
+    return responderExito(c, {
+      id: automatizacion.id,
+      nombre: automatizacion.name,
+      workspace: automatizacion.workspace ?? {},
+      schedules: automatizacion.schedules ?? [],
+    });
+  });
+
+  rutas.put("/:id/workspace", async (c) => {
+    const id = esquemaIdQlik.parse(c.req.param("id"));
+    const cuerpo = (await c.req.json()) as { workspace: Record<string, unknown> };
+    if (!cuerpo || typeof cuerpo.workspace !== "object" || cuerpo.workspace === null) {
+      return c.json({ exito: false, error: { mensaje: "El workspace debe ser un objeto JSON válido" } }, 400);
+    }
+    const qlik = await dependencias.resolverQlik(c);
+    const actualizada = await qlik.actualizarAutomatizacion(id, {
+      workspace: cuerpo.workspace,
+    });
+    return responderExito(c, {
+      id: actualizada.id,
+      nombre: actualizada.name,
+      workspace: actualizada.workspace ?? {},
+    });
+  });
+
+  rutas.post("/:id/clonar", async (c) => {
+    const id = esquemaIdQlik.parse(c.req.param("id"));
+    const cuerpo = (await c.req.json().catch(() => ({}))) as {
+      nombre?: string;
+      espacioIdQlik?: string;
+    };
+    const qlik = await dependencias.resolverQlik(c);
+    const original = await qlik.obtenerAutomatizacion(id);
+    const nombreCopia = cuerpo.nombre?.trim() || `${original.name} (Copia)`;
+    const copia = await qlik.copiarAutomatizacion(id, nombreCopia);
+    if (cuerpo.espacioIdQlik) {
+      await qlik.cambiarEspacioAutomatizacion(copia.id, cuerpo.espacioIdQlik);
+    }
+    return responderExito(c, { id: copia.id, nombre: nombreCopia }, 201);
+  });
+
   rutas.get("/:id", async (c) => {
     const id = esquemaIdQlik.parse(c.req.param("id"));
     const qlik = await dependencias.resolverQlik(c);

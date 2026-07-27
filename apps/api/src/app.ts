@@ -2,39 +2,40 @@ import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
 import { eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import { RepositorioAdministracionPostgres } from "./modulos/admin/infraestructura/publico.js";
 import {
   type ContextoSesion,
   type RepositorioAdministracion,
   type ResolverContextoAdmin,
   crearRutasAdmin,
 } from "./modulos/admin/publico.js";
-import { RepositorioAdministracionPostgres } from "./modulos/admin/infraestructura/publico.js";
+import {
+  ClienteOAuthQlik,
+  RepositorioAutenticacionPostgres,
+  RepositorioConfiguracionOAuthPostgres,
+} from "./modulos/autenticacion-qlik/infraestructura/publico.js";
 import {
   type RepositorioAutenticacion,
   ServicioAutenticacionQlik,
   crearRutasAutenticacionQlik,
 } from "./modulos/autenticacion-qlik/publico.js";
-import {
-  ClienteOAuthQlik,
-  RepositorioAutenticacionPostgres,
-} from "./modulos/autenticacion-qlik/infraestructura/publico.js";
-import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
-import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
 import { ConsultaTenantQlikPostgres } from "./modulos/automatizaciones/infraestructura/consulta-tenant-qlik-postgres.js";
+import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
+import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
+import { ClienteImpalaDirecto } from "./modulos/destinos/infraestructura/publico.js";
 import {
   type PuertoCatalogoDestinos,
   crearRutasDestinos,
 } from "./modulos/destinos/publico.js";
-import {
-  ClienteImpalaDirecto,
-} from "./modulos/destinos/infraestructura/publico.js";
-import { crearRutasFlujos } from "./modulos/flujos/publico.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/publico.js";
-import { type ServicioQlik, crearRutasProxyQlik } from "./modulos/qlik/publico.js";
+import { crearRutasFlujos } from "./modulos/flujos/publico.js";
+import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
-  ClienteHttpQlik,
-} from "./modulos/qlik/infraestructura/publico.js";
+  type ServicioQlik,
+  crearRutasProxyQlik,
+} from "./modulos/qlik/publico.js";
 import type { PuertoAuditoria } from "./nucleo/auditoria/puerto-auditoria.js";
+import { ErrorNoAutorizado } from "./nucleo/errores/error-aplicacion.js";
 import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "./nucleo/idempotencia/puerto-idempotencia.js";
 import type { ConfiguracionAplicacion } from "./plataforma/configuracion/entorno.js";
@@ -42,7 +43,6 @@ import {
   type ContextoSolicitudAutenticado,
   construirContextoSolicitud,
 } from "./plataforma/contexto/contexto-solicitud.js";
-import { ErrorNoAutorizado } from "./nucleo/errores/error-aplicacion.js";
 import { crearManejadorErrores } from "./plataforma/errores/manejador-http.js";
 import { crearMiddlewareCors } from "./plataforma/http/middlewares/cors.js";
 import { crearMiddlewareObservabilidad } from "./plataforma/http/middlewares/observabilidad.js";
@@ -87,7 +87,11 @@ export function crearAplicacion(
   const registrador = dependencias.registrador ?? registradorConsola;
   const repositorioAutenticacion =
     dependencias.repositorioAutenticacion ??
-    new RepositorioAutenticacionPostgres(db, servicioCifrado, configuracion?.SUPERADMINMAIL);
+    new RepositorioAutenticacionPostgres(
+      db,
+      servicioCifrado,
+      configuracion?.SUPERADMINMAIL,
+    );
   const servicioAutenticacion =
     dependencias.servicioAutenticacion ??
     crearServicioAutenticacionDiferido(repositorioAutenticacion, configuracion);
@@ -151,13 +155,12 @@ export function crearAplicacion(
     );
   };
 
-
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
   const outbox = dependencias.outbox ?? new OutboxPostgres();
   const auditoria = dependencias.auditoria ?? new AuditoriaPostgres();
   const repositorioAdministracion =
     dependencias.repositorioAdministracion ??
-    new RepositorioAdministracionPostgres(db);
+    new RepositorioAdministracionPostgres(db, servicioCifrado);
   const resolverContextoAdmin =
     dependencias.resolverContextoAdmin ??
     (async (c) => {
@@ -168,6 +171,7 @@ export function crearAplicacion(
       if (!sesion) throw new Error("Sesión inválida");
       return {
         esSuperadmin: contexto.esSuperadmin ?? false,
+        usuarioId: contexto.usuarioId,
         membresias: sesion.membresias,
       };
     });
@@ -179,6 +183,17 @@ export function crearAplicacion(
     "http://localhost:5173";
   const produccion =
     (configuracion?.NODE_ENV ?? process.env.NODE_ENV) === "production";
+  const redirectUriOAuth =
+    configuracion?.QLIK_REDIRECT_URI ??
+    process.env.QLIK_REDIRECT_URI ??
+    "http://localhost:3000/api/auth/qlik/callback";
+  const scopesOAuthHeredados = (
+    configuracion?.QLIK_OAUTH_SCOPES ??
+    process.env.QLIK_OAUTH_SCOPES ??
+    ""
+  )
+    .split(/\s+/)
+    .filter(Boolean);
 
   aplicacion.use("*", crearMiddlewareCors(frontendUrl));
   aplicacion.use("*", crearMiddlewareObservabilidad(registrador));
@@ -203,6 +218,7 @@ export function crearAplicacion(
     "/api/flujos",
     crearRutasFlujos(
       async (c) => new ConsultaFlujosQlik(await resolverQlik(c)),
+      resolverQlik,
     ),
   );
   aplicacion.route(
@@ -227,6 +243,15 @@ export function crearAplicacion(
     crearRutasAdmin({
       repositorio: repositorioAdministracion,
       resolverContexto: resolverContextoAdmin,
+      redirectUri: redirectUriOAuth,
+      configuracionHeredada: {
+        clienteId: configuracion?.QLIK_CLIENT_ID ?? process.env.QLIK_CLIENT_ID,
+        tieneSecreto: Boolean(
+          configuracion?.QLIK_CLIENT_SECRET ?? process.env.QLIK_CLIENT_SECRET,
+        ),
+        scopes: scopesOAuthHeredados,
+      },
+      auditoria,
     }),
   );
 
@@ -240,23 +265,51 @@ export function crearAplicacion(
   return aplicacion;
 }
 
-
-
 function crearServicioAutenticacionDiferido(
   repositorio: RepositorioAutenticacion,
   configuracion?: ConfiguracionAplicacion,
 ): ServicioAutenticacionQlik {
+  const scopesHeredados = (
+    configuracion?.QLIK_OAUTH_SCOPES ??
+    process.env.QLIK_OAUTH_SCOPES ??
+    ""
+  )
+    .split(/\s+/)
+    .filter(Boolean);
+  const configuracionesOAuth = new RepositorioConfiguracionOAuthPostgres(
+    db,
+    servicioCifrado,
+    {
+      clienteId: configuracion?.QLIK_CLIENT_ID ?? process.env.QLIK_CLIENT_ID,
+      clienteSecreto:
+        configuracion?.QLIK_CLIENT_SECRET ?? process.env.QLIK_CLIENT_SECRET,
+      scopes: scopesHeredados,
+    },
+  );
+
   return new ServicioAutenticacionQlik(
-    (hostTenant) =>
-      new ClienteOAuthQlik(
-        configuracion?.QLIK_CLIENT_ID ?? exigirEntorno("QLIK_CLIENT_ID"),
-        configuracion?.QLIK_CLIENT_SECRET ??
-          exigirEntorno("QLIK_CLIENT_SECRET"),
-        configuracion?.QLIK_REDIRECT_URI ?? exigirEntorno("QLIK_REDIRECT_URI"),
-        hostTenant,
-        configuracion?.QLIK_OAUTH_SCOPES ?? process.env.QLIK_OAUTH_SCOPES,
-      ),
+    async (tenant, configuracionId) => {
+      const credenciales = await configuracionesOAuth.obtenerParaTenant(
+        tenant.id,
+        configuracionId,
+      );
+      return {
+        cliente: new ClienteOAuthQlik(
+          credenciales.clienteId,
+          credenciales.clienteSecreto,
+          configuracion?.QLIK_REDIRECT_URI ??
+            exigirEntorno("QLIK_REDIRECT_URI"),
+          tenant.host,
+          credenciales.scopes.length
+            ? credenciales.scopes.join(" ")
+            : undefined,
+        ),
+        configuracionId: credenciales.configuracionId,
+        origen: credenciales.origen,
+      };
+    },
     repositorio,
+    configuracionesOAuth,
   );
 }
 

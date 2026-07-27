@@ -38,6 +38,7 @@ export const usuarios = pgTable(
     correo: text("correo"),
     avatarUrl: text("avatar_url"),
     estado: text("estado").notNull().default("activo"),
+    esSuperadmin: boolean("es_superadmin").notNull().default(false),
     ultimoAccesoEn: timestamp("ultimo_acceso_en"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
@@ -108,6 +109,42 @@ export const tenantsQlik = pgTable(
     ckEstado: check(
       "tenants_estado_check",
       sql`${t.estado} IN ('activo', 'desconectado', 'suspendido')`,
+    ),
+  }),
+);
+
+export const configuracionesOauthQlik = pgTable(
+  "configuraciones_oauth_qlik",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantQlikId: uuid("tenant_qlik_id")
+      .notNull()
+      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
+    clienteId: text("cliente_id").notNull(),
+    clienteSecretoCifrado: text("cliente_secreto_cifrado").notNull(),
+    secretoSufijo: text("secreto_sufijo").notNull(),
+    scopes: text("scopes").array().notNull().default([]),
+    estado: text("estado").notNull().default("pendiente"),
+    verificadaEn: timestamp("verificada_en"),
+    ultimoError: text("ultimo_error"),
+    creadoPorUsuarioId: uuid("creado_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+    actualizadoPorUsuarioId: uuid("actualizado_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    uqTenant: uniqueIndex("uq_configuracion_oauth_por_tenant").on(
+      t.tenantQlikId,
+    ),
+    ckEstado: check(
+      "configuraciones_oauth_estado_check",
+      sql`${t.estado} IN ('pendiente', 'verificada', 'error', 'desactivada')`,
     ),
   }),
 );

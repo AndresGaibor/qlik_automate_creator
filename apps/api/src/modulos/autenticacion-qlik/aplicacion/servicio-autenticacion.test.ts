@@ -32,9 +32,9 @@ describe("ServicioAutenticacionQlik dinámico", () => {
         host === tenant.host ? tenant : null,
     } as RepositorioAutenticacion;
     const hosts: string[] = [];
-    const servicio = new ServicioAutenticacionQlik((host) => {
-      hosts.push(host);
-      return oauthFalso();
+    const servicio = new ServicioAutenticacionQlik((tenantResuelto) => {
+      hosts.push(tenantResuelto.host);
+      return { cliente: oauthFalso(), origen: "entorno_global" as const };
     }, repositorio);
 
     const resultado = await servicio.iniciar(tenant.host);
@@ -53,7 +53,7 @@ describe("ServicioAutenticacionQlik dinámico", () => {
       },
     } as unknown as RepositorioAutenticacion;
     const servicio = new ServicioAutenticacionQlik(
-      () => oauthFalso(),
+      () => ({ cliente: oauthFalso(), origen: "entorno_global" as const }),
       repositorio,
     );
 
@@ -69,6 +69,47 @@ describe("ServicioAutenticacionQlik dinámico", () => {
     expect(accesoGuardado?.hostTenant).toBe(tenant.host);
   });
 
+  it("conserva la configuración OAuth del tenant y la marca verificada", async () => {
+    const configuracionesUsadas: Array<string | undefined> = [];
+    const verificadas: string[] = [];
+    const repositorio = {
+      obtenerTenantPorHost: async () => tenant,
+      obtenerTenantPorId: async () => tenant,
+      guardarAcceso: async () => ({ tokenSesion: "sesion" }),
+    } as unknown as RepositorioAutenticacion;
+    const servicio = new ServicioAutenticacionQlik(
+      (_tenant, configuracionId) => {
+        configuracionesUsadas.push(configuracionId);
+        return {
+          cliente: oauthFalso(),
+          configuracionId: "oauth-tenant-1",
+          origen: "tenant" as const,
+        };
+      },
+      repositorio,
+      {
+        marcarVerificada: async (id) => {
+          verificadas.push(id);
+        },
+        marcarError: async () => undefined,
+      },
+    );
+
+    const inicio = await servicio.iniciar(tenant.host);
+    await servicio.completar({
+      tenantQlikId: tenant.id,
+      configuracionOauthId: inicio.configuracionOauthId,
+      codigo: "codigo",
+      verificador: "verificador",
+      ip: "127.0.0.1",
+      agenteUsuario: "prueba",
+    });
+
+    expect(inicio.configuracionOauthId).toBe("oauth-tenant-1");
+    expect(configuracionesUsadas).toEqual([undefined, "oauth-tenant-1"]);
+    expect(verificadas).toEqual(["oauth-tenant-1"]);
+  });
+
   it("inicia OAuth resolviendo el tenant a partir del correo del usuario", async () => {
     const repositorio = {
       obtenerTenantPorCorreoUsuario: async (correo: string) =>
@@ -78,13 +119,15 @@ describe("ServicioAutenticacionQlik dinámico", () => {
     } as RepositorioAutenticacion;
 
     const servicio = new ServicioAutenticacionQlik(
-      () => oauthFalso(),
+      () => ({ cliente: oauthFalso(), origen: "entorno_global" as const }),
       repositorio,
     );
 
     const resultado = await servicio.iniciarPorCorreo("usuario@empresa.com");
 
     expect(resultado.tenantQlikId).toBe(tenant.id);
-    expect(resultado.url).toContain("https://empresa.eu.qlikcloud.com/oauth/authorize");
+    expect(resultado.url).toContain(
+      "https://empresa.eu.qlikcloud.com/oauth/authorize",
+    );
   });
 });

@@ -280,6 +280,16 @@ export class ClienteHttpQlik implements ServicioQlik {
     }
     return [];
   }
+
+  obtenerScriptApp(
+    appId: string,
+    scriptId: string = "current",
+  ): Promise<{ script: string; versionMessage?: string }> {
+    return this.solicitarJson<{ script: string; versionMessage?: string }>({
+      metodo: "GET",
+      ruta: `/api/v1/apps/${encodeURIComponent(appId)}/scripts/${encodeURIComponent(scriptId)}`,
+    });
+  }
 }
 
 async function leerCuerpoError(respuesta: Response): Promise<unknown> {

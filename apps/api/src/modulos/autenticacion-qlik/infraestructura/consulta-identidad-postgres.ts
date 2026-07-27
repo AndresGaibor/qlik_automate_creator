@@ -9,6 +9,7 @@ import type {
   ConexionDb,
   TenantQlikAutenticable,
 } from "../aplicacion/puertos/repositorio-autenticacion.js";
+import { resolverEsSuperadministrador } from "../dominio/superadministrador.js";
 import { validarYNormalizarHost } from "../dominio/validador-host-qlik.js";
 
 export async function obtenerTenantPorHost(
@@ -87,12 +88,14 @@ export async function obtenerTenantPorCorreoUsuario(
     }
   }
 
-  const superadmins = (superadminMail ?? process.env.SUPERADMINMAIL ?? process.env.SUPERADMIN_EMAIL ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-
-  const esSuperadmin = superadmins.includes(correoNormalizado);
+  const esSuperadmin = resolverEsSuperadministrador({
+    persistido: Boolean(usuario?.esSuperadmin),
+    correo: correoNormalizado,
+    correosHeredados:
+      superadminMail ??
+      process.env.SUPERADMINMAIL ??
+      process.env.SUPERADMIN_EMAIL,
+  });
 
   if (esSuperadmin) {
     const tenantPrincipal = await db.query.tenantsQlik.findFirst({
@@ -102,7 +105,10 @@ export async function obtenerTenantPorCorreoUsuario(
       return {
         id: tenantPrincipal.id,
         host: tenantPrincipal.host,
-        estado: tenantPrincipal.estado as "activo" | "desconectado" | "suspendido",
+        estado: tenantPrincipal.estado as
+          | "activo"
+          | "desconectado"
+          | "suspendido",
       };
     }
   }

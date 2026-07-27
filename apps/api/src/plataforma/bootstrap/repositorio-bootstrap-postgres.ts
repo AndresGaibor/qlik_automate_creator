@@ -64,11 +64,11 @@ export class RepositorioBootstrapPostgres implements RepositorioBootstrap {
       `;
       if (!usuario) {
         [usuario] = await tx<{ id: string }[]>`
-          INSERT INTO usuarios (nombre, correo, estado)
-          VALUES (${datos.nombre}, ${datos.correo}, 'activo') RETURNING id
+          INSERT INTO usuarios (nombre, correo, estado, es_superadmin)
+          VALUES (${datos.nombre}, ${datos.correo}, 'activo', true) RETURNING id
         `;
       } else {
-        await tx`UPDATE usuarios SET nombre = ${datos.nombre}, estado = 'activo', actualizado_en = NOW() WHERE id = ${usuario.id}`;
+        await tx`UPDATE usuarios SET nombre = ${datos.nombre}, estado = 'activo', es_superadmin = true, actualizado_en = NOW() WHERE id = ${usuario.id}`;
       }
       if (!usuario) throw new Error("No se pudo crear el superadministrador");
       await tx`

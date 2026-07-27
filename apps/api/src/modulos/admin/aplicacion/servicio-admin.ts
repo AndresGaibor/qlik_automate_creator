@@ -1,5 +1,6 @@
 export interface ContextoSesion {
   esSuperadmin: boolean;
+  usuarioId?: string;
   membresias: Array<{
     organizacionId: string;
     organizacionNombre: string;

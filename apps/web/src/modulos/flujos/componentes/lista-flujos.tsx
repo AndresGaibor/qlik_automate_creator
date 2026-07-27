@@ -9,6 +9,7 @@ import { Pagination } from "@/compartido/componentes/ui/pagination";
 import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ResumenFlujo } from "@/modulos/flujos/api";
+import { VisorScriptFlujoModal } from "./visor-script-flujo-modal";
 
 interface Props {
   flujos: ResumenFlujo[];
@@ -74,6 +75,8 @@ export function ListaFlujos({
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  <VisorScriptFlujoModal flujo={flujo} />
+
                   {targetHost && (
                     <Button
                       asChild

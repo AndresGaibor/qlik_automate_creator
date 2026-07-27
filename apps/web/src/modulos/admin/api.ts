@@ -3,6 +3,8 @@ import type {
   ActualizarTenant,
   ActualizarUsuario,
   AgregarUsuario,
+  ConfiguracionOauthQlik,
+  ConfigurarOauthQlik,
   CrearTenant,
   CrearTenantQlik,
   DetalleTenant,
@@ -16,6 +18,8 @@ export type {
   AgregarUsuario,
   ActualizarTenant,
   CrearTenant,
+  ConfiguracionOauthQlik,
+  ConfigurarOauthQlik,
   DetalleTenant,
   TenantResumen,
   ActualizarUsuario,
@@ -168,7 +172,38 @@ export function configurarImpalaTenant(
 }
 
 export function listarAutomatizacionesParaAdmin() {
-  return clienteApi.get<import("@qlik/contratos/automatizaciones").ResumenAutomatizacion[]>("/automatizaciones", {
+  return clienteApi.get<
+    import("@qlik/contratos/automatizaciones").ResumenAutomatizacion[]
+  >("/automatizaciones", {
     parametros: { incluirBase: "true" },
   });
+}
+
+export function obtenerConfiguracionOauthTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+) {
+  return clienteApi.get<ConfiguracionOauthQlik>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/oauth`,
+  );
+}
+
+export function guardarConfiguracionOauthTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+  entrada: ConfigurarOauthQlik,
+) {
+  return clienteApi.put<ConfiguracionOauthQlik>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/oauth`,
+    entrada,
+  );
+}
+
+export function eliminarConfiguracionOauthTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+) {
+  return clienteApi.delete<{ eliminado: boolean }>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/oauth`,
+  );
 }

@@ -28,7 +28,9 @@ interface RespuestaIniciarSesion {
   error?: { mensaje: string };
 }
 
-export async function iniciarSesion(host: string): Promise<RespuestaIniciarSesion> {
+export async function iniciarSesion(
+  host: string,
+): Promise<RespuestaIniciarSesion> {
   const res = await fetch(
     `/api/auth/qlik/iniciar?host=${encodeURIComponent(host)}&format=json`,
     { headers: { Accept: "application/json" } },
@@ -36,10 +38,27 @@ export async function iniciarSesion(host: string): Promise<RespuestaIniciarSesio
   return res.json();
 }
 
-export async function iniciarSesionPorCorreo(correo: string): Promise<RespuestaIniciarSesion> {
+export async function iniciarSesionPorCorreo(
+  correo: string,
+): Promise<RespuestaIniciarSesion> {
   const res = await fetch(
     `/api/auth/qlik/iniciar-por-correo?correo=${encodeURIComponent(correo)}&format=json`,
     { headers: { Accept: "application/json" } },
   );
+  return res.json();
+}
+
+export async function iniciarVerificacionOauth(
+  host: string,
+  retorno: string,
+): Promise<RespuestaIniciarSesion> {
+  const parametros = new URLSearchParams({
+    host,
+    retorno,
+    format: "json",
+  });
+  const res = await fetch(`/api/auth/qlik/iniciar?${parametros.toString()}`, {
+    headers: { Accept: "application/json" },
+  });
   return res.json();
 }

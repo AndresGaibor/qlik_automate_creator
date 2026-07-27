@@ -20,11 +20,19 @@ import type {
   InfoSesion,
   SesionPublica,
 } from "../dominio/modelos.js";
+import { resolverEsSuperadministrador } from "../dominio/superadministrador.js";
 import { validarYNormalizarHost } from "../dominio/validador-host-qlik.js";
-import { hash } from "./hashing-postgres.js";
-import { buscarSesionValida, revocarSesion as revocarSesionHelper } from "./consulta-sesion-postgres.js";
-import { obtenerTenantPorHost, obtenerTenantPorId, obtenerTenantPorCorreoUsuario } from "./consulta-identidad-postgres.js";
 import { obtenerCredenciales as obtenerCredencialesHelper } from "./consulta-credenciales-postgres.js";
+import {
+  obtenerTenantPorCorreoUsuario,
+  obtenerTenantPorHost,
+  obtenerTenantPorId,
+} from "./consulta-identidad-postgres.js";
+import {
+  buscarSesionValida,
+  revocarSesion as revocarSesionHelper,
+} from "./consulta-sesion-postgres.js";
+import { hash } from "./hashing-postgres.js";
 
 export class RepositorioAutenticacionPostgres
   implements RepositorioAutenticacion
@@ -82,21 +90,21 @@ export class RepositorioAutenticacionPostgres
           })
         : undefined;
 
-      if (!usuario && datos.usuarioQlik.correo) {
+      const correoNormalizado = datos.usuarioQlik.correo?.trim().toLowerCase();
+      if (!usuario && correoNormalizado) {
         usuario = await tx.query.usuarios.findFirst({
-          where: eq(usuarios.correo, datos.usuarioQlik.correo),
+          where: eq(usuarios.correo, correoNormalizado),
         });
       }
 
-      const superadmins = (this.superadminMail ?? process.env.SUPERADMINMAIL ?? process.env.SUPERADMIN_EMAIL ?? "")
-        .split(",")
-        .map((s) => s.trim().toLowerCase())
-        .filter(Boolean);
-
-      const esSuperadmin = Boolean(
-        datos.usuarioQlik.correo &&
-          superadmins.includes(datos.usuarioQlik.correo.trim().toLowerCase()),
-      );
+      const esSuperadmin = resolverEsSuperadministrador({
+        persistido: Boolean(usuario?.esSuperadmin),
+        correo: correoNormalizado,
+        correosHeredados:
+          this.superadminMail ??
+          process.env.SUPERADMINMAIL ??
+          process.env.SUPERADMIN_EMAIL,
+      });
 
       if (!usuario && !esSuperadmin) {
         throw new Error(
@@ -112,8 +120,9 @@ export class RepositorioAutenticacionPostgres
               datos.usuarioQlik.nombre ??
               datos.usuarioQlik.correo ??
               "Usuario Qlik",
-            correo: datos.usuarioQlik.correo ?? null,
+            correo: correoNormalizado ?? null,
             avatarUrl: datos.usuarioQlik.avatarUrl ?? null,
+            esSuperadmin,
             ultimoAccesoEn: new Date(),
           })
           .returning();
@@ -124,8 +133,9 @@ export class RepositorioAutenticacionPostgres
           .update(usuarios)
           .set({
             nombre: datos.usuarioQlik.nombre ?? usuario.nombre,
-            correo: datos.usuarioQlik.correo ?? usuario.correo,
+            correo: correoNormalizado ?? usuario.correo,
             avatarUrl: datos.usuarioQlik.avatarUrl ?? usuario.avatarUrl,
+            esSuperadmin: Boolean(usuario.esSuperadmin) || esSuperadmin,
             ultimoAccesoEn: new Date(),
             actualizadoEn: new Date(),
           })
@@ -172,7 +182,7 @@ export class RepositorioAutenticacionPostgres
         await tx.insert(membresiasOrganizacion).values({
           organizacionId,
           usuarioId: usuario.id,
-          rol: "usuario",
+          rol: esSuperadmin ? "admin" : "usuario",
         });
       }
 
@@ -226,7 +236,9 @@ export class RepositorioAutenticacionPostgres
     const sesion = await buscarSesionValida(this.db, tokenSesion);
     if (!sesion) return null;
     const [usuario, identidad] = await Promise.all([
-      this.db.query.usuarios.findFirst({ where: eq(usuarios.id, sesion.usuarioId) }),
+      this.db.query.usuarios.findFirst({
+        where: eq(usuarios.id, sesion.usuarioId),
+      }),
       this.db.query.identidadesQlik.findFirst({
         where: and(
           eq(identidadesQlik.usuarioId, sesion.usuarioId),
@@ -240,15 +252,21 @@ export class RepositorioAutenticacionPostgres
     });
     if (!tenant) return null;
 
-    let esSuperadmin = false;
+    const esSuperadmin = resolverEsSuperadministrador({
+      persistido: Boolean(usuario?.esSuperadmin),
+      correo: usuario?.correo,
+      correosHeredados:
+        this.superadminMail ??
+        process.env.SUPERADMINMAIL ??
+        process.env.SUPERADMIN_EMAIL,
+    });
     let membresias: Array<{
       organizacionId: string;
       organizacionNombre: string;
       rol: "admin" | "usuario";
     }> = [];
 
-    if (usuario?.correo && usuario.correo === this.superadminMail) {
-      esSuperadmin = true;
+    if (esSuperadmin) {
       const todasOrg = await this.db.query.organizaciones.findMany();
       membresias = todasOrg.map((org) => ({
         organizacionId: org.id,
@@ -256,9 +274,11 @@ export class RepositorioAutenticacionPostgres
         rol: "admin" as const,
       }));
     } else {
-      const membresiasRaw = await this.db.query.membresiasOrganizacion.findMany({
-        where: eq(membresiasOrganizacion.usuarioId, sesion.usuarioId),
-      });
+      const membresiasRaw = await this.db.query.membresiasOrganizacion.findMany(
+        {
+          where: eq(membresiasOrganizacion.usuarioId, sesion.usuarioId),
+        },
+      );
       for (const m of membresiasRaw) {
         const org = await this.db.query.organizaciones.findFirst({
           where: eq(organizaciones.id, m.organizacionId),

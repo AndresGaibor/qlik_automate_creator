@@ -36,6 +36,8 @@ export const esquemaCrearDesdePlantilla = z.object({
   plantillaIdQlik: esquemaIdQlik,
   espacioIdQlik: esquemaIdQlik.optional(),
   propietarioIdQlik: esquemaIdQlik.optional(),
+  flujoId: z.string().optional(),
+  tablaId: z.string().optional(),
   reemplazosWorkspace: z.array(esquemaReemplazoWorkspace).max(100).default([]),
   claveIdempotencia: z.string().trim().min(8).max(255).optional(),
 });

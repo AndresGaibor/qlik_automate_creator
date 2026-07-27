@@ -8,6 +8,7 @@ import {
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { formatearFechaYHora } from "@/compartido/utiles/formateador-fechas";
 import type { DetalleAutomatizacion, EjecucionResumen } from "@/modulos/automatizaciones/api";
+import { VisorWorkspaceModal } from "./visor-workspace-modal";
 
 interface Props {
   automatizacion: DetalleAutomatizacion["automatizacion"];
@@ -15,6 +16,7 @@ interface Props {
   urlQlik: string | null;
   onEjecutar: () => void;
   onDetener: (runId: string) => void;
+  onClonar: () => void;
   mutationEjecutar: { mutate: () => void; isPending: boolean };
   mutationDetener: { mutate: (runId: string) => void; isPending: boolean };
 }
@@ -25,6 +27,7 @@ export function TarjetaDetalleAutomatizacion({
   urlQlik,
   onEjecutar,
   onDetener,
+  onClonar,
   mutationEjecutar,
   mutationDetener,
 }: Props) {
@@ -62,6 +65,11 @@ export function TarjetaDetalleAutomatizacion({
               {enEjecucion ? "En Ejecución" : auto.activa ? "Activa" : "Inactiva"}
             </span>
 
+            <VisorWorkspaceModal
+              automatizacionId={auto.id}
+              nombreAutomatizacion={auto.nombre}
+            />
+
             {urlQlik && (
               <Button variant="outline" size="sm" asChild className="text-xs gap-1.5">
                 <a href={urlQlik} target="_blank" rel="noopener noreferrer">
@@ -70,6 +78,16 @@ export function TarjetaDetalleAutomatizacion({
                 </a>
               </Button>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClonar}
+              className="text-xs gap-1.5"
+            >
+              <Icon name="plus" size="sm" />
+              Clonar
+            </Button>
 
             <Button
               size="sm"

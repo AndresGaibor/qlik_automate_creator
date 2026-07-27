@@ -19,3 +19,13 @@ export function obtenerFlujosConFiltros(espacioId?: string, busqueda?: string) {
 export function obtenerEspacios() {
   return clienteApi.get<EspacioDisponible[]>("/automatizaciones/espacios");
 }
+
+export interface RespuestaScriptFlujo {
+  id: string;
+  script: string;
+  versionMessage?: string | null;
+}
+
+export function obtenerScriptFlujo(id: string) {
+  return clienteApi.get<RespuestaScriptFlujo>(`/flujos/${encodeURIComponent(id)}/script`);
+}

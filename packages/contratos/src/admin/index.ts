@@ -93,7 +93,9 @@ export const esquemaConfigurarDestinoTenant = z.object({
 export const esquemaConfigurarImpalaTenant = z.object({
   impalaHost: z.string().min(1),
   impalaPort: z.number().int().positive().default(21050),
-  impalaAuthMechanism: z.enum(["NOSASL", "PLAIN", "LDAP", "KERBEROS"]).default("NOSASL"),
+  impalaAuthMechanism: z
+    .enum(["NOSASL", "PLAIN", "LDAP", "KERBEROS"])
+    .default("NOSASL"),
   impalaUser: z.string().optional(),
   impalaPassword: z.string().optional(),
   impalaDatabase: z.string().default("default"),
@@ -109,4 +111,46 @@ export type ConfigurarDestinoTenant = z.infer<
 >;
 export type ConfigurarImpalaTenant = z.infer<
   typeof esquemaConfigurarImpalaTenant
+>;
+
+export const esquemaEstadoConfiguracionOauth = z.enum([
+  "pendiente",
+  "verificada",
+  "error",
+  "desactivada",
+]);
+
+export const esquemaOrigenConfiguracionOauth = z.enum([
+  "tenant",
+  "entorno_global",
+  "sin_configurar",
+]);
+
+export const esquemaConfigurarOauthQlik = z.object({
+  clienteId: z.string().trim().min(1).max(500),
+  clienteSecreto: z.string().min(8).max(2000).optional(),
+  scopes: z.array(z.string().trim().min(1).max(200)).min(1),
+});
+
+export const esquemaConfiguracionOauthQlik = z.object({
+  tenantQlikId: z.string(),
+  clienteId: z.string().nullable(),
+  secretoMascara: z.string().nullable(),
+  scopes: z.array(z.string()),
+  estado: esquemaEstadoConfiguracionOauth.nullable(),
+  origen: esquemaOrigenConfiguracionOauth,
+  verificadaEn: z.string().nullable(),
+  ultimoError: z.string().nullable(),
+  actualizadoEn: z.string().nullable(),
+  redirectUri: z.string().url(),
+});
+export type EstadoConfiguracionOauth = z.infer<
+  typeof esquemaEstadoConfiguracionOauth
+>;
+export type OrigenConfiguracionOauth = z.infer<
+  typeof esquemaOrigenConfiguracionOauth
+>;
+export type ConfigurarOauthQlik = z.infer<typeof esquemaConfigurarOauthQlik>;
+export type ConfiguracionOauthQlik = z.infer<
+  typeof esquemaConfiguracionOauthQlik
 >;

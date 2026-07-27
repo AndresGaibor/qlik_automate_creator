@@ -64,7 +64,12 @@ describe("API", () => {
       repositorioAdministracion: {
         listarOrganizaciones: async () => [],
         obtenerOrganizacion: async () => null,
-        crearOrganizacion: async () => ({ id: "1", nombre: "t", estado: "activa", creadoEn: new Date() }),
+        crearOrganizacion: async () => ({
+          id: "1",
+          nombre: "t",
+          estado: "activa",
+          creadoEn: new Date(),
+        }),
         actualizarOrganizacion: async () => null,
         eliminarOrganizacion: async () => true,
         listarUsuarios: async () => [],
@@ -89,6 +94,9 @@ describe("API", () => {
         eliminarTenantQlik: async () => "ELIMINADO",
         configurarDestinoTenant: async () => null,
         configurarImpalaTenant: async () => null,
+        obtenerConfiguracionOAuth: async () => null,
+        guardarConfiguracionOAuth: async () => null,
+        eliminarConfiguracionOAuth: async () => false,
       },
     });
 
@@ -97,7 +105,10 @@ describe("API", () => {
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ automatizacionBaseIdQlik: "auto1", automatizacionBaseNombre: "Base Auto" }),
+        body: JSON.stringify({
+          automatizacionBaseIdQlik: "auto1",
+          automatizacionBaseNombre: "Base Auto",
+        }),
       },
     );
     expect(res1.status).toBe(200);
@@ -107,7 +118,10 @@ describe("API", () => {
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ automatizacionBaseIdQlik: "auto1", automatizacionBaseNombre: "Base Auto" }),
+        body: JSON.stringify({
+          automatizacionBaseIdQlik: "auto1",
+          automatizacionBaseNombre: "Base Auto",
+        }),
       },
     );
     expect(res2.status).toBe(200);

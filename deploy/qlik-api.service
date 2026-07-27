@@ -1,0 +1,19 @@
+[Unit]
+Description=Qlik Automate Creator API
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=qlikapp
+WorkingDirectory=/opt/qlik-automate-creator
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/qlik-automate-creator/.env
+ExecStart=/usr/bin/node /opt/qlik-automate-creator/dist/node.js
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=qlik-api
+
+[Install]
+WantedBy=multi-user.target

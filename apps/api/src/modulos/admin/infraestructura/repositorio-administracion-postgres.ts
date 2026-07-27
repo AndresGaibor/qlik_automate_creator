@@ -1,33 +1,30 @@
 import type {
+  EntradaGuardarConfiguracionOauth,
   EstadoOrganizacion,
   RepositorioAdministracion,
   RolAdministracion,
+  ServicioCifradoAdministracion,
   TenantQlikAdministrable,
   UsuarioAdministrable,
 } from "../aplicacion/puertos/repositorio-administracion.js";
+import {
+  eliminarConfiguracionOauth,
+  guardarConfiguracionOauth,
+  obtenerConfiguracionOauth,
+} from "./consulta-configuracion-oauth-postgres.js";
 import { ConsultaOrganizacion } from "./consulta-organizacion-postgres.js";
 import { ConsultaTenantQlik } from "./consulta-tenant-qlik-postgres.js";
 import { ConsultaUsuario } from "./consulta-usuario-postgres.js";
 
-type DbType = {
-  query: {
-    [key: string]: {
-      findFirst: (opts?: any) => Promise<any>;
-      findMany: (opts?: any) => Promise<any[]>;
-    };
-  };
-  transaction<T>(fn: (tx: any) => Promise<T>): Promise<T>;
-  insert(table: any): any;
-  update(table: any): any;
-  delete(table: any): any;
-  select(...args: any[]): any;
-  execute(...args: any[]): any;
-};
+type DbType = typeof import("../../../plataforma/persistencia/conexion.js").db;
 
 export class RepositorioAdministracionPostgres
   implements RepositorioAdministracion
 {
-  constructor(private readonly db: DbType) {}
+  constructor(
+    private readonly db: DbType,
+    private readonly cifrado: ServicioCifradoAdministracion,
+  ) {}
 
   async listarOrganizaciones() {
     return ConsultaOrganizacion.listarOrganizaciones(this.db);
@@ -101,10 +98,8 @@ export class RepositorioAdministracionPostgres
     host: string;
     nombre?: string;
   }): Promise<TenantQlikAdministrable | null> {
-    return ConsultaTenantQlik.crearTenantQlik(
-      this.db,
-      entrada,
-      (id) => this.obtenerOrganizacion(id),
+    return ConsultaTenantQlik.crearTenantQlik(this.db, entrada, (id) =>
+      this.obtenerOrganizacion(id),
     );
   }
 
@@ -171,14 +166,39 @@ export class RepositorioAdministracionPostgres
     );
   }
 
-  async eliminarTenantQlik(
-    organizacionId: string,
-    tenantQlikId: string,
-  ) {
+  async eliminarTenantQlik(organizacionId: string, tenantQlikId: string) {
     return ConsultaTenantQlik.eliminarTenantQlik(
       this.db,
       organizacionId,
       tenantQlikId,
     );
+  }
+
+  async obtenerConfiguracionOAuth(
+    organizacionId: string,
+    tenantQlikId: string,
+  ) {
+    return obtenerConfiguracionOauth(this.db, organizacionId, tenantQlikId);
+  }
+
+  async guardarConfiguracionOAuth(
+    organizacionId: string,
+    tenantQlikId: string,
+    entrada: EntradaGuardarConfiguracionOauth,
+  ) {
+    return guardarConfiguracionOauth(
+      this.db,
+      this.cifrado,
+      organizacionId,
+      tenantQlikId,
+      entrada,
+    );
+  }
+
+  async eliminarConfiguracionOAuth(
+    organizacionId: string,
+    tenantQlikId: string,
+  ) {
+    return eliminarConfiguracionOauth(this.db, organizacionId, tenantQlikId);
   }
 }

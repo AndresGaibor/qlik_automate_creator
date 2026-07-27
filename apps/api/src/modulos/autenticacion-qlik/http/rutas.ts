@@ -10,6 +10,8 @@ const COOKIE_SESION = "sesion_usuario";
 const COOKIE_ESTADO = "oauth_estado";
 const COOKIE_VERIFICADOR = "oauth_verifier";
 const COOKIE_TENANT_QLIK = "oauth_tenant_qlik";
+const COOKIE_CONFIGURACION_OAUTH = "oauth_configuracion_id";
+const COOKIE_RETORNO = "oauth_retorno";
 
 export function crearRutasAutenticacionQlik(
   servicio: ServicioAutenticacionQlik,
@@ -59,6 +61,19 @@ export function crearRutasAutenticacionQlik(
       ...cookieSegura,
       maxAge: 600,
     });
+    if (inicio.configuracionOauthId) {
+      setCookie(c, COOKIE_CONFIGURACION_OAUTH, inicio.configuracionOauthId, {
+        ...cookieSegura,
+        maxAge: 600,
+      });
+    }
+    const retorno = normalizarRutaRetorno(c.req.query("retorno"));
+    if (retorno) {
+      setCookie(c, COOKIE_RETORNO, retorno, {
+        ...cookieSegura,
+        maxAge: 600,
+      });
+    }
     const acceptHeader = c.req.header("accept") ?? "";
     if (
       acceptHeader.includes("application/json") ||
@@ -86,7 +101,9 @@ export function crearRutasAutenticacionQlik(
       if (acceptHeader.includes("application/json")) {
         return responderError(
           c,
-          error instanceof Error ? error.message : "Usuario o tenant no encontrado",
+          error instanceof Error
+            ? error.message
+            : "Usuario o tenant no encontrado",
           400,
           { codigo: "USUARIO_TENANT_NO_ENCONTRADO" },
         );
@@ -107,6 +124,19 @@ export function crearRutasAutenticacionQlik(
       ...cookieSegura,
       maxAge: 600,
     });
+    if (inicio.configuracionOauthId) {
+      setCookie(c, COOKIE_CONFIGURACION_OAUTH, inicio.configuracionOauthId, {
+        ...cookieSegura,
+        maxAge: 600,
+      });
+    }
+    const retorno = normalizarRutaRetorno(c.req.query("retorno"));
+    if (retorno) {
+      setCookie(c, COOKIE_RETORNO, retorno, {
+        ...cookieSegura,
+        maxAge: 600,
+      });
+    }
     const acceptHeader = c.req.header("accept") ?? "";
     if (
       acceptHeader.includes("application/json") ||
@@ -122,9 +152,13 @@ export function crearRutasAutenticacionQlik(
     const estadoGuardado = getCookie(c, COOKIE_ESTADO);
     const verificador = getCookie(c, COOKIE_VERIFICADOR);
     const tenantQlikId = getCookie(c, COOKIE_TENANT_QLIK);
+    const configuracionOauthId = getCookie(c, COOKIE_CONFIGURACION_OAUTH);
+    const retorno = normalizarRutaRetorno(getCookie(c, COOKIE_RETORNO));
     deleteCookie(c, COOKIE_ESTADO, { path: "/" });
     deleteCookie(c, COOKIE_VERIFICADOR, { path: "/" });
     deleteCookie(c, COOKIE_TENANT_QLIK, { path: "/" });
+    deleteCookie(c, COOKIE_CONFIGURACION_OAUTH, { path: "/" });
+    deleteCookie(c, COOKIE_RETORNO, { path: "/" });
 
     if (
       !codigo ||
@@ -141,6 +175,7 @@ export function crearRutasAutenticacionQlik(
     try {
       const { tokenSesion } = await servicio.completar({
         tenantQlikId,
+        configuracionOauthId,
         codigo,
         verificador,
         ip:
@@ -153,9 +188,11 @@ export function crearRutasAutenticacionQlik(
         ...cookieSegura,
         maxAge: 60 * 60 * 24 * 7,
       });
-      return c.redirect(new URL("/", opciones.frontendUrl).toString());
+      const url = new URL(retorno ?? "/", opciones.frontendUrl);
+      if (retorno) url.searchParams.set("oauth_verificado", "1");
+      return c.redirect(url.toString());
     } catch (error) {
-      const url = new URL("/login", opciones.frontendUrl);
+      const url = new URL(retorno ?? "/login", opciones.frontendUrl);
       const mensaje = error instanceof Error ? error.message : "";
       url.searchParams.set(
         "oauth_error",
@@ -229,4 +266,16 @@ export function crearRutasAutenticacionQlik(
   });
 
   return rutas;
+}
+
+function normalizarRutaRetorno(ruta?: string): string | undefined {
+  if (!ruta) return undefined;
+  let valor = ruta;
+  try {
+    valor = decodeURIComponent(ruta);
+  } catch {
+    return undefined;
+  }
+  if (!valor.startsWith("/") || valor.startsWith("//")) return undefined;
+  return valor;
 }

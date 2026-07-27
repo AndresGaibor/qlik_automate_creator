@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 export type IconName =
   | "brand" | "home" | "flow" | "zap" | "admin" | "search" | "bell" | "help"
   | "chev" | "x" | "plus" | "ext" | "grid" | "rows" | "gear" | "users"
-  | "cloud" | "robot" | "check" | "star" | "edit" | "pause" | "db" | "play" | "more" | "sparkles";
+  | "cloud" | "robot" | "check" | "star" | "edit" | "pause" | "db" | "play" | "more" | "sparkles" | "copy";
 
 const TAM = { sm: "h-[15px] w-[15px]", md: "h-5 w-5", lg: "h-[30px] w-[30px]" } as const;
 
@@ -45,6 +45,7 @@ export function IconSprite() {
       <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
       <symbol id="i-rows" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M3 14.5h18M9 4v16"/></symbol>
       <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.9 4.8L18 9.7l-4.1 1.9L12 16.5l-1.9-4.9L6 9.7l4.1-1.9zM19 16l.9 2.1L22 19l-2.1.9-.9 2.1-.9-2.1L16 19l2.1-.9zM5 3l.9 2.1L8 6l-2.1.9L5 9l-.9-2.1L2 6l2.1-.9z"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
     </svg>
   );
 }
