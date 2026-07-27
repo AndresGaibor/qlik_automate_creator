@@ -2,6 +2,8 @@ import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./esquema.js";
+import { readFileSync, readdirSync } from "fs";
+import { join } from "path";
 
 class DbHolder {
   private _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
@@ -46,7 +48,46 @@ export async function cerrarConexion(): Promise<void> {
   await dbHolder.cerrar();
 }
 
+export async function ejecutarMigraciones(): Promise<void> {
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS _migrations_lock (
+        id INTEGER PRIMARY KEY,
+        locked BOOLEAN DEFAULT FALSE
+      )
+    `);
+  } catch {
+    // tabla _migrations_lock puede no existir aún
+  }
+
+  const migrationsDir = process.env.NODE_ENV === "production"
+    ? join(process.cwd(), "drizzle")
+    : join(process.cwd(), "drizzle");
+
+  let archivos: string[] = [];
+  try {
+    archivos = readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"))
+      .sort();
+  } catch {
+    console.warn("No se encontró directorio de migraciones:", migrationsDir);
+    return;
+  }
+
+  for (const archivo of archivos) {
+    try {
+      const contenido = readFileSync(join(migrationsDir, archivo), "utf8");
+      await db.execute(sql.raw(contenido));
+      console.info("Migración ejecutada:", archivo);
+    } catch (error) {
+      console.warn("Error en migración", archivo + ":", error);
+    }
+  }
+}
+
 export async function asegurarEsquemaTablas(): Promise<void> {
+  await ejecutarMigraciones();
+
   try {
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS app_config (
