@@ -42,9 +42,15 @@ const NAVEGACION: readonly {
   { to: "/tablas", etiqueta: "Resultados", icono: "db" },
   { to: "/configuracion", etiqueta: "Configuración", icono: "admin" },
   {
-    to: "/admin/superadmins",
+    to: "/admin/tenants",
     etiqueta: "Organizaciones",
     icono: "shield",
+    admin: true,
+  },
+  {
+    to: "/admin/superadmins",
+    etiqueta: "Superadministradores",
+    icono: "users",
     superadmin: true,
   },
 ] as const;
@@ -53,7 +59,11 @@ function HeaderLink({
   to,
   etiqueta,
   icono,
-}: { to: RutaNav; etiqueta: string; icono: IconName }) {
+}: {
+  to: RutaNav;
+  etiqueta: string;
+  icono: IconName;
+}) {
   const { pathname } = useLocation();
   const activo =
     to === "/"

@@ -1,5 +1,4 @@
 import { clienteApi } from "@/compartido/api/cliente";
-import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
 import {
@@ -25,7 +24,7 @@ import {
   obtenerTablasImpala,
 } from "@/modulos/automatizaciones/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 export interface DetalleRecurso {
@@ -48,12 +47,14 @@ const ETIQUETA_TIPO: Record<TipoDestino, string> = {
 export function PaginaTablasDestino() {
   const { mostrarExito, mostrarError } = useNotificaciones();
   const queryClient = useQueryClient();
+  const navegar = useNavigate();
 
   const [tablaSeleccionada, setTablaSeleccionada] = useState<string | null>(
     null,
   );
-  const [conexionSeleccionada, setConexionSeleccionada] =
-    useState<string | null>(null);
+  const [conexionSeleccionada, setConexionSeleccionada] = useState<
+    string | null
+  >(null);
   const [modalCrearTabla, setModalCrearTabla] = useState(false);
   const [nombreNuevaTabla, setNombreNuevaTabla] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -79,7 +80,8 @@ export function PaginaTablasDestino() {
     retry: false,
   });
 
-  const conexionActiva = conexiones.find((c) => c.id === conexionSeleccionada) ?? conexiones[0];
+  const conexionActiva =
+    conexiones.find((c) => c.id === conexionSeleccionada) ?? conexiones[0];
 
   const { data: recursosGenericos = [], isLoading: cargandoRecursos } =
     useQuery<RecursoDestino[]>({
@@ -121,25 +123,32 @@ export function PaginaTablasDestino() {
   // 3. Obtener esquema y metadatos de la tabla seleccionada
   const { data: detalleTabla, isLoading: cargandoDetalle } =
     useQuery<DetalleTablaImpala>({
-      queryKey: ["destino-recurso-detalle", conexionActiva?.id, tablaSeleccionada],
+      queryKey: [
+        "destino-recurso-detalle",
+        conexionActiva?.id,
+        tablaSeleccionada,
+      ],
       queryFn: () => {
         if (!tablaSeleccionada) throw new Error("Selecciona una tabla");
         if (conexionActiva) {
-          return obtenerDetalleRecursoDestino(conexionActiva.id, tablaSeleccionada).then(
-            (recurso) => ({
-              baseDatos: recurso.espacioDeNombres ?? conexionActiva.nombre,
-              tabla: recurso.nombre,
-              totalFilas: recurso.totalFilas ?? 0,
-              columnas: recurso.columnas ?? [],
-              actualizadoEn: recurso.actualizadoEn,
-            }),
-          );
+          return obtenerDetalleRecursoDestino(
+            conexionActiva.id,
+            tablaSeleccionada,
+          ).then((recurso) => ({
+            baseDatos: recurso.espacioDeNombres ?? conexionActiva.nombre,
+            tabla: recurso.nombre,
+            totalFilas: recurso.totalFilas ?? 0,
+            columnas: recurso.columnas ?? [],
+            actualizadoEn: recurso.actualizadoEn,
+          }));
         }
         return clienteApi.get<DetalleTablaImpala>(
           `/destinos/bases-datos/default/tablas/${encodeURIComponent(tablaSeleccionada)}/detalle`,
         );
       },
-      enabled: Boolean(tablaSeleccionada) && (!conexionActiva || Boolean(conexionActiva.id)),
+      enabled:
+        Boolean(tablaSeleccionada) &&
+        (!conexionActiva || Boolean(conexionActiva.id)),
     });
 
   // Solicitud de Aprobación para Crear/Editar Tabla
@@ -166,23 +175,79 @@ export function PaginaTablasDestino() {
     t.nombre.toLowerCase().includes(busqueda.toLowerCase()),
   );
 
-  if (cargandoConexiones || cargandoRecursos || (!conexionActiva && cargandoTablas)) {
-    return (
-      <EstadoCarga mensaje="Conectando al catálogo de destinos..." />
-    );
+  if (
+    cargandoConexiones ||
+    cargandoRecursos ||
+    (!conexionActiva && cargandoTablas)
+  ) {
+    return <EstadoCarga mensaje="Conectando al catálogo de destinos..." />;
   }
 
   if (isError) {
+    const mensajeError =
+      (error as Error)?.message ||
+      "Error al conectar con el catálogo de Impala";
+    const organizacionActivaId =
+      sesion?.tenantsDisponibles.find((t) => t.id === sesion.tenantActivoId)
+        ?.organizacionId ?? sesion?.membresias[0]?.organizacionId;
+    const sinConfigurar = mensajeError
+      .toLowerCase()
+      .includes("no tiene configurado");
+
     return (
-      <EstadoError
-        mensaje={
-          (error as Error)?.message ||
-          "Error al conectar con el catálogo de Impala"
-        }
-        onReintentar={() =>
-          queryClient.invalidateQueries({ queryKey: ["impala-tablas"] })
-        }
-      />
+      <PageLayout>
+        <PageHeader
+          title="Resultados en Impala"
+          description="Consulta las tablas destino donde llegan tus datos ya procesados desde Qlik Automate: cuántos registros hay, qué campos incluyen y quién hizo cambios."
+        />
+        <Card className="border-line-200 bg-surface shadow-card">
+          <CardContent className="flex flex-col items-center gap-5 py-16 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-600">
+              <Icon name="db" size="lg" />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="font-display text-lg font-semibold text-ink-900">
+                {sinConfigurar
+                  ? "Servidor de Impala no configurado"
+                  : "No se pudo conectar al catálogo de Impala"}
+              </h2>
+              <p className="mx-auto max-w-md text-sm leading-relaxed text-ink-500">
+                {mensajeError}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {esAdmin && organizacionActivaId ? (
+                <Button
+                  onClick={() =>
+                    navegar({
+                      to: "/admin/tenants/$tenantId",
+                      params: { tenantId: organizacionActivaId },
+                    })
+                  }
+                  className="gap-1.5"
+                >
+                  <Icon name="gear" size="sm" />
+                  Configurar Impala
+                </Button>
+              ) : (
+                <p className="text-xs text-ink-500">
+                  Contacta a un administrador de tu organización para configurar
+                  el servidor de Impala.
+                </p>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  queryClient.invalidateQueries({ queryKey: ["impala-tablas"] })
+                }
+              >
+                Reintentar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </PageLayout>
     );
   }
 
