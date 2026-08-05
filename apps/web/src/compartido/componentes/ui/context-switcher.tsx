@@ -19,12 +19,16 @@ export function ContextSwitcher({
   onCambiar: (id: string) => void;
   cargando?: boolean;
 }) {
+  const tenantsUnicos = Array.from(
+    new Map(tenants.map((tenant) => [tenant.id, tenant])).values(),
+  );
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const opcionesRef = useRef<(HTMLButtonElement | null)[]>([]);
   const menuId = useId();
-  const activo = tenants.find((t) => t.id === activoId) ?? tenants[0];
+  const activo =
+    tenantsUnicos.find((t) => t.id === activoId) ?? tenantsUnicos[0];
 
   useEffect(() => {
     if (!abierto) return;
@@ -98,7 +102,7 @@ export function ContextSwitcher({
             Tenant Qlik activo
           </div>
           <ul className="max-h-72 overflow-y-auto p-1">
-            {tenants.map((t) => {
+            {tenantsUnicos.map((t) => {
               const esActivo = t.id === activoId;
               return (
                 <li key={t.id}>
@@ -107,14 +111,14 @@ export function ContextSwitcher({
                     role="menuitemradio"
                     aria-checked={esActivo}
                     ref={(elemento) => {
-                      opcionesRef.current[tenants.indexOf(t)] = elemento;
+                      opcionesRef.current[tenantsUnicos.indexOf(t)] = elemento;
                     }}
                     onClick={() => {
                       onCambiar(t.id);
                       setAbierto(false);
                     }}
                     onKeyDown={(e) => {
-                      const indice = tenants.indexOf(t);
+                      const indice = tenantsUnicos.indexOf(t);
                       if (e.key === "Escape") {
                         e.preventDefault();
                         setAbierto(false);
@@ -124,8 +128,10 @@ export function ContextSwitcher({
                         e.preventDefault();
                         const siguiente =
                           (indice +
-                            (e.key === "ArrowDown" ? 1 : tenants.length - 1)) %
-                          tenants.length;
+                            (e.key === "ArrowDown"
+                              ? 1
+                              : tenantsUnicos.length - 1)) %
+                          tenantsUnicos.length;
                         opcionesRef.current[siguiente]?.focus();
                       }
                     }}

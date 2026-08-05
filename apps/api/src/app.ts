@@ -26,9 +26,11 @@ import { ClienteImpalaDirecto } from "./modulos/destinos/infraestructura/publico
 import {
   type PuertoCatalogoDestinos,
   crearRutasDestinos,
+  crearRutasDestinosGenericas,
 } from "./modulos/destinos/publico.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/publico.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
+import { crearRutasConexionesOrigen } from "./modulos/origenes/publico.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
   type ServicioQlik,
@@ -64,7 +66,11 @@ import {
 } from "./plataforma/observabilidad/registrador.js";
 import { AuditoriaPostgres } from "./plataforma/persistencia/auditoria-postgres.js";
 import { db, dbHolder } from "./plataforma/persistencia/conexion.js";
-import { appConfig, tenantsQlik } from "./plataforma/persistencia/esquema.js";
+import {
+  appConfig,
+  conexionesDestino,
+  tenantsQlik,
+} from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
 import { OutboxPostgres } from "./plataforma/persistencia/outbox-postgres.js";
 import { leerSecretoCifrado } from "./plataforma/seguridad/secreto-cifrado.js";
@@ -104,11 +110,10 @@ export async function crearAplicacion(
     (configuracion?.NODE_ENV ?? process.env.NODE_ENV) === "production";
   const redirectUriConfigurado =
     process.env.QLIK_REDIRECT_URI ?? configuracion?.QLIK_REDIRECT_URI;
-  const redirectUriOAuth =
-    frontendUrlGuardado
-      ? new URL("/api/auth/qlik/callback", frontendUrl).toString()
-      : (redirectUriConfigurado ??
-        "http://localhost:3000/api/auth/qlik/callback");
+  const redirectUriOAuth = frontendUrlGuardado
+    ? new URL("/api/auth/qlik/callback", frontendUrl).toString()
+    : (redirectUriConfigurado ??
+      "http://localhost:3000/api/auth/qlik/callback");
 
   await servicioCifrado.inicializarConDb({
     async guardar(clave, valor) {
@@ -318,7 +323,12 @@ export async function crearAplicacion(
     crearRutasFlujos(
       async (c) => new ConsultaFlujosQlik(await resolverQlik(c)),
       resolverQlik,
+      resolverSesion,
     ),
+  );
+  aplicacion.route(
+    "/api/conexiones-origen",
+    crearRutasConexionesOrigen(resolverSesion),
   );
   aplicacion.route(
     "/api/automatizaciones",
@@ -336,12 +346,120 @@ export async function crearAplicacion(
     "/api/destinos",
     crearRutasDestinos(resolverCatalogoDestinos),
   );
+  aplicacion.route(
+    "/api/destinos/conexiones",
+    crearRutasDestinosGenericas(
+      async (c: Context) => {
+        const sesion = await resolverSesion(c);
+        const filas = await db.query.conexionesDestino.findMany({
+          where: (t, { eq }) => eq(t.organizacionId, sesion.organizacionId),
+        });
+        return filas.map((f) => ({
+          id: f.id,
+          tipo: f.tipo,
+          nombre: f.nombre,
+          estado: f.estado,
+          mensajeError: f.mensajeError,
+          config: f.config as Record<string, unknown>,
+          secretoRefs: f.secretoRefs as Record<string, unknown>,
+        }));
+      },
+      async (
+        c: Context,
+        conexion: {
+          organizacionId: string;
+          tipo: string;
+          nombre: string;
+          config: Record<string, unknown>;
+          secretoRefs: Record<string, unknown>;
+        },
+      ) => {
+        const sesion = await resolverSesion(c);
+        const [creada] = await db
+          .insert(conexionesDestino)
+          .values({
+            organizacionId: sesion.organizacionId,
+            tipo: conexion.tipo,
+            nombre: conexion.nombre,
+            config: conexion.config,
+            secretoRefs: conexion.secretoRefs,
+            estado: "activo",
+          })
+          .returning({ id: conexionesDestino.id });
+        return { id: creada.id };
+      },
+      async (
+        c: Context,
+        id: string,
+        cambios: {
+          nombre?: string;
+          config?: Record<string, unknown>;
+          estado?: string;
+          mensajeError?: string | null;
+        },
+      ) => {
+        await db
+          .update(conexionesDestino)
+          .set({
+            ...cambios,
+            ...(cambios.config ? { config: cambios.config } : {}),
+          })
+          .where(eq(conexionesDestino.id, id));
+      },
+      async (c: Context, id: string) => {
+        await db.delete(conexionesDestino).where(eq(conexionesDestino.id, id));
+      },
+      async (c: Context, id: string) => {
+        const fila = await db.query.conexionesDestino.findFirst({
+          where: (t, { eq }) => eq(t.id, id),
+        });
+        if (!fila) return null;
+        return {
+          id: fila.id,
+          tipo: fila.tipo,
+          nombre: fila.nombre,
+          estado: fila.estado,
+          mensajeError: fila.mensajeError,
+          config: fila.config as Record<string, unknown>,
+          secretoRefs: fila.secretoRefs as Record<string, unknown>,
+        };
+      },
+      async (c: Context) => (await resolverSesion(c)).organizacionId,
+    ),
+  );
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));
   aplicacion.route(
     "/api/admin",
     crearRutasAdmin({
       repositorio: repositorioAdministracion,
       resolverContexto: resolverContextoAdmin,
+      guardarConexionDestino: async (entrada) => {
+        const [conexion] = await db
+          .insert(conexionesDestino)
+          .values({
+            organizacionId: entrada.organizacionId,
+            tenantQlikId: entrada.tenantQlikId,
+            tipo: entrada.tipo,
+            nombre: entrada.nombre,
+            config: entrada.config,
+            secretoRefs: {},
+            estado: "activo",
+          })
+          .onConflictDoUpdate({
+            target: [
+              conexionesDestino.organizacionId,
+              conexionesDestino.tipo,
+              conexionesDestino.nombre,
+            ],
+            set: {
+              tenantQlikId: entrada.tenantQlikId,
+              config: entrada.config,
+              actualizadoEn: new Date(),
+            },
+          })
+          .returning({ id: conexionesDestino.id });
+        return conexion;
+      },
       redirectUri: redirectUriOAuth,
       configuracionHeredada: {
         clienteId: configuracion?.QLIK_CLIENT_ID ?? process.env.QLIK_CLIENT_ID,
@@ -412,9 +530,9 @@ function crearServicioAutenticacionDiferido(
         cliente: new ClienteOAuthQlik(
           credenciales.clienteId,
           credenciales.clienteSecreto,
-           redirectUriOAuth ??
-             configuracion?.QLIK_REDIRECT_URI ??
-             exigirEntorno("QLIK_REDIRECT_URI"),
+          redirectUriOAuth ??
+            configuracion?.QLIK_REDIRECT_URI ??
+            exigirEntorno("QLIK_REDIRECT_URI"),
           tenant.host,
           credenciales.scopes.length
             ? credenciales.scopes.join(" ")

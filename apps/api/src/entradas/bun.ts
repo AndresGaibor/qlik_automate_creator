@@ -16,13 +16,13 @@ const servidor = Bun.serve({
   port: puerto,
 });
 
-console.info(`API ejecutándose en http://localhost:${puerto}`);
+console.log(`\n🚀 API en http://localhost:${puerto}\n`);
 
 let cerrando = false;
 async function cerrarOrdenadamente(senal: string): Promise<void> {
   if (cerrando) return;
   cerrando = true;
-  console.info(`Recibida ${senal}; cerrando API ordenadamente`);
+  console.info(`\n👋 Cerrando API...`);
   servidor.stop();
   await cerrarConexion();
   process.exit(0);

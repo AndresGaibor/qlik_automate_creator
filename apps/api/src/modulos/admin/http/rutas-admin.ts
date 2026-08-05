@@ -18,6 +18,9 @@ export interface DependenciasRutasAdmin extends OpcionesConfiguracionOAuth {
   repositorio: RepositorioAdministracion;
   resolverContexto: ResolverContextoAdmin;
   auditoria: PuertoAuditoria;
+  guardarConexionDestino?: Parameters<
+    typeof crearRutasConfiguracionTenant
+  >[0]["guardarConexionDestino"];
 }
 
 export function crearRutasAdmin({
@@ -26,6 +29,7 @@ export function crearRutasAdmin({
   redirectUri,
   configuracionHeredada,
   auditoria,
+  guardarConexionDestino,
 }: DependenciasRutasAdmin) {
   const rutas = new Hono();
 
@@ -34,7 +38,11 @@ export function crearRutasAdmin({
   rutas.route("/", crearRutasTenantsQlik({ repositorio, resolverContexto }));
   rutas.route(
     "/",
-    crearRutasConfiguracionTenant({ repositorio, resolverContexto }),
+    crearRutasConfiguracionTenant({
+      repositorio,
+      resolverContexto,
+      guardarConexionDestino,
+    }),
   );
   rutas.route(
     "/",

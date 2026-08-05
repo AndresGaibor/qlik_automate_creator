@@ -6,8 +6,10 @@ import {
 } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { TenantQlik } from "@/modulos/admin/api";
+import { obtenerConexionesDestino } from "@/modulos/automatizaciones/api";
+import { useQuery } from "@tanstack/react-query";
 import { SeccionConfigurarAutomatizacionBase } from "./seccion-configurar-automatizacion-base";
-import { SeccionConfigurarImpalaTenant } from "./seccion-configurar-impala-tenant";
+import { SeccionConfigurarDestinosTenant } from "./seccion-configurar-destinos-tenant";
 
 interface Props {
   organizacionId: string;
@@ -45,6 +47,12 @@ export function SeccionAutomatizacionBaseTenant({
   organizacionId,
   tenantsQlik,
 }: Props) {
+  const { data: conexionesDestino = [] } = useQuery({
+    queryKey: ["destinos-conexiones"],
+    queryFn: obtenerConexionesDestino,
+    retry: false,
+  });
+
   if (tenantsQlik.length === 0) return null;
 
   return (
@@ -57,7 +65,7 @@ export function SeccionAutomatizacionBaseTenant({
         <p className="text-xs text-ink-500 mt-1">
           Para que los usuarios puedan crear automatizaciones, cada entorno Qlik
           necesita dos cosas: una <strong>plantilla base</strong> y una{" "}
-          <strong>conexión a Impala</strong>.
+           <strong>al menos una conexión de destino</strong>.
         </p>
       </CardHeader>
 
@@ -74,7 +82,7 @@ export function SeccionAutomatizacionBaseTenant({
             Es una automatización en Qlik Cloud que actúa como molde. Cuando un
             usuario crea una nueva automatización, el sistema la{" "}
             <strong>clona automáticamente</strong> y la personaliza con el
-            Dataflow y la tabla Impala que eligió. Los usuarios finales nunca la
+             Dataflow y el recurso de destino que eligió. Los usuarios finales nunca la
             ven directamente.
           </p>
           <p className="mt-1.5 text-xs text-amber-700 font-medium flex items-center gap-1.5">
@@ -87,8 +95,8 @@ export function SeccionAutomatizacionBaseTenant({
       <CardContent className="pt-6 space-y-6">
         {tenantsQlik.map((tQlik, idx) => {
           const tienePlantilla = !!tQlik.automatizacionBaseIdQlik;
-          const tieneImpala = !!tQlik.impalaHost;
-          const todoListo = tienePlantilla && tieneImpala;
+           const tieneDestino = conexionesDestino.length > 0 || !!tQlik.impalaHost;
+           const todoListo = tienePlantilla && tieneDestino;
 
           return (
             <div
@@ -185,24 +193,24 @@ export function SeccionAutomatizacionBaseTenant({
                   />
                 </div>
 
-                {/* ── PASO 2: Conexión Impala ── */}
+                {/* ── PASO 2: Conexión de destino ── */}
                 <div className="p-5 space-y-4">
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                        tieneImpala
+                         tieneDestino
                           ? "bg-brand-600 text-white"
                           : "bg-amber-400 text-white"
                       }`}
                     >
-                      {tieneImpala ? <Icon name="check" size="sm" /> : "2"}
+                       {tieneDestino ? <Icon name="check" size="sm" /> : "2"}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-ink-900 text-sm">
-                        Conexión a Impala
+                         Conexión de destino
                       </span>
                       <EstadoPaso
-                        listo={tieneImpala}
+                         listo={tieneDestino}
                         textoListo="Conectado"
                         textoPendiente="Sin configurar"
                       />
@@ -210,11 +218,11 @@ export function SeccionAutomatizacionBaseTenant({
                   </div>
 
                   <p className="text-xs text-ink-500 leading-relaxed">
-                    La app necesita acceder a Impala para que los usuarios
-                    puedan elegir tablas de destino al crear automatizaciones.
+                     Agrega PostgreSQL, BigQuery, SFTP o Impala para que los usuarios
+                     puedan elegir recursos de destino al crear automatizaciones.
                   </p>
 
-                  {tieneImpala && (
+                   {tieneDestino && (
                     <div className="rounded-lg border border-obj-100 bg-obj-50/40 p-3 flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-obj-600 animate-pulse shrink-0" />
                       <span className="font-mono text-xs text-obj-700 font-medium truncate">
@@ -228,7 +236,7 @@ export function SeccionAutomatizacionBaseTenant({
                     </div>
                   )}
 
-                  <SeccionConfigurarImpalaTenant
+                   <SeccionConfigurarDestinosTenant
                     organizacionId={organizacionId}
                     tenantQlik={tQlik}
                   />

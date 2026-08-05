@@ -14,21 +14,36 @@ import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
-  type TablaImpala,
+  type ConexionDestino,
+  type RecursoDestino,
+  type TipoDestino,
   obtenerAutomatizaciones,
+  obtenerConexionesDestino,
+  obtenerDetalleRecursoDestino,
+  obtenerRecursosDestino,
+  type TablaImpala,
   obtenerTablasImpala,
 } from "@/modulos/automatizaciones/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
-export interface DetalleTablaImpala {
+export interface DetalleRecurso {
   baseDatos: string;
   tabla: string;
   totalFilas: number;
   columnas: Array<{ nombre: string; tipo: string }>;
   actualizadoEn: string;
 }
+
+type DetalleTablaImpala = DetalleRecurso;
+
+const ETIQUETA_TIPO: Record<TipoDestino, string> = {
+  impala: "Impala",
+  postgres: "PostgreSQL",
+  bigquery: "BigQuery",
+  sftp: "SFTP",
+};
 
 export function PaginaTablasDestino() {
   const { mostrarExito, mostrarError } = useNotificaciones();
@@ -37,6 +52,8 @@ export function PaginaTablasDestino() {
   const [tablaSeleccionada, setTablaSeleccionada] = useState<string | null>(
     null,
   );
+  const [conexionSeleccionada, setConexionSeleccionada] =
+    useState<string | null>(null);
   const [modalCrearTabla, setModalCrearTabla] = useState(false);
   const [nombreNuevaTabla, setNombreNuevaTabla] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -53,7 +70,26 @@ export function PaginaTablasDestino() {
     sesion?.membresias?.some((m) => m.rol === "admin") ||
     false;
 
-  // 1. Obtener tablas de Impala
+  // La ruta heredada sigue siendo fallback mientras se migran las conexiones.
+  const { data: conexiones = [], isLoading: cargandoConexiones } = useQuery<
+    ConexionDestino[]
+  >({
+    queryKey: ["destinos-conexiones"],
+    queryFn: obtenerConexionesDestino,
+    retry: false,
+  });
+
+  const conexionActiva = conexiones.find((c) => c.id === conexionSeleccionada) ?? conexiones[0];
+
+  const { data: recursosGenericos = [], isLoading: cargandoRecursos } =
+    useQuery<RecursoDestino[]>({
+      queryKey: ["destinos-recursos", conexionActiva?.id],
+      queryFn: () => obtenerRecursosDestino(conexionActiva?.id ?? ""),
+      enabled: Boolean(conexionActiva),
+      retry: false,
+    });
+
+  // Fallback temporal para tenants que todavía solo tienen configuración Impala heredada.
   const {
     data: tablas = [],
     isLoading: cargandoTablas,
@@ -63,7 +99,18 @@ export function PaginaTablasDestino() {
     queryKey: ["impala-tablas"],
     queryFn: obtenerTablasImpala,
     retry: false,
+    enabled: !conexionActiva,
   });
+
+  const recursos: RecursoDestino[] = conexionActiva
+    ? recursosGenericos
+    : tablas.map((tabla) => ({
+        id: tabla.nombre,
+        nombre: tabla.nombre,
+        tipo: "tabla" as const,
+        espacioDeNombres: "default",
+        metadatos: {},
+      }));
 
   // 2. Obtener automatizaciones vinculadas
   const { data: automatizaciones = [] } = useQuery({
@@ -74,14 +121,25 @@ export function PaginaTablasDestino() {
   // 3. Obtener esquema y metadatos de la tabla seleccionada
   const { data: detalleTabla, isLoading: cargandoDetalle } =
     useQuery<DetalleTablaImpala>({
-      queryKey: ["impala-tabla-detalle", tablaSeleccionada],
+      queryKey: ["destino-recurso-detalle", conexionActiva?.id, tablaSeleccionada],
       queryFn: () => {
         if (!tablaSeleccionada) throw new Error("Selecciona una tabla");
+        if (conexionActiva) {
+          return obtenerDetalleRecursoDestino(conexionActiva.id, tablaSeleccionada).then(
+            (recurso) => ({
+              baseDatos: recurso.espacioDeNombres ?? conexionActiva.nombre,
+              tabla: recurso.nombre,
+              totalFilas: recurso.totalFilas ?? 0,
+              columnas: recurso.columnas ?? [],
+              actualizadoEn: recurso.actualizadoEn,
+            }),
+          );
+        }
         return clienteApi.get<DetalleTablaImpala>(
           `/destinos/bases-datos/default/tablas/${encodeURIComponent(tablaSeleccionada)}/detalle`,
         );
       },
-      enabled: Boolean(tablaSeleccionada),
+      enabled: Boolean(tablaSeleccionada) && (!conexionActiva || Boolean(conexionActiva.id)),
     });
 
   // Solicitud de Aprobación para Crear/Editar Tabla
@@ -104,13 +162,13 @@ export function PaginaTablasDestino() {
     onError: (err: Error) => mostrarError(err.message),
   });
 
-  const tablasFiltradas = tablas.filter((t) =>
+  const tablasFiltradas = recursos.filter((t) =>
     t.nombre.toLowerCase().includes(busqueda.toLowerCase()),
   );
 
-  if (cargandoTablas) {
+  if (cargandoConexiones || cargandoRecursos || (!conexionActiva && cargandoTablas)) {
     return (
-      <EstadoCarga mensaje="Conectando a Impala y cargando catálogo de tablas..." />
+      <EstadoCarga mensaje="Conectando al catálogo de destinos..." />
     );
   }
 
@@ -151,32 +209,72 @@ export function PaginaTablasDestino() {
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-8">
         {/* Panel Izquierdo: Lista de Tablas */}
-        <div className="space-y-4 lg:col-span-1">
-          <div className="relative">
+        <section
+          aria-labelledby="lista-reportes"
+          className="space-y-3 lg:sticky lg:top-24"
+        >
+          <div className="flex items-center justify-between px-1">
+            <div>
+              <h2
+                id="lista-reportes"
+                className="text-sm font-semibold text-slate-900"
+              >
+                Reportes disponibles
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {tablasFiltradas.length}{" "}
+                {tablasFiltradas.length === 1 ? "reporte" : "reportes"}
+              </p>
+            </div>
+            {conexiones.length > 0 ? (
+              <select
+                value={conexionActiva?.id ?? ""}
+                onChange={(e) => {
+                  setConexionSeleccionada(e.target.value);
+                  setTablaSeleccionada(null);
+                }}
+                aria-label="Seleccionar conexión de destino"
+                className="max-w-[150px] rounded-full border border-brand-100 bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 outline-none"
+              >
+                {conexiones.map((conexion) => (
+                  <option key={conexion.id} value={conexion.id}>
+                    {conexion.nombre} · {ETIQUETA_TIPO[conexion.tipo]}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
+                Impala heredado
+              </span>
+            )}
+          </div>
+
+          <label className="relative block">
             <Icon
               name="search"
               size="sm"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <input
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar un reporte…"
-              className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+              aria-label="Buscar un reporte"
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm font-medium text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-100"
             />
-          </div>
+          </label>
 
-          <div className="space-y-2 max-h-[650px] overflow-y-auto pr-1">
+          <div className="max-h-[650px] space-y-2 overflow-y-auto pr-1">
             {tablasFiltradas.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-400 border border-dashed rounded-xl bg-white">
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-xs text-slate-400">
                 No se encontraron reportes.
               </div>
             ) : (
               tablasFiltradas.map((t) => {
-                const seleccionada = tablaSeleccionada === t.nombre;
+                const seleccionada = tablaSeleccionada === t.id;
                 const autoVinculada = automatizaciones.find((a) =>
                   a.nombre.toLowerCase().includes(t.nombre.toLowerCase()),
                 );
@@ -184,12 +282,13 @@ export function PaginaTablasDestino() {
                 return (
                   <button
                     type="button"
-                    key={t.nombre}
-                    onClick={() => setTablaSeleccionada(t.nombre)}
-                    className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                    key={t.id}
+                    onClick={() => setTablaSeleccionada(t.id)}
+                    aria-pressed={seleccionada}
+                    className={`group w-full rounded-xl border p-4 text-left transition-all duration-200 ${
                       seleccionada
-                        ? "border-brand-500 bg-brand-50/50 shadow-sm ring-1 ring-brand-200"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                        ? "border-brand-500 bg-brand-50/60 shadow-sm ring-4 ring-brand-100"
+                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-sm"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -198,10 +297,12 @@ export function PaginaTablasDestino() {
                           name="db"
                           size="sm"
                           className={
-                            seleccionada ? "text-brand-600" : "text-slate-400"
+                            seleccionada
+                              ? "text-brand-600"
+                              : "text-slate-400 group-hover:text-brand-500"
                           }
                         />
-                        <span className="font-semibold text-xs text-slate-900 truncate">
+                        <span className="truncate text-sm font-semibold text-slate-900">
                           {t.nombre}
                         </span>
                       </div>
@@ -213,30 +314,31 @@ export function PaginaTablasDestino() {
                       )}
                     </div>
                     {autoVinculada && (
-                      <p className="text-[10px] text-emerald-700 font-medium mt-1 truncate">
-                        Conectado a: "{autoVinculada.nombre}"
-                      </p>
+                      <div className="mt-2 flex items-center gap-1.5 truncate text-xs font-medium text-emerald-700">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                        <span className="truncate">
+                          Conectado a {autoVinculada.nombre}
+                        </span>
+                      </div>
                     )}
                   </button>
                 );
               })
             )}
           </div>
-        </div>
+        </section>
 
         {/* Panel Derecho: Detalle, Esquema de Columnas y Auditoría */}
-        <div className="lg:col-span-2 space-y-5">
+        <section aria-live="polite" className="min-w-0 space-y-5">
           {!tablaSeleccionada ? (
-            <Card className="border-slate-200 bg-white p-12 text-center text-slate-400">
-              <Icon
-                name="db"
-                size="lg"
-                className="mx-auto text-slate-300 mb-2"
-              />
-              <p className="text-sm font-medium text-slate-600">
+            <Card className="flex min-h-[310px] flex-col items-center justify-center border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
+              <div className="mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-slate-50 ring-1 ring-slate-200">
+                <Icon name="db" size="lg" className="text-slate-300" />
+              </div>
+              <p className="text-base font-semibold text-slate-700">
                 Selecciona un reporte para explorar sus detalles
               </p>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="mt-2 max-w-md text-sm text-slate-400">
                 Consulta cantidad de campos, número de registros, permisos e
                 historial.
               </p>
@@ -251,25 +353,25 @@ export function PaginaTablasDestino() {
           ) : (
             <div className="space-y-5">
               {/* Encabezado de la Tabla */}
-              <Card className="border-slate-200 bg-white shadow-sm">
-                <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
-                  <div className="flex items-center justify-between">
+              <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
+                <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-brand-50 rounded-xl border border-brand-100 text-brand-600">
+                      <div className="rounded-xl border border-brand-100 bg-brand-50 p-3 text-brand-600">
                         <Icon name="db" size="md" />
                       </div>
-                      <div>
-                        <CardTitle className="text-base font-bold text-slate-900 font-mono">
+                      <div className="min-w-0">
+                        <CardTitle className="truncate font-mono text-lg font-bold text-slate-900">
                           {detalleTabla?.baseDatos || "default"}.
                           {tablaSeleccionada}
                         </CardTitle>
-                        <p className="text-xs text-slate-500 font-medium">
+                        <p className="mt-0.5 text-sm font-medium text-slate-500">
                           Tabla destino en Impala
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button
                         size="sm"
                         variant="outline"
@@ -280,7 +382,7 @@ export function PaginaTablasDestino() {
                               : `Solicitud de edición enviada al Administrador para ${tablaSeleccionada}`,
                           )
                         }
-                        className="text-xs gap-1"
+                        className="gap-1 text-xs"
                       >
                         <Icon name="edit" size="sm" />
                         {esAdmin
@@ -291,7 +393,7 @@ export function PaginaTablasDestino() {
                       <Link
                         to="/automatizaciones/nueva"
                         search={{ flujoId: "", tablaId: tablaSeleccionada }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-xs"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700"
                       >
                         <Icon name="zap" size="sm" />
                         Usar en automatización
@@ -301,29 +403,29 @@ export function PaginaTablasDestino() {
                 </CardHeader>
 
                 <CardContent className="pt-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                  <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                         Cantidad de registros
                       </span>
-                      <span className="text-sm font-bold text-slate-900 font-mono">
+                      <span className="mt-1 block font-mono text-lg font-bold text-slate-900">
                         {detalleTabla?.totalFilas !== undefined
                           ? detalleTabla.totalFilas.toLocaleString()
                           : "—"}
                       </span>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                         Cantidad de campos
                       </span>
-                      <span className="text-sm font-bold text-indigo-700 font-mono">
+                      <span className="mt-1 block font-mono text-lg font-bold text-indigo-700">
                         {detalleTabla?.columnas.length || 0} campos
                       </span>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                         Permisos de edición
                       </span>
                       {esAdmin ? (
@@ -337,11 +439,11 @@ export function PaginaTablasDestino() {
                       )}
                     </div>
 
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                         Última actualización
                       </span>
-                      <span className="text-xs font-mono text-slate-700">
+                      <span className="mt-1 block font-mono text-sm text-slate-700">
                         {detalleTabla?.actualizadoEn
                           ? new Date(
                               detalleTabla.actualizadoEn,
@@ -486,7 +588,7 @@ export function PaginaTablasDestino() {
               </Card>
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       {/* Modal Solicitar Crear Tabla */}

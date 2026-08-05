@@ -379,7 +379,17 @@ export class RepositorioAutenticacionPostgres
     const identidades = await this.db.query.identidadesQlik.findMany({
       where: eq(identidadesQlik.usuarioId, sesion.usuarioId),
     });
-    const resultado = [];
+    const resultado = new Map<
+      string,
+      {
+        id: string;
+        host: string;
+        nombre: string | null;
+        organizacionId: string;
+        organizacionNombre: string;
+        esPrincipal: boolean;
+      }
+    >();
     for (const identidad of identidades) {
       const tenant = await this.db.query.tenantsQlik.findFirst({
         where: and(
@@ -392,7 +402,7 @@ export class RepositorioAutenticacionPostgres
         where: eq(organizaciones.id, tenant.organizacionId),
       });
       if (!organizacion || organizacion.estado !== "activa") continue;
-      resultado.push({
+      resultado.set(tenant.id, {
         id: tenant.id,
         host: tenant.host,
         nombre: tenant.nombre,
@@ -401,7 +411,7 @@ export class RepositorioAutenticacionPostgres
         esPrincipal: tenant.esPrincipal,
       });
     }
-    return resultado;
+    return Array.from(resultado.values());
   }
 
   async cambiarTenantActivo(tokenSesion: string, tenantQlikId: string) {

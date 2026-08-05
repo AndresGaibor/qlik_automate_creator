@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { esquemaTipoDestino } from "../destinos/index.js";
 
 export const esquemaTenantResumen = z.object({
   id: z.string(),
@@ -92,6 +93,12 @@ export const esquemaConfigurarDestinoTenant = z.object({
   destinoBaseDatos: z.string().optional(),
 });
 
+export const esquemaConfigurarConexionDestino = z.object({
+  tipo: esquemaTipoDestino,
+  nombre: z.string().trim().min(1).max(255),
+  config: z.record(z.unknown()),
+});
+
 const identificadorImpala = z
   .string()
   .trim()
@@ -133,6 +140,9 @@ export type ConfigurarAutomatizacionBase = z.infer<
 >;
 export type ConfigurarDestinoTenant = z.infer<
   typeof esquemaConfigurarDestinoTenant
+>;
+export type ConfigurarConexionDestino = z.infer<
+  typeof esquemaConfigurarConexionDestino
 >;
 export type ConfigurarImpalaTenant = z.infer<
   typeof esquemaConfigurarImpalaTenant

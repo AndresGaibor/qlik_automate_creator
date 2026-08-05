@@ -49,6 +49,8 @@ export async function cerrarConexion(): Promise<void> {
 }
 
 export async function ejecutarMigraciones(): Promise<void> {
+  await db.execute(sql`SET client_min_messages = 'WARNING'`);
+
   try {
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS _migrations_lock (
@@ -60,9 +62,7 @@ export async function ejecutarMigraciones(): Promise<void> {
     // tabla _migrations_lock puede no existir aún
   }
 
-  const migrationsDir = process.env.NODE_ENV === "production"
-    ? join(process.cwd(), "drizzle")
-    : join(process.cwd(), "drizzle");
+  const migrationsDir = join(process.cwd(), "drizzle");
 
   let archivos: string[] = [];
   try {
@@ -78,9 +78,9 @@ export async function ejecutarMigraciones(): Promise<void> {
     try {
       const contenido = readFileSync(join(migrationsDir, archivo), "utf8");
       await db.execute(sql.raw(contenido));
-      console.info("Migración ejecutada:", archivo);
+      console.log("✓ Migración:", archivo);
     } catch (error) {
-      console.warn("Error en migración", archivo + ":", error);
+      console.warn("✗ Error en migración", archivo + ":", error);
     }
   }
 }
@@ -103,7 +103,6 @@ export async function asegurarEsquemaTablas(): Promise<void> {
 
   try {
     await db.execute(sql`
-      SET client_min_messages = WARNING;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_id_qlik TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_nombre TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS destino_api_url TEXT;

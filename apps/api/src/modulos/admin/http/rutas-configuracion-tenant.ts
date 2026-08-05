@@ -1,5 +1,6 @@
 import {
   esquemaConfigurarAutomatizacionBase,
+  esquemaConfigurarConexionDestino,
   esquemaConfigurarDestinoTenant,
   esquemaConfigurarImpalaTenant,
 } from "@qlik/contratos/admin";
@@ -19,11 +20,19 @@ import {
 export interface DependenciasRutasConfiguracionTenant {
   repositorio: RepositorioAdministracion;
   resolverContexto: ResolverContextoAdmin;
+  guardarConexionDestino?: (entrada: {
+    organizacionId: string;
+    tenantQlikId: string;
+    tipo: string;
+    nombre: string;
+    config: Record<string, unknown>;
+  }) => Promise<{ id: string }>;
 }
 
 export function crearRutasConfiguracionTenant({
   repositorio,
   resolverContexto,
+  guardarConexionDestino,
 }: DependenciasRutasConfiguracionTenant) {
   const rutas = new Hono();
 
@@ -134,6 +143,34 @@ export function crearRutasConfiguracionTenant({
     handlerImpala,
   );
   rutas.put("/tenants/:id/qlik/:tenantQlikId/impala", handlerImpala);
+
+  rutas.put(
+    "/organizaciones/:id/tenants-qlik/:tenantQlikId/destino-generico",
+    async (c) => {
+      try {
+        if (!guardarConexionDestino) {
+          return responderError(c, "Configuración de destinos no disponible", 503);
+        }
+        const organizacionId = obtenerParametroRequerido(c, "id");
+        const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");
+        const contexto = await resolverContexto(c);
+        exigirAccesoOrganizacion(contexto, organizacionId);
+        const entrada = esquemaConfigurarConexionDestino.parse(
+          await c.req.json(),
+        );
+        return responderExito(
+          c,
+          await guardarConexionDestino({
+            organizacionId,
+            tenantQlikId,
+            ...entrada,
+          }),
+        );
+      } catch (error) {
+        return responderErrorAdmin(c, error);
+      }
+    },
+  );
 
   return rutas;
 }

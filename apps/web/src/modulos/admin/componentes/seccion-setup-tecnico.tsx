@@ -1,4 +1,5 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { obtenerConexionesDestino } from "@/modulos/automatizaciones/api";
 import { Button } from "@/compartido/componentes/ui/button";
 import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { Icon } from "@/compartido/componentes/ui/icon";
@@ -13,6 +14,7 @@ import {
   configurarImpalaTenant,
   listarAutomatizacionesParaAdmin,
 } from "../api";
+import { SeccionConfigurarDestinosTenant } from "./seccion-configurar-destinos-tenant";
 
 interface Props {
   tenant: { id: string };
@@ -372,7 +374,7 @@ function PasoImpala({
   return (
     <div className="space-y-6">
       {tenantsQlik.map((tQlik) => (
-        <ImpalaPorEntorno
+        <SeccionConfigurarDestinosTenant
           key={tQlik.id}
           organizacionId={organizacionId}
           tenantQlik={tQlik}
@@ -421,7 +423,7 @@ function ImpalaPorEntorno({
       queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
-      mostrarExito("Conexión Impala guardada");
+      mostrarExito("Conexión de destino guardada");
     },
     onError: (err: Error) => mostrarError(err.message),
   });
@@ -590,13 +592,18 @@ export function SeccionSetupTecnico({
 }: Props) {
   const tieneQlik = tenantsQlik.length > 0;
   const tienePlantilla = tenantsQlik.some((t) => !!t.automatizacionBaseIdQlik);
-  const tieneImpala = tenantsQlik.some((t) => !!t.impalaHost);
+  const { data: conexionesDestino = [] } = useQuery({
+    queryKey: ["destinos-conexiones"],
+    queryFn: obtenerConexionesDestino,
+    retry: false,
+  });
+  const tieneDestino = conexionesDestino.length > 0 || tenantsQlik.some((t) => !!t.impalaHost);
 
   const primerPasoAbierto = !tieneQlik
     ? 0
     : !tienePlantilla
       ? 1
-      : !tieneImpala
+       : !tieneDestino
         ? 2
         : -1;
   const [pasoAbierto, setPasoAbierto] = useState<number>(primerPasoAbierto);
@@ -654,13 +661,13 @@ export function SeccionSetupTecnico({
       ),
     },
     {
-      titulo: "Conexión Impala",
-      descripcionCorta:
-        "Configura el acceso al servidor Impala para que los usuarios puedan seleccionar tablas de destino.",
-      listo: tieneImpala,
-      resumen: tieneImpala ? (
-        <p className="text-xs text-ink-500 font-mono truncate">
-          {tenantsQlik.find((t) => t.impalaHost)?.impalaHost}
+       titulo: "Conexiones de destino",
+       descripcionCorta:
+         "Agrega PostgreSQL, BigQuery, SFTP o Impala para seleccionar recursos de destino.",
+       listo: tieneDestino,
+       resumen: tieneDestino ? (
+         <p className="text-xs text-ink-500 font-mono truncate">
+           {conexionesDestino.map((destino) => destino.nombre).join(", ") || "Destino heredado"}
         </p>
       ) : null,
       contenido: tieneQlik ? (
@@ -675,7 +682,7 @@ export function SeccionSetupTecnico({
 
   return (
     <div className="space-y-3">
-      {tieneQlik && tienePlantilla && tieneImpala ? (
+       {tieneQlik && tienePlantilla && tieneDestino ? (
         <div className="flex items-center gap-3 border-l-4 border-brand-600 bg-brand-50 px-4 py-3 mb-4">
           <Icon name="check" size="md" className="text-brand-700" />
           <div>
@@ -693,7 +700,7 @@ export function SeccionSetupTecnico({
             <p className="text-sm font-semibold text-amber-900">
               Completa los{" "}
               {3 -
-                [tieneQlik, tienePlantilla, tieneImpala].filter(Boolean)
+                 [tieneQlik, tienePlantilla, tieneDestino].filter(Boolean)
                   .length}{" "}
               pasos pendientes
             </p>

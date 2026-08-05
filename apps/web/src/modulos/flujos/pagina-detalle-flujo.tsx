@@ -13,6 +13,7 @@ import {
 } from "@/modulos/automatizaciones/api";
 import {
   type ResumenFlujo,
+  obtenerCatalogoSparkFlujo,
   obtenerFlujosConFiltros,
   obtenerScriptFlujo,
 } from "@/modulos/flujos/api";
@@ -20,12 +21,28 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 
+function urlCatalogoConexiones(conexiones: string[]): string {
+  const parametros = new URLSearchParams();
+
+  for (const conexion of conexiones) {
+    const coincidencia = conexion.match(
+      /^(Base de Datos \/ JDBC|Servidor SFTP): "(.+)"$/,
+    );
+    if (!coincidencia) continue;
+    const tipo = coincidencia[1] === "Base de Datos / JDBC" ? "jdbc" : "sftp";
+    parametros.append("conexion", `${tipo}:${coincidencia[2]}`);
+  }
+
+  return `/configuracion?${parametros.toString()}`;
+}
+
 export function PaginaDetalleFlujo() {
   const { id } = useParams({ from: "/flujos/$id" });
   const [pestana, setPestana] = useState<
-    "script" | "metadata" | "automatizaciones"
+    "script" | "spark" | "metadata" | "automatizaciones"
   >("script");
   const [copiadoScript, setCopiadoScript] = useState(false);
+  const [copiadoSpark, setCopiadoSpark] = useState(false);
   const [copiadoMeta, setCopiadoMeta] = useState(false);
 
   const { tenant: tenantActivo } = useTenantActivo();
@@ -46,10 +63,16 @@ export function PaginaDetalleFlujo() {
     data: datosScript,
     isLoading: cargandoScript,
     isError: errorScript,
-    error: errorScriptMsg,
   } = useQuery({
     queryKey: ["flujo-script", id],
     queryFn: () => obtenerScriptFlujo(id),
+    staleTime: 60 * 1000,
+  });
+
+  // 3. Obtener el catálogo Spark derivado
+  const { data: datosSpark, isLoading: cargandoSpark } = useQuery({
+    queryKey: ["flujo-catalogo-spark", id],
+    queryFn: () => obtenerCatalogoSparkFlujo(id),
     staleTime: 60 * 1000,
   });
 
@@ -198,6 +221,18 @@ export function PaginaDetalleFlujo() {
         </button>
         <button
           type="button"
+          onClick={() => setPestana("spark")}
+          className={`px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+            pestana === "spark"
+              ? "bg-surface text-ink-900 shadow-sm"
+              : "text-ink-500 hover:text-ink-900"
+          }`}
+        >
+          <Icon name="sparkles" size="sm" className="text-brand-600" />
+          Catálogo Spark (JSON)
+        </button>
+        <button
+          type="button"
           onClick={() => setPestana("metadata")}
           className={`px-4 py-2 rounded-lg font-semibold transition-all ${
             pestana === "metadata"
@@ -276,6 +311,97 @@ export function PaginaDetalleFlujo() {
                   {datosScript.script ||
                     "Este Dataflow todavía no tiene un script de carga para mostrar."}
                 </pre>
+              </div>
+            )}
+          </div>
+        )}
+
+        {pestana === "spark" && (
+          <div className="space-y-4">
+            {datosSpark?.conexionesFaltantes &&
+              datosSpark.conexionesFaltantes.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-semibold text-amber-800 text-sm">
+                      <Icon
+                        name="sparkles"
+                        size="sm"
+                        className="text-amber-600"
+                      />
+                      ¡Falta configurar el catálogo técnico de conexiones!
+                    </div>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="bg-white border-amber-300 text-amber-900 hover:bg-amber-100 text-xs"
+                    >
+                      <a
+                        href={urlCatalogoConexiones(
+                          datosSpark.conexionesFaltantes,
+                        )}
+                      >
+                        Ir a Configuración de Conexiones
+                      </a>
+                    </Button>
+                  </div>
+                  <p className="text-amber-700">
+                    El script Qlik contiene nombres de conexión, tablas y
+                    archivos, pero falta definir los datos técnicos (URL JDBC,
+                    Hosts SFTP, usuarios, etc.) en el catálogo central para las
+                    siguientes conexiones:
+                  </p>
+                  <ul className="list-disc list-inside font-mono text-[11px] text-amber-800 bg-amber-100/50 p-2.5 rounded-lg border border-amber-200 space-y-1">
+                    {datosSpark.conexionesFaltantes.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                  <p className="text-[11px] text-amber-600 italic">
+                    Una vez configuradas en el módulo de Conexiones Destino, se
+                    reutilizarán automáticamente para este y cualquier otro
+                    Dataflow que use la misma conexión.
+                  </p>
+                </div>
+              )}
+
+            <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm text-xs">
+              <span className="text-slate-600 font-medium flex items-center gap-2">
+                <Icon name="sparkles" size="sm" className="text-brand-600" />
+                Catálogo resuelto generado automáticamente a partir del script
+                Qlik para Spark motor.py.
+              </span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (datosSpark?.catalogoJson) {
+                    navigator.clipboard.writeText(
+                      JSON.stringify(datosSpark.catalogoJson, null, 2),
+                    );
+                    setCopiadoSpark(true);
+                    setTimeout(() => setCopiadoSpark(false), 2000);
+                  }
+                }}
+                disabled={!datosSpark?.catalogoJson}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-line-300 text-ink-800 hover:bg-app text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
+              >
+                <Icon name="copy" size="sm" className="text-brand-600" />
+                {copiadoSpark ? "¡JSON Copiado!" : "Copiar JSON para Spark"}
+              </button>
+            </div>
+
+            {cargandoSpark ? (
+              <div className="flex min-h-[300px] flex-col items-center justify-center gap-2 bg-white rounded-xl border p-8">
+                <div className="h-7 w-7 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+                <p className="text-sm text-ink-500 font-medium">
+                  Generando catálogo JSON para Spark...
+                </p>
+              </div>
+            ) : datosSpark?.catalogoJson ? (
+              <VisorJsonInteractivo data={datosSpark.catalogoJson} />
+            ) : (
+              <div className="p-5 text-xs text-slate-500">
+                No se pudo generar el catálogo para este flujo.
               </div>
             )}
           </div>

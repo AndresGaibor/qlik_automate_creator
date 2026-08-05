@@ -132,7 +132,7 @@ export function PaginaInicio() {
                     Configuración de la plataforma
                   </div>
                   <div className="truncate text-sm text-ink-500">
-                    Gestiona organizaciones, conexiones a Qlik Cloud e Impala,
+                    Gestiona organizaciones, conexiones a Qlik Cloud y destinos,
                     plantillas base y permisos de usuarios.
                   </div>
                 </div>

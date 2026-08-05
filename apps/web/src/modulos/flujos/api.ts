@@ -26,8 +26,21 @@ export interface RespuestaScriptFlujo {
   versionMessage?: string | null;
 }
 
+export interface RespuestaCatalogoSpark {
+  id: string;
+  catalogoJson: Record<string, unknown>;
+  scriptOriginal: string;
+  conexionesFaltantes?: string[];
+}
+
 export function obtenerScriptFlujo(id: string) {
   return clienteApi.get<RespuestaScriptFlujo>(
     `/flujos/${encodeURIComponent(id)}/script`,
+  );
+}
+
+export function obtenerCatalogoSparkFlujo(id: string) {
+  return clienteApi.get<RespuestaCatalogoSpark>(
+    `/flujos/${encodeURIComponent(id)}/catalogo-spark`,
   );
 }

@@ -95,9 +95,11 @@ export function VisorJsonInteractivo({
             <button
               type="button"
               onClick={() => setColapsado(!colapsado)}
-              className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors text-[10px]"
+              className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-900"
+              aria-label={colapsado ? "Expandir arreglo" : "Contraer arreglo"}
+              title={colapsado ? "Expandir" : "Contraer"}
             >
-              {colapsado ? "Expandir" : "Contraer"}
+              {colapsado ? ">" : "v"}
             </button>
           )}
           <span className="text-slate-600 font-bold">[</span>
@@ -151,9 +153,11 @@ export function VisorJsonInteractivo({
           <button
             type="button"
             onClick={() => setColapsado(!colapsado)}
-            className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors text-[10px]"
+            className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-900"
+            aria-label={colapsado ? "Expandir objeto" : "Contraer objeto"}
+            title={colapsado ? "Expandir" : "Contraer"}
           >
-            {colapsado ? "Expandir" : "Contraer"}
+            {colapsado ? ">" : "v"}
           </button>
         )}
         <span className="text-slate-600 font-bold">&#123;</span>

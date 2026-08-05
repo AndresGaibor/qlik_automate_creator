@@ -64,6 +64,27 @@
       "when": 1785173023913,
       "tag": "0008_bizarre_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785180000000,
+      "tag": "0009_secretos_destino_impala",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785200000000,
+      "tag": "0010_conexiones_destino",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785240000000,
+      "tag": "0011_catalogo_conexiones_origen",
+      "breakpoints": true
     }
   ]
 }

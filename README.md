@@ -60,6 +60,10 @@ Las tablas se crean automáticamente al primer arranque.
 
 ## Wizard de configuración inicial
 
+Consulta la guía completa de producción, Cloudflare Tunnel, OAuth, migraciones,
+identidades y diagnóstico en
+[`docs/setup/CONFIGURACION-PRODUCCION.md`](docs/setup/CONFIGURACION-PRODUCCION.md).
+
 Al abrir la app por primera vez:
 
 1. **Organización** — nombre de tu organización

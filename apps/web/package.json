@@ -8,10 +8,10 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "typecheck": "tsc -b --pretty false"
+    "typecheck": "tsc -b --pretty false",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.9.0",
     "@qlik/contratos": "workspace:*",
     "@tanstack/react-query": "^5.45.0",
     "@tanstack/react-router": "^1.45.0",

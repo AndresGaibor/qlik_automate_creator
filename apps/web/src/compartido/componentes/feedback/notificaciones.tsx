@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -67,9 +68,13 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
     (mensaje: string) => mostrar(mensaje, "exito"),
     [mostrar],
   );
+  const valorContexto = useMemo(
+    () => ({ mostrarError, mostrarExito }),
+    [mostrarError, mostrarExito],
+  );
 
   return (
-    <NotificacionesContext.Provider value={{ mostrarError, mostrarExito }}>
+    <NotificacionesContext.Provider value={valorContexto}>
       {children}
       <div
         aria-live="assertive"

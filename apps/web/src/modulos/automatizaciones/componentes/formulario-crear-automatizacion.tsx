@@ -9,7 +9,7 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
 import type {
   ConfiguracionTenant,
-  TablaImpala,
+  RecursoDestino,
 } from "@/modulos/automatizaciones/api";
 import type { ResumenFlujo } from "@qlik/contratos";
 import { Link } from "@tanstack/react-router";
@@ -25,7 +25,8 @@ interface Props {
   nombre: string;
   setNombre: (v: string) => void;
   flujos: ResumenFlujo[];
-  tablas: TablaImpala[];
+  tablas: RecursoDestino[];
+  etiquetaDestino: string;
   automatizaciones?: ResumenAutomatizacion[];
   espacioId?: string;
   isLoadingFlujos: boolean;
@@ -53,6 +54,7 @@ export function FormularioCrearAutomatizacion({
   isCreating,
   puedeCrear,
   configTenant,
+  etiquetaDestino,
 }: Props) {
   const opcionesFlujos = flujos.map((f) => {
     const autoVinculada = automatizaciones.find(
@@ -77,7 +79,7 @@ export function FormularioCrearAutomatizacion({
     return {
       id: t.nombre,
       nombre: t.nombre,
-      espacioNombre: "Impala",
+      espacioNombre: t.espacioDeNombres || etiquetaDestino,
       badgeAviso: autoVinculada
         ? `Esta tabla ya se usa en: "${autoVinculada.nombre.slice(0, 25)}"`
         : undefined,
@@ -107,8 +109,8 @@ export function FormularioCrearAutomatizacion({
           Crear automatización en Qlik Automate
         </h2>
         <p className="mt-1 text-sm text-ink-500">
-          Elige el Dataflow de Qlik del que vienen tus datos y la tabla en
-          Impala a la que quieres que lleguen. Nosotros configuramos el resto
+           Elige el Dataflow de Qlik del que vienen tus datos y el recurso de
+          destino al que quieres que lleguen. Nosotros configuramos el resto
           por ti.
         </p>
       </div>
@@ -155,10 +157,10 @@ export function FormularioCrearAutomatizacion({
 
             <div>
               <SelectBuscable
-                etiqueta="2. Tabla destino (Impala)"
-                placeholder="Elige dónde guardar el resultado en Impala..."
-                searchPlaceholder="Busca la tabla por nombre…"
-                emptyText="No se encontraron tablas. Revisa la conexión a Impala e inténtalo de nuevo."
+                 etiqueta={`2. Recurso destino (${etiquetaDestino})`}
+                 placeholder="Elige dónde guardar el resultado..."
+                 searchPlaceholder="Busca por nombre…"
+                 emptyText="No se encontraron recursos en la conexión seleccionada."
                 opciones={opcionesTablas}
                 valorSeleccionado={tablaId}
                 onSeleccionar={setTablaId}

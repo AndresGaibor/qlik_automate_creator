@@ -6,6 +6,7 @@ import type {
   AgregarUsuario,
   ConfiguracionOauthQlik,
   ConfigurarDestinoTenant,
+  ConfigurarConexionDestino,
   ConfigurarImpalaTenant,
   ConfigurarOauthQlik,
   CrearTenant,
@@ -32,6 +33,7 @@ export type {
   TenantQlik,
   CrearTenantQlik,
   ConfigurarDestinoTenant,
+  ConfigurarConexionDestino,
   ConfigurarImpalaTenant,
 };
 
@@ -163,6 +165,17 @@ export function configurarImpalaTenant(
   return clienteApi.put<TenantQlik>(
     `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/impala`,
     datos,
+  );
+}
+
+export function configurarConexionDestino(
+  organizacionId: string,
+  tenantQlikId: string,
+  entrada: ConfigurarConexionDestino,
+) {
+  return clienteApi.put<{ id: string }>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/destino-generico`,
+    entrada,
   );
 }
 

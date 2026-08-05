@@ -1,6 +1,7 @@
 import { ErrorClienteApi } from "@/compartido/api/cliente";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
-import { Avatar, inicialesDe } from "@/compartido/componentes/ui/avatar";
+import { Avatar } from "@/compartido/componentes/ui/avatar";
+import { inicialesDe } from "@/compartido/componentes/ui/avatar-utils";
 import { Button } from "@/compartido/componentes/ui/button";
 import { ContextSwitcher } from "@/compartido/componentes/ui/context-switcher";
 import {
@@ -24,6 +25,7 @@ type RutaNav =
   | "/flujos"
   | "/automatizaciones"
   | "/tablas"
+  | "/configuracion"
   | "/admin/tenants"
   | "/admin/superadmins";
 
@@ -38,12 +40,7 @@ const NAVEGACION: readonly {
   { to: "/flujos", etiqueta: "Dataflows", icono: "flow" },
   { to: "/automatizaciones", etiqueta: "Automatizaciones", icono: "zap" },
   { to: "/tablas", etiqueta: "Resultados", icono: "db" },
-  {
-    to: "/admin/tenants",
-    etiqueta: "Configuración",
-    icono: "admin",
-    admin: true,
-  },
+  { to: "/configuracion", etiqueta: "Configuración", icono: "admin" },
   {
     to: "/admin/superadmins",
     etiqueta: "Organizaciones",
@@ -203,13 +200,18 @@ export function LayoutPrincipal() {
   }
 
   const sesion = consulta.data;
+  const tenantsDisponibles = Array.from(
+    new Map(
+      sesion.tenantsDisponibles.map((tenant) => [tenant.id, tenant]),
+    ).values(),
+  );
   const esSuperadmin = sesion.esSuperadmin ?? false;
   const esAdmin =
     esSuperadmin || sesion.membresias.some((m) => m.rol === "admin");
   const nombre = sesion.usuario?.nombre?.trim() || "Usuario Qlik";
 
   return (
-    <div className="ambient min-h-screen bg-app text-ink-900">
+    <div className="ambient min-h-screen overflow-x-hidden bg-app text-ink-900">
       <IconSprite />
       <div className="flex min-h-screen flex-col">
         {/* ── Topbar / Header completo ── */}
@@ -238,9 +240,9 @@ export function LayoutPrincipal() {
 
           {/* Acciones del extremo derecho (Tenant selector + usuario + logout) */}
           <div className="ml-auto hidden items-center gap-4 md:flex">
-            {sesion.tenantsDisponibles.length > 1 && (
+            {tenantsDisponibles.length > 1 && (
               <ContextSwitcher
-                tenants={sesion.tenantsDisponibles}
+                tenants={tenantsDisponibles}
                 activoId={sesion.tenantActivoId}
                 cargando={cambiarTenant.isPending}
                 onCambiar={(id) => cambiarTenant.mutate(id)}

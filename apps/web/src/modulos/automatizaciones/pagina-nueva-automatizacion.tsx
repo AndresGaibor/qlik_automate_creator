@@ -2,13 +2,17 @@ import { useNotificaciones } from "@/compartido/componentes/feedback/notificacio
 import { useFiltroEspacioConPersistencia } from "@/compartido/hooks/use-filtro-espacio-con-persistencia";
 import {
   type ConfiguracionTenant,
+  type ConexionDestino,
+  type RecursoDestino,
   type ResultadoCrearDesdePlantilla,
   type ResumenAutomatizacion,
   type TablaImpala,
   crearAutomatizacionDesdePlantilla,
   obtenerAutomatizaciones,
+  obtenerConexionesDestino,
   obtenerConfiguracionTenant,
   obtenerFlujosConFiltros,
+  obtenerRecursosDestino,
   obtenerTablasImpala,
 } from "@/modulos/automatizaciones/api";
 import { AlertaConfiguracionTenant } from "@/modulos/automatizaciones/componentes/alerta-configuracion-tenant";
@@ -31,6 +35,7 @@ export function PaginaNuevaAutomatizacion() {
 
   const [flujoId, setFlujoId] = useState(flujoIdParam);
   const [tablaId, setTablaId] = useState("");
+  const [destinoId, setDestinoId] = useState<string | undefined>();
   const [nombre, setNombre] = useState("");
 
   const { data: configTenant, isLoading: cargandoConfig } =
@@ -57,14 +62,42 @@ export function PaginaNuevaAutomatizacion() {
     enabled: tieneBase,
   });
 
-  const { data: tablas = [], isLoading: cargandoTablas } = useQuery<
-    TablaImpala[]
+  const { data: conexiones = [] } = useQuery<ConexionDestino[]>({
+    queryKey: ["destinos-conexiones"],
+    queryFn: obtenerConexionesDestino,
+    retry: false,
+    enabled: tieneBase,
+  });
+
+  const destinoActivo = conexiones.find((destino) => destino.id === destinoId) ?? conexiones[0];
+
+  const { data: recursosDestino = [], isLoading: cargandoRecursos } = useQuery<
+    RecursoDestino[]
+  >({
+    queryKey: ["destinos-recursos", destinoActivo?.id],
+    queryFn: () => obtenerRecursosDestino(destinoActivo?.id ?? ""),
+    retry: false,
+    enabled: tieneBase && Boolean(destinoActivo),
+  });
+
+  const { data: tablasHeredadas = [], isLoading: cargandoTablasHeredadas } = useQuery<
+    { nombre: string }[]
   >({
     queryKey: ["impala-tablas"],
     queryFn: obtenerTablasImpala,
     retry: false,
-    enabled: tieneBase,
+    enabled: tieneBase && !destinoActivo,
   });
+
+  const tablas: RecursoDestino[] = destinoActivo
+    ? recursosDestino
+    : tablasHeredadas.map((tabla) => ({
+        id: tabla.nombre,
+        nombre: tabla.nombre,
+        tipo: "tabla",
+        espacioDeNombres: "default",
+        metadatos: {},
+      }));
 
   useEffect(() => {
     if (flujoIdParam && !flujoId) {
@@ -85,7 +118,7 @@ export function PaginaNuevaAutomatizacion() {
       if (!flujoObj)
         throw new Error("Debes seleccionar un flujo de datos válido");
       if (!tablaId)
-        throw new Error("Debes seleccionar una tabla de destino Impala");
+        throw new Error("Debes seleccionar un recurso de destino");
       if (!configTenant?.automatizacionBaseIdQlik) {
         throw new Error(
           "El tenant no tiene una automatización base configurada",
@@ -94,8 +127,9 @@ export function PaginaNuevaAutomatizacion() {
       return crearAutomatizacionDesdePlantilla({
         nombre: nombre.trim() || `Auto - ${flujoObj.nombre} a ${tablaId}`,
         espacioIdQlik: espacioIdActual,
-        flujoId,
-        tablaId,
+         flujoId,
+         tablaId,
+         destinoId,
         reemplazosWorkspace: [],
       });
     },
@@ -113,7 +147,7 @@ export function PaginaNuevaAutomatizacion() {
       return;
     }
     if (!tablaId) {
-      mostrarError("Por favor selecciona una tabla de destino Impala");
+      mostrarError("Por favor selecciona un recurso de destino");
       return;
     }
     crear.mutate();
@@ -154,11 +188,12 @@ export function PaginaNuevaAutomatizacion() {
       automatizaciones={automatizaciones}
       espacioId={espacioIdActual}
       isLoadingFlujos={cargandoFlujos}
-      isLoadingTablas={cargandoTablas}
+       isLoadingTablas={cargandoRecursos || cargandoTablasHeredadas}
       onCrear={onCrear}
       isCreating={crear.isPending}
       puedeCrear={!!(flujoId && tablaId && nombre.trim())}
-      configTenant={configTenant}
+       configTenant={configTenant}
+       etiquetaDestino={destinoActivo?.nombre ?? "Impala heredado"}
     />
   );
 }

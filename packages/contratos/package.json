@@ -9,7 +9,8 @@
     "./qlik": "./src/qlik/index.ts",
     "./autenticacion": "./src/autenticacion/index.ts",
     "./flujos": "./src/flujos/index.ts",
-    "./admin": "./src/admin/index.ts"
+    "./admin": "./src/admin/index.ts",
+    "./destinos": "./src/destinos/index.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

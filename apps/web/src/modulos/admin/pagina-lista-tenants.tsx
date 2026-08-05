@@ -64,7 +64,7 @@ export function PaginaListaTenants() {
     <PageLayout>
       <PageHeader
         title="Organizaciones"
-        description="Cada organización agrupa un entorno de Qlik Cloud, sus usuarios autorizados y la configuración de Impala."
+        description="Cada organización agrupa entornos de Qlik Cloud, usuarios autorizados y conexiones de destino."
         actions={
           <Button onClick={() => setModalCrear(true)} font-medium>
             Nueva organización

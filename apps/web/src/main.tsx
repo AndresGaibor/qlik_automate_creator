@@ -1,5 +1,6 @@
 import "@/index.css";
-import { Proveedores, clienteConsultas } from "@/app/proveedores";
+import { clienteConsultas } from "@/app/cliente-consultas";
+import { Proveedores } from "@/app/proveedores";
 import { clienteApi } from "@/compartido/api/cliente";
 import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { obtenerMotivoSesion } from "@/modulos/autenticacion/motivo-sesion";
