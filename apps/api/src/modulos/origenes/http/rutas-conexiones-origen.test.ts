@@ -49,7 +49,35 @@ function crearDbFake() {
   const conexiones: Map<string, ConexionOral> = new Map();
   const secretos: Map<string, SecretoOral> = new Map();
 
-  const dbFake = {
+  interface DbFake {
+    query: ReturnType<typeof crearQueryMock>;
+    insert: () => {
+      values: () => {
+        returning: () => Promise<ConexionOral[]>;
+        onConflictDoUpdate: () => Promise<never[]>;
+      };
+    };
+    update: () => {
+      set: () => {
+        where: () => {
+          returning: () => Promise<ConexionOral[]>;
+        };
+      };
+    };
+    delete: () => {
+      where: () => {
+        returning: () => Promise<{ id: string }[]>;
+      };
+    };
+    select: () => {
+      from: () => {
+        where: () => never[];
+      };
+    };
+    transaction: (callback: (tx: DbFake) => Promise<void>) => Promise<void>;
+  }
+
+  const dbFake: DbFake = {
     query: crearQueryMock(conexiones, secretos),
     insert: () => ({
       values: () => ({
@@ -99,6 +127,9 @@ function crearDbFake() {
         where: () => [],
       }),
     }),
+    transaction: async (callback: (tx: typeof dbFake) => Promise<void>) => {
+      return callback(dbFake);
+    },
   };
 
   return { dbFake, conexiones, secretos };
@@ -245,5 +276,85 @@ describe("rutas-conexiones-origen · secretos", () => {
     const respuesta = await app.request("/api/conexiones-origen/contexto-secretos", { method: "POST" });
 
     expect(respuesta.status).toBe(403);
+  });
+
+  it("POST /api/conexiones-origen/contexto-secretos devuelve 422 cuando falta secreto declarado", async () => {
+    const cifrador = crearCifradorFake();
+    const { dbFake, conexiones } = crearDbFake();
+
+    conexiones.set("conn-jdbc-sin-secreto", {
+      id: "conn-jdbc-sin-secreto",
+      organizacionId: "org-1",
+      tipo: "jdbc",
+      nombre: "JDBC_Sin_Secreto",
+      config: {
+        url: "jdbc:postgresql://localhost:5432/test",
+        driver: "org.postgresql.Driver",
+        secreto_nombre: "SECRETO_FALTANTE",
+        propiedades: {},
+      },
+      creadoEn: new Date(),
+      actualizadoEn: new Date(),
+    });
+
+    const auditoriaFake: PuertoAuditoria = { registrar: vi.fn(async () => undefined) };
+    const resolverSesion = async () => ({ organizacionId: "org-1", usuarioId: "user-1" });
+    const resolverContextoAdmin = async () => ({ esSuperadmin: true, usuarioId: "user-1", membresias: [{ organizacionId: "org-1", organizacionNombre: "Empresa", rol: "admin" as const }] });
+
+    const app = crearAppPrueba(dbFake, cifrador, auditoriaFake, resolverSesion, resolverContextoAdmin);
+    const respuesta = await app.request("/api/conexiones-origen/contexto-secretos", { method: "POST" });
+    expect(respuesta.status).toBe(422);
+    const cuerpo = await respuesta.json();
+
+    expect(cuerpo.exito).toBe(false);
+    expect(cuerpo.error.codigo).toBe("SECRETOS_FALTANTES");
+    expect(cuerpo.error.detalles.nombres).toContain("SECRETO_FALTANTE");
+  });
+
+  it("POST /api/conexiones-origen/contexto-secretos devuelve 403 para membresia en org diferente", async () => {
+    const cifrador = crearCifradorFake();
+    const { dbFake } = crearDbFake();
+
+    const auditoriaFake: PuertoAuditoria = { registrar: vi.fn(async () => undefined) };
+    const resolverSesion = async () => ({ organizacionId: "org-1", usuarioId: "user-1" });
+    const resolverContextoAdmin = async () => ({
+      esSuperadmin: false,
+      usuarioId: "user-1",
+      membresias: [{ organizacionId: "org-2", organizacionNombre: "OtraEmpresa", rol: "admin" as const }]
+    });
+
+    const app = crearAppPrueba(dbFake, cifrador, auditoriaFake, resolverSesion, resolverContextoAdmin);
+    const respuesta = await app.request("/api/conexiones-origen/contexto-secretos", { method: "POST" });
+
+    expect(respuesta.status).toBe(403);
+  });
+
+  it("POST /api/conexiones-origen/contexto-secretos devuelve {} cuando no hay secretos", async () => {
+    const cifrador = crearCifradorFake();
+    const { dbFake, conexiones } = crearDbFake();
+
+    conexiones.set("conn-sin-secreto", {
+      id: "conn-sin-secreto",
+      organizacionId: "org-1",
+      tipo: "jdbc",
+      nombre: "JDBC_Sin_Secreto_Declarado",
+      config: {
+        url: "jdbc:postgresql://localhost:5432/test",
+        driver: "org.postgresql.Driver",
+        secreto_nombre: "SECRETO_FALTANTE",
+        propiedades: {},
+      },
+      creadoEn: new Date(),
+      actualizadoEn: new Date(),
+    });
+
+    const auditoriaFake: PuertoAuditoria = { registrar: vi.fn(async () => undefined) };
+    const resolverSesion = async () => ({ organizacionId: "org-1", usuarioId: "user-1" });
+    const resolverContextoAdmin = async () => ({ esSuperadmin: true, usuarioId: "user-1", membresias: [{ organizacionId: "org-1", organizacionNombre: "Empresa", rol: "admin" as const }] });
+
+    const app = crearAppPrueba(dbFake, cifrador, auditoriaFake, resolverSesion, resolverContextoAdmin);
+    const respuesta = await app.request("/api/conexiones-origen/contexto-secretos", { method: "POST" });
+
+    expect(respuesta.status).toBe(422);
   });
 });

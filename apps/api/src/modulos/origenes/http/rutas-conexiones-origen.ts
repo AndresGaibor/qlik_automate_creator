@@ -11,7 +11,7 @@ import { db } from "../../../plataforma/persistencia/conexion.js";
 import { conexionesOrigen, secretosConexionOrigen } from "../../../plataforma/persistencia/esquema.js";
 import type { ResolverContextoAdmin } from "../../admin/http/rutas-comunes.js";
 import { servicioAdmin } from "../../admin/http/rutas-comunes.js";
-import { cifrarSecretoParaPersistencia, descifrarSecretoPersistido, leerSecretoCifrado } from "../../../plataforma/seguridad/secreto-cifrado.js";
+import { cifrarSecretoParaPersistencia, leerSecretoCifrado } from "../../../plataforma/seguridad/secreto-cifrado.js";
 
 const esquemaConfigJdbc = z.object({
   url: z.string().trim().min(1),
@@ -61,10 +61,6 @@ export interface DepsRutasConexionesOrigen {
   resolverContextoAdmin: ResolverContextoAdmin;
 }
 
-function estadosConexion(origenId: string) {
-  return db.select().from(secretosConexionOrigen).where(eq(secretosConexionOrigen.conexionOrigenId, origenId));
-}
-
 function omitirSecretos(config: Record<string, unknown>): Record<string, unknown> {
   const { secretoValor, secretoClavePrivadaValor, ...rest } = config as Record<string, unknown>;
   return rest;
@@ -105,17 +101,6 @@ export function crearRutasConexionesOrigen(deps: DepsRutasConexionesOrigen) {
       });
     }
 
-    const configSinSecreto = omitirSecretos(entrada.config as Record<string, unknown>);
-    const [conexion] = await dbLocal
-      .insert(conexionesOrigen)
-      .values({
-        organizacionId: sesion.organizacionId,
-        tipo: entrada.tipo,
-        nombre: entrada.nombre,
-        config: configSinSecreto,
-      })
-      .returning();
-
     const nombreSecreto = entrada.tipo === "jdbc"
       ? (entrada.config as { secreto_nombre: string }).secreto_nombre
       : (entrada.config as { secreto_clave_privada_nombre: string }).secreto_clave_privada_nombre;
@@ -124,22 +109,36 @@ export function crearRutasConexionesOrigen(deps: DepsRutasConexionesOrigen) {
       ? (entrada.config as { secretoValor?: string }).secretoValor
       : (entrada.config as { secretoClavePrivadaValor?: string }).secretoClavePrivadaValor;
 
-    if (valorSecreto && nombreSecreto) {
-      const cifrado = cifrarSecretoParaPersistencia(servicioCifrado, valorSecreto);
-      await dbLocal
-        .insert(secretosConexionOrigen)
-        .values({
-          conexionOrigenId: conexion.id,
-          nombre: nombreSecreto,
-          valorCifrado: cifrado,
-        })
-        .onConflictDoUpdate({
-          target: [secretosConexionOrigen.conexionOrigenId, secretosConexionOrigen.nombre],
-          set: { valorCifrado: cifrado, actualizadoEn: new Date() },
-        });
-    }
+    const configSinSecreto = omitirSecretos(entrada.config as Record<string, unknown>);
 
-    return responderExito(c, { ...conexion, config: configSinSecreto });
+    await dbLocal.transaction(async (tx) => {
+      const [conexion] = await tx
+        .insert(conexionesOrigen)
+        .values({
+          organizacionId: sesion.organizacionId,
+          tipo: entrada.tipo,
+          nombre: entrada.nombre,
+          config: configSinSecreto,
+        })
+        .returning();
+
+      if (valorSecreto && nombreSecreto) {
+        const cifrado = cifrarSecretoParaPersistencia(servicioCifrado, valorSecreto);
+        await tx
+          .insert(secretosConexionOrigen)
+          .values({
+            conexionOrigenId: conexion.id,
+            nombre: nombreSecreto,
+            valorCifrado: cifrado,
+          })
+          .onConflictDoUpdate({
+            target: [secretosConexionOrigen.conexionOrigenId, secretosConexionOrigen.nombre],
+            set: { valorCifrado: cifrado, actualizadoEn: new Date() },
+          });
+      }
+    });
+
+    return responderExito(c, { organizacionId: sesion.organizacionId, tipo: entrada.tipo, nombre: entrada.nombre, config: configSinSecreto });
   });
 
   rutas.put("/:id", async (c) => {
@@ -172,23 +171,6 @@ export function crearRutasConexionesOrigen(deps: DepsRutasConexionesOrigen) {
       }
     }
 
-    const configSinSecreto = omitirSecretos(entrada.config as Record<string, unknown>);
-    const [actualizada] = await dbLocal
-      .update(conexionesOrigen)
-      .set({
-        tipo: entrada.tipo,
-        nombre: entrada.nombre,
-        config: configSinSecreto,
-        actualizadoEn: new Date(),
-      })
-      .where(
-        and(
-          eq(conexionesOrigen.id, existente.id),
-          eq(conexionesOrigen.organizacionId, sesion.organizacionId),
-        ),
-      )
-      .returning();
-
     const nombreSecreto = entrada.tipo === "jdbc"
       ? (entrada.config as { secreto_nombre: string }).secreto_nombre
       : (entrada.config as { secreto_clave_privada_nombre: string }).secreto_clave_privada_nombre;
@@ -197,39 +179,63 @@ export function crearRutasConexionesOrigen(deps: DepsRutasConexionesOrigen) {
       ? (entrada.config as { secretoValor?: string }).secretoValor
       : (entrada.config as { secretoClavePrivadaValor?: string }).secretoClavePrivadaValor;
 
-    const secretosPrevios = await estadosConexion(existente.id);
-    const nombresPrevios = new Set(secretosPrevios.map((s) => s.nombre));
-    const nombresActuales = new Set([nombreSecreto]);
+    const configSinSecreto = omitirSecretos(entrada.config as Record<string, unknown>);
 
-    for (const sec of secretosPrevios) {
-      if (!nombresActuales.has(sec.nombre)) {
-        await dbLocal
-          .delete(secretosConexionOrigen)
-          .where(
-            and(
-              eq(secretosConexionOrigen.conexionOrigenId, existente.id),
-              eq(secretosConexionOrigen.nombre, sec.nombre),
-            ),
-          );
-      }
-    }
-
-    if (valorSecreto && nombreSecreto) {
-      const cifrado = cifrarSecretoParaPersistencia(servicioCifrado, valorSecreto);
-      await dbLocal
-        .insert(secretosConexionOrigen)
-        .values({
-          conexionOrigenId: existente.id,
-          nombre: nombreSecreto,
-          valorCifrado: cifrado,
+    await dbLocal.transaction(async (tx) => {
+      const [actualizada] = await tx
+        .update(conexionesOrigen)
+        .set({
+          tipo: entrada.tipo,
+          nombre: entrada.nombre,
+          config: configSinSecreto,
+          actualizadoEn: new Date(),
         })
-        .onConflictDoUpdate({
-          target: [secretosConexionOrigen.conexionOrigenId, secretosConexionOrigen.nombre],
-          set: { valorCifrado: cifrado, actualizadoEn: new Date() },
-        });
-    }
+        .where(
+          and(
+            eq(conexionesOrigen.id, existente.id),
+            eq(conexionesOrigen.organizacionId, sesion.organizacionId),
+          ),
+        )
+        .returning();
 
-    return responderExito(c, { ...actualizada, config: configSinSecreto });
+      const secretosPrevios = await tx
+        .select()
+        .from(secretosConexionOrigen)
+        .where(eq(secretosConexionOrigen.conexionOrigenId, existente.id));
+
+      const nombresPrevios = new Set(secretosPrevios.map((s) => s.nombre));
+      const nombresActuales = new Set([nombreSecreto]);
+
+      for (const sec of secretosPrevios) {
+        if (!nombresActuales.has(sec.nombre)) {
+          await tx
+            .delete(secretosConexionOrigen)
+            .where(
+              and(
+                eq(secretosConexionOrigen.conexionOrigenId, existente.id),
+                eq(secretosConexionOrigen.nombre, sec.nombre),
+              ),
+            );
+        }
+      }
+
+      if (valorSecreto && nombreSecreto) {
+        const cifrado = cifrarSecretoParaPersistencia(servicioCifrado, valorSecreto);
+        await tx
+          .insert(secretosConexionOrigen)
+          .values({
+            conexionOrigenId: existente.id,
+            nombre: nombreSecreto,
+            valorCifrado: cifrado,
+          })
+          .onConflictDoUpdate({
+            target: [secretosConexionOrigen.conexionOrigenId, secretosConexionOrigen.nombre],
+            set: { valorCifrado: cifrado, actualizadoEn: new Date() },
+          });
+      }
+    });
+
+    return responderExito(c, { id: existente.id, organizacionId: sesion.organizacionId, tipo: entrada.tipo, nombre: entrada.nombre, config: configSinSecreto });
   });
 
   rutas.delete("/:id", async (c) => {
@@ -292,7 +298,9 @@ export function crearRutasConexionesOrigen(deps: DepsRutasConexionesOrigen) {
           secretosMap[nombreSecreto] = descifrado;
         }
       } catch {
-        secretosMap[nombreSecreto] = "";
+        if (!nombresFaltantes.includes(nombreSecreto)) {
+          nombresFaltantes.push(nombreSecreto);
+        }
       }
     }
 
