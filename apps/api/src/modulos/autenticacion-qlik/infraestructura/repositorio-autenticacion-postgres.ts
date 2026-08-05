@@ -348,12 +348,11 @@ export class RepositorioAutenticacionPostgres
     const sesion = await buscarSesionValida(this.db, tokenSesion);
     if (!sesion) return null;
     const identidad = await this.db.query.identidadesQlik.findFirst({
-      where: and(
-        eq(identidadesQlik.usuarioId, sesion.usuarioId),
-        eq(identidadesQlik.tenantQlikId, sesion.tenantQlikActivoId),
-      ),
+      where: eq(identidadesQlik.id, sesion.identidadQlikId),
     });
-    if (!identidad) return null;
+    if (!identidad || identidad.tenantQlikId !== sesion.tenantQlikActivoId) {
+      return null;
+    }
     const tenant = await this.db.query.tenantsQlik.findFirst({
       where: eq(tenantsQlik.id, identidad.tenantQlikId),
     });
