@@ -328,7 +328,12 @@ export async function crearAplicacion(
   );
   aplicacion.route(
     "/api/conexiones-origen",
-    crearRutasConexionesOrigen(resolverSesion),
+    crearRutasConexionesOrigen({
+      resolverSesion,
+      servicioCifrado,
+      auditoria,
+      resolverContextoAdmin,
+    }),
   );
   aplicacion.route(
     "/api/automatizaciones",

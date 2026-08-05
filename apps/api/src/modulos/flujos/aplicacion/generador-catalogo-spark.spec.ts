@@ -115,4 +115,40 @@ INTO [lib://Bancolombia prueba:SFTP//upload/ventas_curadas.csv] (txt);
       secreto_clave_privada_nombre: "SFTP_PRIVATE_KEY_B64",
     });
   });
+
+  test("el catálogo solo incluye secreto_nombre, nunca el valor cifrado ni el texto plano", () => {
+    const descubierto = parsearScriptQlik(scriptEjemplo);
+    const catalogo = construirCatalogoConexionesSpark(descubierto, [
+      {
+        tipo: "jdbc",
+        nombre: "Bancolombia prueba:Postgres_BanColombia_Prueba",
+        config: {
+          url: "jdbc:postgresql://origen:5432/bancolombia",
+          driver: "org.postgresql.Driver",
+          secreto_nombre: "POSTGRES_BANCOLOMBIA",
+          secretoValor: "usuario:clave",
+          propiedades: { fetchsize: "10000" },
+        },
+      },
+      {
+        tipo: "sftp",
+        nombre: "Bancolombia prueba:SFTP",
+        config: {
+          host: "sftp.bancolombia.test",
+          puerto: 22,
+          usuario: "sftpqlik",
+          secreto_clave_privada_nombre: "SFTP_PRIVATE_KEY_B64",
+          secretoClavePrivadaValor: "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t...",
+        },
+      },
+    ]);
+
+    expect(catalogo.jdbc[0]).toHaveProperty("secreto_nombre", "POSTGRES_BANCOLOMBIA");
+    expect(catalogo.jdbc[0]).not.toHaveProperty("secretoValor");
+    expect(JSON.stringify(catalogo.jdbc[0])).not.toContain("usuario:clave");
+
+    expect(catalogo.sftp[0]).toHaveProperty("secreto_clave_privada_nombre", "SFTP_PRIVATE_KEY_B64");
+    expect(catalogo.sftp[0]).not.toHaveProperty("secretoClavePrivadaValor");
+    expect(JSON.stringify(catalogo.sftp[0])).not.toContain("LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t");
+  });
 });
