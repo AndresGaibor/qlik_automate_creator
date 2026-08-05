@@ -1,4 +1,6 @@
 import type { Context } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { responderError } from "../../../nucleo/http/respuestas.js";
 import {
   type ContextoSesion,
@@ -25,6 +27,12 @@ export function obtenerParametroRequerido(c: Context, nombre: string): string {
 }
 
 export function responderErrorAdmin(c: Context, error: unknown) {
+  if (error instanceof ErrorAplicacion) {
+    return responderError(c, error.message, error.estadoHttp as ContentfulStatusCode, {
+      codigo: error.codigo,
+      detalles: error.detalles,
+    });
+  }
   if (error instanceof Error && error.message === "No hay sesión") {
     return responderError(c, "Sesión requerida", 401, {
       codigo: "SESION_REQUERIDA",
@@ -38,10 +46,17 @@ export function responderErrorAdmin(c: Context, error: unknown) {
   if (error instanceof Error && error.message.includes("permisos")) {
     return responderError(c, error.message, 403, { codigo: "NO_AUTORIZADO" });
   }
+  if (error instanceof Error && error.message.startsWith("Falta el parámetro")) {
+    return responderError(c, error.message, 400, {
+      codigo: "PARAMETRO_FALTANTE",
+    });
+  }
   if (error instanceof Error && error.name === "ZodError") {
     return responderError(c, "Datos inválidos", 400, {
       codigo: "DATOS_INVALIDOS",
     });
   }
-  return responderError(c, "Error interno", 500);
+  const mensaje =
+    error instanceof Error && error.message ? error.message : "Error inesperado";
+  return responderError(c, mensaje, 500, { codigo: "ERROR_INTERNO" });
 }
