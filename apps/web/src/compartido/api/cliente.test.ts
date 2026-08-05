@@ -57,6 +57,29 @@ describe("ClienteApi", () => {
     expect(error.message).toBe("Solicitud inválida");
   });
 
+  it("propaga el código al callback onUnauthorized en 401", async () => {
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            exito: false,
+            error: {
+              codigo: "CREDENCIALES_QLIK_INVALIDAS",
+              mensaje: "Credenciales inválidas",
+            },
+          }),
+          { status: 401, headers: { "content-type": "application/json" } },
+        ),
+    ) as unknown as typeof fetch;
+
+    const cliente = new ClienteApi("/api");
+    const noAutorizado = vi.fn();
+    cliente.onUnauthorized = noAutorizado;
+
+    await expect(cliente.get("/prueba")).rejects.toBeDefined();
+    expect(noAutorizado).toHaveBeenCalledWith("CREDENCIALES_QLIK_INVALIDAS");
+  });
+
   it("envía JSON e Idempotency-Key", async () => {
     globalThis.fetch = vi.fn(
       async () =>

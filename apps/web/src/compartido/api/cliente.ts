@@ -17,11 +17,11 @@ export class ErrorClienteApi extends Error {
 }
 
 export class ClienteApi {
-  private _onUnauthorized?: () => void;
+  private _onUnauthorized?: (codigo?: string) => void;
 
   constructor(private readonly baseUrl = "/api") {}
 
-  set onUnauthorized(fn: (() => void) | undefined) {
+  set onUnauthorized(fn: ((codigo?: string) => void) | undefined) {
     this._onUnauthorized = fn;
   }
 
@@ -96,7 +96,7 @@ export class ClienteApi {
         ? { mensaje: `HTTP ${respuesta.status}` }
         : contenido.error;
       if (respuesta.status === 401) {
-        this._onUnauthorized?.();
+        this._onUnauthorized?.(error.codigo);
       }
       throw new ErrorClienteApi(
         error.mensaje,
