@@ -10,6 +10,7 @@ import {
   iniciarSesion,
   iniciarSesionPorCorreo,
 } from "@/modulos/autenticacion/api";
+import { obtenerMensajeMotivoSesion } from "@/modulos/autenticacion/motivo-sesion";
 import { useEffect, useState } from "react";
 
 // Mensajes seguros permitidos (mapeo de errores del backend)
@@ -37,16 +38,24 @@ export function PaginaLogin() {
   const [hostManual, setHostManual] = useState("");
   const [modoAvanzado, setModoAvanzado] = useState(false);
 
-  // Procesar oauth_error de la URL al montar
+  // Procesar oauth_error y motivo_sesion de la URL al montar
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const oauthError = params.get("oauth_error");
+    const motivoSesion = params.get("motivo_sesion");
 
     if (oauthError) {
       const mensaje = obtenerMensajeSeguro(oauthError);
       mostrarError(mensaje);
       setErrorOAuth(mensaje);
-      // Limpiar el query param sin recargar
+    }
+
+    const mensajeSesion = obtenerMensajeMotivoSesion(motivoSesion);
+    if (mensajeSesion) {
+      setErrorOAuth(mensajeSesion);
+    }
+
+    if (oauthError || mensajeSesion) {
       const cleanUrl = window.location.pathname;
       history.replaceState(null, "", cleanUrl);
     }

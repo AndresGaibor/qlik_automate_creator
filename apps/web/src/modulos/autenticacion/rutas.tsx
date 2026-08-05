@@ -7,6 +7,12 @@ export function crearRutasAutenticacion(rutaRaiz: AnyRoute) {
       getParentRoute: () => rutaRaiz,
       path: "/login",
       component: PaginaLogin,
+      validateSearch: (busqueda: Record<string, unknown>) => ({
+        motivo_sesion:
+          typeof busqueda.motivo_sesion === "string"
+            ? busqueda.motivo_sesion
+            : undefined,
+      }),
     }),
   ];
 }
