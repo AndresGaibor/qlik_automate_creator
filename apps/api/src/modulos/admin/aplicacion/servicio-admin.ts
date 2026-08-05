@@ -30,4 +30,9 @@ export class ServicioAdmin {
       (m) => m.organizacionId === organizacionId && m.rol === "admin",
     );
   }
+
+  puedeCambiarModoGlobal(sesion: ContextoSesion): boolean {
+    if (sesion.esSuperadmin) return true;
+    return sesion.membresias.some((m) => m.rol === "admin");
+  }
 }

@@ -3,6 +3,7 @@ import {
   esquemaConfigurarConexionDestino,
   esquemaConfigurarDestinoTenant,
   esquemaConfigurarImpalaTenant,
+  esquemaConfigurarPlantillaAutomatizacion,
 } from "@qlik/contratos/admin";
 import { type Context, Hono } from "hono";
 import {
@@ -44,11 +45,12 @@ export function crearRutasConfiguracionTenant({
       exigirAccesoOrganizacion(contexto, organizacionId);
 
       const cuerpo = await c.req.json();
-      const entrada = esquemaConfigurarAutomatizacionBase.parse(cuerpo);
+      const entrada = esquemaConfigurarPlantillaAutomatizacion.parse(cuerpo);
 
-      const resultado = await repositorio.configurarAutomatizacionBase(
+      const resultado = await repositorio.configurarPlantillaAutomatizacion(
         organizacionId,
         tenantQlikId,
+        entrada.modo,
         entrada.automatizacionBaseIdQlik,
         entrada.automatizacionBaseNombre,
       );

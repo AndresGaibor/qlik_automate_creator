@@ -1,6 +1,7 @@
 export type RolAdministracion = "admin" | "usuario";
 export type EstadoOrganizacion = "activa" | "suspendida";
 export type EstadoTenantQlik = "activo" | "desconectado" | "suspendido";
+export type ModoPlantilla = 1 | 2;
 
 export interface OrganizacionAdministrable {
   id: string;
@@ -19,6 +20,10 @@ export interface TenantQlikAdministrable {
   esPrincipal: boolean;
   automatizacionBaseIdQlik?: string | null;
   automatizacionBaseNombre?: string | null;
+  automatizacionPlantillaModo1IdQlik?: string | null;
+  automatizacionPlantillaModo1Nombre?: string | null;
+  automatizacionPlantillaModo2IdQlik?: string | null;
+  automatizacionPlantillaModo2Nombre?: string | null;
   destinoApiUrl?: string | null;
   tieneDestinoApiKey: boolean;
   destinoApiKeyMascara: string | null;
@@ -141,6 +146,20 @@ export interface RepositorioAdministracion {
     automatizacionBaseIdQlik: string,
     automatizacionBaseNombre?: string,
   ): Promise<TenantQlikAdministrable | null>;
+  configurarPlantillaAutomatizacion(
+    organizacionId: string,
+    tenantQlikId: string,
+    modo: ModoPlantilla,
+    automatizacionBaseIdQlik: string,
+    automatizacionBaseNombre?: string,
+  ): Promise<TenantQlikAdministrable | null>;
+  obtenerModoAutomatizacionGlobal(): Promise<{
+    modoAutomatizacionActivo: ModoPlantilla;
+  }>;
+  actualizarModoAutomatizacionGlobal(
+    modo: ModoPlantilla,
+    usuarioId?: string,
+  ): Promise<{ modoAutomatizacionActivo: ModoPlantilla }>;
   configurarDestinoTenant(
     organizacionId: string,
     tenantQlikId: string,

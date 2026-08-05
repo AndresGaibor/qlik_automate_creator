@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { esquemaIdQlik } from "../qlik/comunes.js";
 import { esquemaTipoDestino } from "../destinos/index.js";
 
 export const esquemaTenantResumen = z.object({
@@ -62,6 +63,10 @@ export const esquemaTenantQlik = z.object({
   esPrincipal: z.boolean(),
   automatizacionBaseIdQlik: z.string().nullable().optional(),
   automatizacionBaseNombre: z.string().nullable().optional(),
+  automatizacionPlantillaModo1IdQlik: z.string().nullable().optional(),
+  automatizacionPlantillaModo1Nombre: z.string().nullable().optional(),
+  automatizacionPlantillaModo2IdQlik: z.string().nullable().optional(),
+  automatizacionPlantillaModo2Nombre: z.string().nullable().optional(),
   destinoApiUrl: z.string().nullable().optional(),
   tieneDestinoApiKey: z.boolean(),
   destinoApiKeyMascara: z.string().nullable(),
@@ -86,6 +91,25 @@ export const esquemaConfigurarAutomatizacionBase = z.object({
   automatizacionBaseIdQlik: z.string().min(1),
   automatizacionBaseNombre: z.string().optional(),
 });
+
+export const esquemaModoPlantilla = z.union([z.literal(1), z.literal(2)]);
+export type ModoPlantilla = z.infer<typeof esquemaModoPlantilla>;
+
+export const esquemaConfigurarPlantillaAutomatizacion = z.object({
+  modo: esquemaModoPlantilla,
+  automatizacionBaseIdQlik: esquemaIdQlik,
+  automatizacionBaseNombre: z.string().trim().min(1).max(255).optional(),
+});
+export type ConfigurarPlantillaAutomatizacion = z.infer<
+  typeof esquemaConfigurarPlantillaAutomatizacion
+>;
+
+export const esquemaActualizarModoAutomatizacion = z.object({
+  modoAutomatizacionActivo: esquemaModoPlantilla,
+});
+export type ActualizarModoAutomatizacion = z.infer<
+  typeof esquemaActualizarModoAutomatizacion
+>;
 
 export const esquemaConfigurarDestinoTenant = z.object({
   destinoApiUrl: z.string().trim().url().max(2048),

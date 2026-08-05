@@ -1,9 +1,10 @@
 import { eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
-import { usuarios } from "../../../plataforma/persistencia/esquema.js";
+import { configuracionesPlataforma, usuarios } from "../../../plataforma/persistencia/esquema.js";
 import type {
   EntradaGuardarConfiguracionOauth,
   EstadoOrganizacion,
+  ModoPlantilla,
   RepositorioAdministracion,
   ResultadoEliminarSuperadmin,
   RolAdministracion,
@@ -132,6 +133,71 @@ export class RepositorioAdministracionPostgres
       automatizacionBaseIdQlik,
       automatizacionBaseNombre,
     );
+  }
+
+  async configurarPlantillaAutomatizacion(
+    organizacionId: string,
+    tenantQlikId: string,
+    modo: ModoPlantilla,
+    automatizacionBaseIdQlik: string,
+    automatizacionBaseNombre?: string,
+  ): Promise<TenantQlikAdministrable | null> {
+    return ConsultaTenantQlik.configurarPlantillaAutomatizacion(
+      this.db,
+      organizacionId,
+      tenantQlikId,
+      modo,
+      automatizacionBaseIdQlik,
+      automatizacionBaseNombre,
+    );
+  }
+
+  async obtenerModoAutomatizacionGlobal(): Promise<{
+    modoAutomatizacionActivo: ModoPlantilla;
+  }> {
+    const fila = await this.db.query.configuracionesPlataforma.findFirst({
+      where: eq(configuracionesPlataforma.id, 1),
+    });
+    const rawModo = fila?.modoAutomatizacionActivo ?? 1;
+    const modoValido: ModoPlantilla = rawModo === 1 || rawModo === 2 ? rawModo : 1;
+    return { modoAutomatizacionActivo: modoValido };
+  }
+
+  async actualizarModoAutomatizacionGlobal(
+    modo: ModoPlantilla,
+    usuarioId?: string,
+  ): Promise<{ modoAutomatizacionActivo: ModoPlantilla }> {
+    const existente = await this.db.query.configuracionesPlataforma.findFirst({
+      where: eq(configuracionesPlataforma.id, 1),
+    });
+
+    if (!existente) {
+      const [nueva] = await this.db
+        .insert(configuracionesPlataforma)
+        .values({
+          id: 1,
+          modoAutomatizacionActivo: modo,
+          actualizadoPorUsuarioId: usuarioId ?? null,
+        })
+        .returning();
+      const rawModo = nueva.modoAutomatizacionActivo;
+      const modoValido: ModoPlantilla = rawModo === 1 || rawModo === 2 ? rawModo : 1;
+      return { modoAutomatizacionActivo: modoValido };
+    }
+
+    const [actualizada] = await this.db
+      .update(configuracionesPlataforma)
+      .set({
+        modoAutomatizacionActivo: modo,
+        actualizadoEn: new Date(),
+        actualizadoPorUsuarioId: usuarioId ?? null,
+      })
+      .where(eq(configuracionesPlataforma.id, 1))
+      .returning();
+
+    const rawModo = actualizada.modoAutomatizacionActivo;
+    const modoValido: ModoPlantilla = rawModo === 1 || rawModo === 2 ? rawModo : 1;
+    return { modoAutomatizacionActivo: modoValido };
   }
 
   async configurarDestinoTenant(

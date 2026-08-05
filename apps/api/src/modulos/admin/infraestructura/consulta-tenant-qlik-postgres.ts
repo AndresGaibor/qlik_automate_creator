@@ -4,6 +4,7 @@ import { tenantsQlik } from "../../../plataforma/persistencia/esquema.js";
 import { cifrarSecretoParaPersistencia } from "../../../plataforma/seguridad/secreto-cifrado.js";
 import type {
   EstadoTenantQlik,
+  ModoPlantilla,
   ResultadoEliminarTenantQlik,
   ServicioCifradoAdministracion,
   TenantQlikAdministrable,
@@ -98,6 +99,44 @@ export const ConsultaTenantQlik = {
       .set({
         automatizacionBaseIdQlik,
         automatizacionBaseNombre: automatizacionBaseNombre ?? null,
+        actualizadoEn: new Date(),
+      })
+      .where(
+        and(
+          eq(tenantsQlik.id, tenantQlikId),
+          eq(tenantsQlik.organizacionId, organizacionId),
+        ),
+      )
+      .returning();
+
+    return fila ? mapearTenantQlik(fila) : null;
+  },
+
+  async configurarPlantillaAutomatizacion(
+    db: DbType,
+    organizacionId: string,
+    tenantQlikId: string,
+    modo: ModoPlantilla,
+    automatizacionBaseIdQlik: string,
+    automatizacionBaseNombre?: string,
+  ) {
+    const campos =
+      modo === 1
+        ? {
+            automatizacionPlantillaModo1IdQlik: automatizacionBaseIdQlik,
+            automatizacionPlantillaModo1Nombre:
+              automatizacionBaseNombre ?? null,
+          }
+        : {
+            automatizacionPlantillaModo2IdQlik: automatizacionBaseIdQlik,
+            automatizacionPlantillaModo2Nombre:
+              automatizacionBaseNombre ?? null,
+          };
+
+    const [fila] = await db
+      .update(tenantsQlik)
+      .set({
+        ...campos,
         actualizadoEn: new Date(),
       })
       .where(
