@@ -1,7 +1,9 @@
 import { type Context, Hono } from "hono";
 import { z } from "zod";
-import { responderExito } from "../../../nucleo/http/respuestas.js";
+import { responderError, responderExito } from "../../../nucleo/http/respuestas.js";
 import { crearClienteDestino } from "../aplicacion/fabrica-destinos.js";
+import type { ConfigConexionDestino } from "../aplicacion/fabrica-destinos.js";
+import type { PuertoDestino } from "../aplicacion/puertos/puerto-destino.js";
 import type { TipoDestino } from "../dominio/tipos-destino.js";
 
 const esquemaCrearDestino = z.object({
@@ -62,8 +64,70 @@ export function crearRutasDestinosGenericas(
     secretoRefs: Record<string, unknown>;
   } | null>,
   resolverOrganizacion?: (c: Context) => Promise<string>,
+  crearCliente?: (conexion: ConfigConexionDestino) => PuertoDestino,
 ) {
   const rutas = new Hono();
+
+  const fabricarCliente = (
+    c: Context,
+    conn: { tipo: string; config: Record<string, unknown> },
+  ): PuertoDestino | Response => {
+    try {
+      return (crearCliente ?? crearClienteDestino)({
+        tipo: conn.tipo as TipoDestino,
+        config: conn.config,
+      });
+    } catch (error) {
+      const mensaje =
+        error instanceof Error
+          ? error.message
+          : "Configuración de destino inválida";
+      return responderError(c, mensaje, 400, {
+        codigo: "CONFIGURACION_INVALIDA",
+      });
+    }
+  };
+
+  const listarRecursosDestino = async (
+    c: Context,
+    conn: { tipo: string; config: Record<string, unknown> },
+  ) => {
+    const cliente = fabricarCliente(c, conn);
+    if (cliente instanceof Response) return cliente;
+    try {
+      const recursos = await cliente.listarRecursos();
+      return responderExito(c, recursos);
+    } catch (error) {
+      const mensaje =
+        error instanceof Error
+          ? error.message
+          : "El destino no está disponible";
+      return responderError(c, mensaje, 502, {
+        codigo: "DESTINO_NO_DISPONIBLE",
+      });
+    }
+  };
+
+  const obtenerRecursoDestino = async (
+    c: Context,
+    conn: { tipo: string; config: Record<string, unknown> },
+    recursoId: string,
+  ) => {
+    const cliente = fabricarCliente(c, conn);
+    if (cliente instanceof Response) return cliente;
+    try {
+      const recurso = await cliente.obtenerRecurso(recursoId);
+      return responderExito(c, recurso);
+    } catch (error) {
+      const mensaje =
+        error instanceof Error
+          ? error.message
+          : "El destino no está disponible";
+      return responderError(c, mensaje, 502, {
+        codigo: "DESTINO_NO_DISPONIBLE",
+      });
+    }
+  };
 
   rutas.get("/", async (c) => {
     const conexiones = await obtenerConexiones(c);
@@ -137,11 +201,9 @@ export function crearRutasDestinosGenericas(
     if (!conn) {
       return c.json({ success: false, error: "Conexión no encontrada" }, 404);
     }
+    const cliente = fabricarCliente(c, conn);
+    if (cliente instanceof Response) return cliente;
     try {
-      const cliente = crearClienteDestino({
-        tipo: conn.tipo as TipoDestino,
-        config: conn.config,
-      });
       const capacidades = cliente.obtenerCapacidades();
       await actualizarConexion(c, id, {
         estado: "activo",
@@ -168,10 +230,8 @@ export function crearRutasDestinosGenericas(
     if (!conn) {
       return c.json({ success: false, error: "Conexión no encontrada" }, 404);
     }
-    const cliente = crearClienteDestino({
-      tipo: conn.tipo as TipoDestino,
-      config: conn.config,
-    });
+    const cliente = fabricarCliente(c, conn);
+    if (cliente instanceof Response) return cliente;
     return responderExito(c, cliente.obtenerCapacidades());
   });
 
@@ -181,12 +241,7 @@ export function crearRutasDestinosGenericas(
     if (!conn) {
       return c.json({ success: false, error: "Conexión no encontrada" }, 404);
     }
-    const cliente = crearClienteDestino({
-      tipo: conn.tipo as TipoDestino,
-      config: conn.config,
-    });
-    const recursos = await cliente.listarRecursos();
-    return responderExito(c, recursos);
+    return listarRecursosDestino(c, conn);
   });
 
   rutas.get("/:id/recursos/:recursoId", async (c) => {
@@ -196,12 +251,7 @@ export function crearRutasDestinosGenericas(
     if (!conn) {
       return c.json({ success: false, error: "Conexión no encontrada" }, 404);
     }
-    const cliente = crearClienteDestino({
-      tipo: conn.tipo as TipoDestino,
-      config: conn.config,
-    });
-    const recurso = await cliente.obtenerRecurso(recursoId);
-    return responderExito(c, recurso);
+    return obtenerRecursoDestino(c, conn, recursoId);
   });
 
   return rutas;

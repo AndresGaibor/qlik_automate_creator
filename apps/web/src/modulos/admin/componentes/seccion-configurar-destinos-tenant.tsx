@@ -10,10 +10,10 @@ import { useState } from "react";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 
 const TIPOS = [
-  { id: "postgres", nombre: "PostgreSQL" },
-  { id: "bigquery", nombre: "BigQuery" },
-  { id: "sftp", nombre: "SFTP" },
-  { id: "impala", nombre: "Impala" },
+  { id: "postgres", nombre: "PostgreSQL", deshabilitado: false },
+  { id: "bigquery", nombre: "BigQuery", deshabilitado: true },
+  { id: "sftp", nombre: "SFTP", deshabilitado: false },
+  { id: "impala", nombre: "Impala", deshabilitado: false },
 ] as const;
 
 type Tipo = (typeof TIPOS)[number]["id"];
@@ -64,7 +64,13 @@ export function SeccionConfigurarDestinosTenant({
           aria-label="Tipo de destino"
         >
           {TIPOS.map((opcion) => (
-            <option key={opcion.id} value={opcion.id}>{opcion.nombre}</option>
+            <option
+              key={opcion.id}
+              value={opcion.id}
+              disabled={opcion.deshabilitado}
+            >
+              {opcion.nombre}
+            </option>
           ))}
         </select>
       </div>
