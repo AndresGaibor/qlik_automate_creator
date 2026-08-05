@@ -4,6 +4,7 @@ import {
   auditoriaEventos,
   automatizacionesQlikCache,
   configuracionesAutomatizacion,
+  configuracionesPlataforma,
   configuracionesOauthQlik,
   credencialesQlik,
   destinosCache,
@@ -16,6 +17,7 @@ import {
   organizaciones,
   programacionesAutomatizacion,
   sesionesUsuario,
+  secretosConexionOrigen,
   solicitudesIdempotentes,
   tenantsQlik,
   usuarios,
@@ -64,6 +66,55 @@ describe("Esquema Drizzle", () => {
     expect(idxNames(getTableConfig(tenantsQlik))).toContain(
       "uq_tenant_principal_por_organizacion",
     );
+    expect(cols).toContain("automatizacion_plantilla_modo_1_id_qlik");
+    expect(cols).toContain("automatizacion_plantilla_modo_1_nombre");
+    expect(cols).toContain("automatizacion_plantilla_modo_2_id_qlik");
+    expect(cols).toContain("automatizacion_plantilla_modo_2_nombre");
+  });
+
+  it("configuracionesPlataforma modela el modo activo y su auditoría", () => {
+    const cols = colNames(getTableConfig(configuracionesPlataforma));
+    expect(cols).toContain("id");
+    expect(cols).toContain("modo_automatizacion_activo");
+    expect(cols).toContain("actualizado_en");
+    expect(cols).toContain("actualizado_por_usuario_id");
+  });
+
+  it("secretosConexionOrigen modela secretos por conexión", () => {
+    const config = getTableConfig(secretosConexionOrigen);
+    const cols = colNames(config);
+    expect(cols).toContain("conexion_origen_id");
+    expect(cols).toContain("nombre");
+    expect(cols).toContain("valor_cifrado");
+    expect(cols).toContain("creado_en");
+    expect(cols).toContain("actualizado_en");
+    expect(idxNames(config)).toContain("uq_secreto_conexion_origen_nombre");
+  });
+
+  it("la migración 0013 es idempotente y migra los dos modos", async () => {
+    const sqlMigracion = await Bun.file(
+      new URL(
+        "../drizzle/0013_modos_plantilla_y_secretos_origen.sql",
+        import.meta.url,
+      ),
+    ).text();
+
+    expect(sqlMigracion).toContain(
+      'ADD COLUMN "automatizacion_plantilla_modo_1_id_qlik" text',
+    );
+    expect(sqlMigracion).toContain(
+      'CREATE TABLE IF NOT EXISTS "configuraciones_plataforma"',
+    );
+    expect(sqlMigracion).toContain(
+      'CREATE TABLE IF NOT EXISTS "secretos_conexion_origen"',
+    );
+    expect(sqlMigracion).toContain('UPDATE "tenants_qlik"');
+    expect(sqlMigracion).toContain("ON CONFLICT DO NOTHING");
+    expect(sqlMigracion).toContain('CHECK ("id" = 1)');
+    expect(sqlMigracion).toContain(
+      'CHECK ("modo_automatizacion_activo" IN (1, 2))',
+    );
+    expect(sqlMigracion).toContain('UNIQUE ("conexion_origen_id", "nombre")');
   });
 
   it("configuracionesOauthQlik protege secretos por tenant", () => {

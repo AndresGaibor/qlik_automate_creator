@@ -6,6 +6,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  smallint,
   text,
   timestamp,
   unique,
@@ -86,6 +87,18 @@ export const tenantsQlik = pgTable(
     esPrincipal: boolean("es_principal").notNull().default(false),
     automatizacionBaseIdQlik: text("automatizacion_base_id_qlik"),
     automatizacionBaseNombre: text("automatizacion_base_nombre"),
+    automatizacionPlantillaModo1IdQlik: text(
+      "automatizacion_plantilla_modo_1_id_qlik",
+    ),
+    automatizacionPlantillaModo1Nombre: text(
+      "automatizacion_plantilla_modo_1_nombre",
+    ),
+    automatizacionPlantillaModo2IdQlik: text(
+      "automatizacion_plantilla_modo_2_id_qlik",
+    ),
+    automatizacionPlantillaModo2Nombre: text(
+      "automatizacion_plantilla_modo_2_nombre",
+    ),
     destinoApiUrl: text("destino_api_url"),
     destinoApiKeyCifrada: text("destino_api_key_cifrada"),
     destinoBaseDatos: text("destino_base_datos"),
@@ -550,6 +563,47 @@ export const conexionesOrigen = pgTable(
     ),
     idxOrganizacion: index("idx_conexiones_origen_organizacion").on(
       t.organizacionId,
+    ),
+  }),
+);
+
+export const configuracionesPlataforma = pgTable(
+  "configuraciones_plataforma",
+  {
+    id: integer("id").primaryKey(),
+    modoAutomatizacionActivo: smallint("modo_automatizacion_activo")
+      .notNull()
+      .default(1),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+    actualizadoPorUsuarioId: uuid("actualizado_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+  },
+  (t) => ({
+    ckId: check("configuraciones_plataforma_id_check", sql`${t.id} = 1`),
+    ckModo: check(
+      "configuraciones_plataforma_modo_check",
+      sql`${t.modoAutomatizacionActivo} IN (1, 2)`,
+    ),
+  }),
+);
+
+export const secretosConexionOrigen = pgTable(
+  "secretos_conexion_origen",
+  {
+    conexionOrigenId: uuid("conexion_origen_id")
+      .notNull()
+      .references(() => conexionesOrigen.id, { onDelete: "cascade" }),
+    nombre: text("nombre").notNull(),
+    valorCifrado: text("valor_cifrado").notNull(),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    uqConexionNombre: uniqueIndex("uq_secreto_conexion_origen_nombre").on(
+      t.conexionOrigenId,
+      t.nombre,
     ),
   }),
 );
