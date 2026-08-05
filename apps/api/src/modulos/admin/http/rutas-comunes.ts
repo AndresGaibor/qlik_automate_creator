@@ -56,7 +56,38 @@ export function responderErrorAdmin(c: Context, error: unknown) {
       codigo: "DATOS_INVALIDOS",
     });
   }
+  if (error instanceof Error && typeof codigoErrorBd(error) === "string") {
+    return responderError(c, mensajeErrorBd(codigoErrorBd(error)), 500, {
+      codigo: "ERROR_BASE_DATOS",
+    });
+  }
   const mensaje =
     error instanceof Error && error.message ? error.message : "Error inesperado";
   return responderError(c, mensaje, 500, { codigo: "ERROR_INTERNO" });
+}
+
+function codigoErrorBd(error: Error): string | null {
+  const codigo = (error as { code?: unknown }).code;
+  return typeof codigo === "string" ? codigo : null;
+}
+
+function mensajeErrorBd(codigo: string | null): string {
+  switch (codigo) {
+    case "23505":
+      return "Ya existe una conexión con ese nombre para este tipo y organización.";
+    case "23503":
+      return "La organización o el tenant indicado no existe.";
+    case "23514":
+      return "El tipo de conexión no está soportado para guardar un destino.";
+    case "42501":
+      return "No hay permisos de base de datos para guardar la conexión.";
+    case "57P01":
+    case "57P02":
+    case "57P03":
+    case "ECONNREFUSED":
+    case "ETIMEDOUT":
+      return "La base de datos no está disponible. Inténtalo de nuevo.";
+    default:
+      return "No se pudo completar la operación en la base de datos.";
+  }
 }

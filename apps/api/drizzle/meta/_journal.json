@@ -85,6 +85,13 @@
       "when": 1785240000000,
       "tag": "0011_catalogo_conexiones_origen",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786000000000,
+      "tag": "0012_permitir_tipo_impala",
+      "breakpoints": true
     }
   ]
 }

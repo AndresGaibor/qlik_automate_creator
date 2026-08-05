@@ -111,4 +111,56 @@ describe("rutas-configuracion-tenant · impala", () => {
     const cuerpo = await respuesta.json();
     expect(cuerpo.error.codigo).toBe("DATOS_INVALIDOS");
   });
+
+  it("traduce violaciones de unicidad de la BD a un mensaje amigable", async () => {
+    const errorBd = new Error(
+      'Failed query: insert into "conexiones_destino" ... params: ...',
+    );
+    Object.assign(errorBd, { code: "23505" });
+
+    const app = crearApp({
+      configurarImpalaTenant: async () => {
+        throw errorBd;
+      },
+    });
+
+    const respuesta = await app.request(rutaImpala, {
+      method: "PUT",
+      body: JSON.stringify(cuerpoValido),
+      headers: { "content-type": "application/json" },
+    });
+
+    expect(respuesta.status).toBe(500);
+    const cuerpo = await respuesta.json();
+    expect(cuerpo.exito).toBe(false);
+    expect(cuerpo.error.codigo).toBe("ERROR_BASE_DATOS");
+    expect(cuerpo.error.mensaje).toBe(
+      "Ya existe una conexión con ese nombre para este tipo y organización.",
+    );
+    expect(JSON.stringify(cuerpo)).not.toContain("Failed query");
+  });
+
+  it("traduce la falta de disponibilidad de la BD a un mensaje amigable", async () => {
+    const errorBd = new Error("Failed query: connect ECONNREFUSED");
+    Object.assign(errorBd, { code: "ECONNREFUSED" });
+
+    const app = crearApp({
+      configurarImpalaTenant: async () => {
+        throw errorBd;
+      },
+    });
+
+    const respuesta = await app.request(rutaImpala, {
+      method: "PUT",
+      body: JSON.stringify(cuerpoValido),
+      headers: { "content-type": "application/json" },
+    });
+
+    expect(respuesta.status).toBe(500);
+    const cuerpo = await respuesta.json();
+    expect(cuerpo.error.codigo).toBe("ERROR_BASE_DATOS");
+    expect(cuerpo.error.mensaje).toBe(
+      "La base de datos no está disponible. Inténtalo de nuevo.",
+    );
+  });
 });
