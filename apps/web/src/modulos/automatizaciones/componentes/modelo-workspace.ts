@@ -129,3 +129,178 @@ export function obtenerTipoBadge(type: string): TipoBadgeWorkspace {
     label: type,
   };
 }
+
+export interface ParametroResumenWorkspace {
+  clave: string;
+  valor: unknown;
+}
+
+export interface GrupoResumenWorkspace {
+  clave: string;
+  items: ParametroResumenWorkspace[];
+}
+
+export interface BloqueResumenWorkspace {
+  tipo: string;
+  nombre: string;
+  parametros: ParametroResumenWorkspace[];
+  grupos: GrupoResumenWorkspace[];
+}
+
+export interface VariableResumenWorkspace {
+  nombre: string;
+  valor: unknown;
+}
+
+export interface FlujoReferenciable {
+  id: string;
+  nombre: string;
+}
+
+export interface ReferenciaWorkspace {
+  nombreDataflow: string;
+  flujoId: string | null;
+  archivoODataset: string;
+  extension: string;
+  tablaDestino: string;
+}
+
+export function extraerBloquesResumen(
+  workspace: Record<string, unknown>,
+): BloqueResumenWorkspace[] {
+  const bloques = workspace.blocks;
+  if (!Array.isArray(bloques)) return [];
+
+  return bloques.map((bloque, indice) => {
+    const actual = bloque as Record<string, unknown>;
+    const tipo = String(actual.type ?? actual.blockType ?? "desconocido");
+    const nombre = String(actual.name ?? actual.title ?? `Bloque ${indice}`);
+    const settings = (actual.settings ?? actual.parameters ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const grupos: GrupoResumenWorkspace[] = [];
+    const parametros: ParametroResumenWorkspace[] = [];
+
+    for (const [clave, valor] of entriesValidasResumen(settings)) {
+      if (Array.isArray(valor)) {
+        if (valor.length > 0 && typeof valor[0] === "object") {
+          const items: ParametroResumenWorkspace[] = [];
+          for (const item of valor) {
+            if (typeof item === "object" && item !== null) {
+              for (const [itemClave, itemValor] of entriesValidasResumen(
+                item,
+              )) {
+                items.push({ clave: itemClave, valor: itemValor });
+              }
+            } else {
+              items.push({ clave, valor: item });
+            }
+          }
+          grupos.push({ clave, items });
+        } else {
+          parametros.push({ clave, valor });
+        }
+      } else if (typeof valor === "object" && valor !== null) {
+        for (const [itemClave, itemValor] of entriesValidasResumen(valor)) {
+          parametros.push({ clave: `${clave}.${itemClave}`, valor: itemValor });
+        }
+      } else {
+        parametros.push({ clave, valor });
+      }
+    }
+
+    if (actual.connectorId && tipo === "EndpointBlock") {
+      parametros.push({ clave: "connectorId", valor: actual.connectorId });
+    }
+    if (actual.endpointId && tipo === "EndpointBlock") {
+      parametros.push({ clave: "endpointId", valor: actual.endpointId });
+    }
+    if (actual.snippetId) {
+      parametros.push({ clave: "snippetId", valor: actual.snippetId });
+    }
+
+    return { tipo, nombre, parametros, grupos };
+  });
+}
+
+export function extraerVariablesResumen(
+  workspace: Record<string, unknown>,
+): VariableResumenWorkspace[] {
+  const variables = workspace.variables;
+  const bloques = workspace.blocks;
+  const valoresOperaciones: Record<string, unknown> = {};
+
+  if (Array.isArray(bloques)) {
+    for (const bloque of bloques) {
+      const actual = bloque as Record<string, unknown>;
+      if (actual.type !== "VariableBlock" || !actual.name) continue;
+      const operaciones = actual.operations as
+        | Array<Record<string, unknown>>
+        | undefined;
+      if (
+        Array.isArray(operaciones) &&
+        operaciones.length > 0 &&
+        operaciones[0].value !== undefined
+      ) {
+        valoresOperaciones[String(actual.name)] = operaciones[0].value;
+      }
+    }
+  }
+  if (!Array.isArray(variables)) return [];
+
+  return variables.map((variableRaw) => {
+    const variable = variableRaw as Record<string, unknown>;
+    const nombre = String(variable.name ?? "sin nombre");
+    const valorDirecto = variable.value ?? variable.defaultValue;
+    return {
+      nombre,
+      valor:
+        valorDirecto !== undefined && valorDirecto !== ""
+          ? valorDirecto
+          : (valoresOperaciones[nombre] ?? ""),
+    };
+  });
+}
+
+export function construirReferenciaWorkspace(
+  variables: VariableResumenWorkspace[],
+  flujos: FlujoReferenciable[],
+): ReferenciaWorkspace | null {
+  const valor = (nombre: string) =>
+    String(
+      variables.find((variable) => variable.nombre === nombre)?.valor || "",
+    );
+  const appid = valor("Appid");
+  const dataset = valor("Dataset");
+  const archivo = valor("ArchivoEntrada");
+  const tablaDestino = valor("TablaDestino");
+  const extension = valor("Extension");
+  if (!appid && !dataset && !tablaDestino) return null;
+
+  const referenciaNombre = (dataset || archivo).toLowerCase();
+  const flujo = flujos.find(
+    (item) =>
+      item.id === appid ||
+      (referenciaNombre &&
+        item.nombre.toLowerCase().includes(referenciaNombre)),
+  );
+  return {
+    nombreDataflow:
+      flujo?.nombre ||
+      dataset ||
+      archivo ||
+      (appid ? `Flujo (${appid.slice(0, 8)}...)` : "—"),
+    flujoId: flujo?.id ?? null,
+    archivoODataset: archivo || dataset,
+    extension,
+    tablaDestino,
+  };
+}
+
+function entriesValidasResumen(valor: unknown): Array<[string, unknown]> {
+  if (typeof valor !== "object" || valor === null) return [];
+  return Object.entries(valor as Record<string, unknown>).filter(
+    ([clave]) => !clave.startsWith("_") && !clave.startsWith("internal"),
+  );
+}
