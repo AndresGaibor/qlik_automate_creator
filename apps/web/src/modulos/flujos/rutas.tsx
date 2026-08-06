@@ -1,6 +1,17 @@
-import { type AnyRoute, createRoute } from "@tanstack/react-router";
-import { PaginaDetalleFlujo } from "./pagina-detalle-flujo";
-import { PaginaFlujos } from "./pagina-flujos";
+import {
+  type AnyRoute,
+  createRoute,
+  lazyRouteComponent,
+} from "@tanstack/react-router";
+
+const PaginaFlujos = lazyRouteComponent(
+  () => import("./pagina-flujos"),
+  "PaginaFlujos",
+);
+const PaginaDetalleFlujo = lazyRouteComponent(
+  () => import("./pagina-detalle-flujo"),
+  "PaginaDetalleFlujo",
+);
 
 export function crearRutasFlujos(rutaRaiz: AnyRoute) {
   return [

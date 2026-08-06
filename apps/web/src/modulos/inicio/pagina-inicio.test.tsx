@@ -16,6 +16,7 @@ vi.mock("@/modulos/autenticacion/api", () => ({
   obtenerSesion: mocks.obtenerSesion,
 }));
 vi.mock("@tanstack/react-router", () => ({
+  lazyRouteComponent: () => () => null,
   Link: mocks.Link,
 }));
 

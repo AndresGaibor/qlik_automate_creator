@@ -2,11 +2,19 @@ import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import {
   type AnyRoute,
   createRoute,
+  lazyRouteComponent,
   useNavigate,
-  useParams,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { PaginaDetalleTenant } from "./pagina-detalle-tenant";
+
+const PaginaConfiguracion = lazyRouteComponent(
+  () => import("./pagina-configuracion"),
+  "PaginaConfiguracion",
+);
+const RutaDetalleTenant = lazyRouteComponent(
+  () => import("./ruta-detalle-tenant"),
+  "RutaDetalleTenant",
+);
 
 function RedireccionConfiguracion() {
   const navegar = useNavigate();
@@ -19,26 +27,26 @@ function RedireccionConfiguracion() {
 }
 
 export function crearRutasAdmin(rutaRaiz: AnyRoute) {
-  const listadoHeredado = createRoute({
-    getParentRoute: () => rutaRaiz,
-    path: "/admin/tenants",
-    component: RedireccionConfiguracion,
-  });
-
-  const detalle = createRoute({
-    getParentRoute: () => rutaRaiz,
-    path: "/admin/tenants/$tenantId",
-    component: function RutaDetalleTenant() {
-      const { tenantId } = useParams({ strict: false }) as { tenantId: string };
-      return <PaginaDetalleTenant tenantId={tenantId} modoConfiguracion />;
-    },
-  });
-
-  const superadminsOculto = createRoute({
-    getParentRoute: () => rutaRaiz,
-    path: "/admin/superadmins",
-    component: RedireccionConfiguracion,
-  });
-
-  return [listadoHeredado, detalle, superadminsOculto];
+  return [
+    createRoute({
+      getParentRoute: () => rutaRaiz,
+      path: "/configuracion",
+      component: PaginaConfiguracion,
+    }),
+    createRoute({
+      getParentRoute: () => rutaRaiz,
+      path: "/admin/tenants",
+      component: RedireccionConfiguracion,
+    }),
+    createRoute({
+      getParentRoute: () => rutaRaiz,
+      path: "/admin/tenants/$tenantId",
+      component: RutaDetalleTenant,
+    }),
+    createRoute({
+      getParentRoute: () => rutaRaiz,
+      path: "/admin/superadmins",
+      component: RedireccionConfiguracion,
+    }),
+  ];
 }

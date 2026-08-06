@@ -1,5 +1,13 @@
-import { type AnyRoute, createRoute } from "@tanstack/react-router";
-import { PaginaLogin } from "./pagina-login";
+import {
+  type AnyRoute,
+  createRoute,
+  lazyRouteComponent,
+} from "@tanstack/react-router";
+
+const PaginaLogin = lazyRouteComponent(
+  () => import("./pagina-login"),
+  "PaginaLogin",
+);
 
 export function crearRutasAutenticacion(rutaRaiz: AnyRoute) {
   return [

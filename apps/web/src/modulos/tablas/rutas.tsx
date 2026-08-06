@@ -1,6 +1,13 @@
-import { type AnyRoute, createRoute } from "@tanstack/react-router";
-import { PaginaConfiguracion } from "../admin/pagina-configuracion";
-import { PaginaTablasDestino } from "./pagina-tablas-destino";
+import {
+  type AnyRoute,
+  createRoute,
+  lazyRouteComponent,
+} from "@tanstack/react-router";
+
+const PaginaTablasDestino = lazyRouteComponent(
+  () => import("./pagina-tablas-destino"),
+  "PaginaTablasDestino",
+);
 
 export function crearRutasTablas(rutaRaiz: AnyRoute) {
   return [
@@ -8,11 +15,6 @@ export function crearRutasTablas(rutaRaiz: AnyRoute) {
       getParentRoute: () => rutaRaiz,
       path: "/tablas",
       component: PaginaTablasDestino,
-    }),
-    createRoute({
-      getParentRoute: () => rutaRaiz,
-      path: "/configuracion",
-      component: PaginaConfiguracion,
     }),
   ];
 }

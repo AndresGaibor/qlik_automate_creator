@@ -42,6 +42,7 @@ vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
   ),
 }));
 vi.mock("@tanstack/react-router", () => ({
+  lazyRouteComponent: () => () => null,
   useNavigate: () => mocks.navegar,
   useLocation: mocks.useLocation,
   Link: mocks.Link,

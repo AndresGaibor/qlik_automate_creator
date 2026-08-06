@@ -1,5 +1,13 @@
-import { type AnyRoute, createRoute } from "@tanstack/react-router";
-import { PaginaSetup } from "./pagina-setup";
+import {
+  type AnyRoute,
+  createRoute,
+  lazyRouteComponent,
+} from "@tanstack/react-router";
+
+const PaginaSetup = lazyRouteComponent(
+  () => import("./pagina-setup"),
+  "PaginaSetup",
+);
 
 export function crearRutasSetup(rutaRaiz: AnyRoute) {
   return [
