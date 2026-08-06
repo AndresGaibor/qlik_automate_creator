@@ -7,19 +7,26 @@ interface Props {
   onVolver: () => void;
 }
 
-export function AlertaConfiguracionTenant({ onVolver }: Props) {
+export function AlertaConfiguracionTenant({ configTenant, onVolver }: Props) {
+  const modoActivo = configTenant?.modoAutomatizacionActivo ?? 1;
+  const esModo2 = modoActivo === 2;
+
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 flex flex-col gap-3">
       <div className="flex items-center gap-3">
         <Icon name="gear" size="md" className="text-amber-700" />
         <div>
           <h3 className="font-semibold text-amber-900 text-base">
-            Falta configurar la plantilla base
+            Falta configurar la plantilla {esModo2 ? "del Modo 2" : "base"}
           </h3>
           <p className="text-sm text-amber-800 mt-0.5">
             Para poder crear automatizaciones, el administrador primero debe
-            configurar una <strong>automatización base (plantilla)</strong> en
-            la sección de administración.
+            configurar la plantilla del{" "}
+            <strong>
+              {esModo2 ? "Modo 2 — Dataflow → SFTP → Talend" : "Modo 1 — Dataflow Spark/Python"}
+            </strong>{" "}
+            en{" "}
+            <strong>Administración → Tenants</strong>.
           </p>
         </div>
       </div>

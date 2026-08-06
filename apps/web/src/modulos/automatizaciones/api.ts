@@ -17,8 +17,10 @@ import type {
 const RUTA = "/automatizaciones";
 
 export interface ConfiguracionTenant {
-  automatizacionBaseIdQlik: string | null;
-  automatizacionBaseNombre: string | null;
+  modoAutomatizacionActivo: 1 | 2;
+  plantillaEfectivaIdQlik: string | null;
+  plantillaEfectivaNombre: string | null;
+  configurada: boolean;
 }
 
 export function obtenerConfiguracionTenant(): Promise<ConfiguracionTenant> {

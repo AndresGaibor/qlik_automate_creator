@@ -8,7 +8,7 @@ import {
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
 import type {
-  ConfiguracionTenant,
+  ConexionDestino,
   RecursoDestino,
 } from "@/modulos/automatizaciones/api";
 import type { ResumenFlujo } from "@qlik/contratos";
@@ -34,7 +34,12 @@ interface Props {
   onCrear: () => void;
   isCreating: boolean;
   puedeCrear: boolean;
-  configTenant: ConfiguracionTenant | undefined;
+  modoActivo: 1 | 2;
+  plantillaEfectivaNombre: string | null;
+  destinoId: string | undefined;
+  setDestinoId: (v: string) => void;
+  conexiones: ConexionDestino[];
+  requiereDestino: boolean;
 }
 
 export function FormularioCrearAutomatizacion({
@@ -53,9 +58,20 @@ export function FormularioCrearAutomatizacion({
   onCrear,
   isCreating,
   puedeCrear,
-  configTenant,
+  modoActivo,
+  plantillaEfectivaNombre,
+  destinoId,
+  setDestinoId,
+  conexiones,
+  requiereDestino,
   etiquetaDestino,
 }: Props) {
+  const opcionesConexiones = conexiones.map((c) => ({
+    id: c.id,
+    nombre: c.nombre,
+    espacioNombre: "",
+  }));
+
   const opcionesFlujos = flujos.map((f) => {
     const autoVinculada = automatizaciones.find(
       (a) =>
@@ -118,12 +134,9 @@ export function FormularioCrearAutomatizacion({
       <div className="flex items-center gap-2 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-3.5 py-2.5 font-medium shadow-sm">
         <Icon name="check" size="sm" className="text-brand-600 shrink-0" />
         <span>
-          Plantilla base:{" "}
-          <strong className="font-semibold text-brand-900">
-            {configTenant?.automatizacionBaseNombre ??
-              configTenant?.automatizacionBaseIdQlik ??
-              "Configurada por el administrador"}
-          </strong>
+          Modo {modoActivo}
+          {modoActivo === 2 ? " — Dataflow → SFTP → Talend" : " — Dataflow Spark/Python"}
+          {plantillaEfectivaNombre ? ` — ${plantillaEfectivaNombre}` : ""}
         </span>
         {espacioId && (
           <>
@@ -134,6 +147,25 @@ export function FormularioCrearAutomatizacion({
           </>
         )}
       </div>
+
+      {requiereDestino && (
+        <SelectBuscable
+          etiqueta="Conexión destino (obligatorio en Modo 2)"
+          placeholder="Elige la conexión destino..."
+          searchPlaceholder="Busca por nombre…"
+          emptyText="No se encontraron conexiones destino."
+          opciones={opcionesConexiones}
+          valorSeleccionado={destinoId ?? ""}
+          onSeleccionar={setDestinoId}
+          cargando={false}
+        />
+      )}
+
+      {requiereDestino && !destinoId && (
+        <p className="text-xs text-amber-600">
+          El modo 2 requiere seleccionar una conexión destino y una tabla.
+        </p>
+      )}
 
       <Card className="border-line-200 bg-surface shadow-card">
         <CardHeader className="border-b border-line-200 bg-app/30 pb-4">

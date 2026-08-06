@@ -45,13 +45,14 @@ export function PaginaNuevaAutomatizacion() {
       retry: false,
     });
 
+  const modoActivo = configTenant?.modoAutomatizacionActivo ?? 1;
+  const configurada = configTenant?.configurada ?? false;
+
   const { data: automatizaciones = [] } = useQuery<ResumenAutomatizacion[]>({
     queryKey: ["automatizaciones"],
     queryFn: obtenerAutomatizaciones,
     retry: false,
   });
-
-  const tieneBase = !!configTenant?.automatizacionBaseIdQlik;
 
   const { data: flujos = [], isLoading: cargandoFlujos } = useQuery<
     ResumenFlujo[]
@@ -59,17 +60,26 @@ export function PaginaNuevaAutomatizacion() {
     queryKey: espacioIdActual ? ["flujos", espacioIdActual] : ["flujos"],
     queryFn: () => obtenerFlujosConFiltros(espacioIdActual),
     retry: false,
-    enabled: tieneBase,
+    enabled: configurada,
   });
 
   const { data: conexiones = [] } = useQuery<ConexionDestino[]>({
     queryKey: ["destinos-conexiones"],
     queryFn: obtenerConexionesDestino,
     retry: false,
-    enabled: tieneBase,
+    enabled: configurada,
   });
 
-  const destinoActivo = conexiones.find((destino) => destino.id === destinoId) ?? conexiones[0];
+  const destinoActivo =
+    modoActivo === 2
+      ? conexiones.find((destino) => destino.id === destinoId)
+      : conexiones.find((destino) => destino.id === destinoId) ?? conexiones[0];
+
+  useEffect(() => {
+    if (destinoId) {
+      setTablaId("");
+    }
+  }, [destinoId]);
 
   const { data: recursosDestino = [], isLoading: cargandoRecursos } = useQuery<
     RecursoDestino[]
@@ -77,7 +87,7 @@ export function PaginaNuevaAutomatizacion() {
     queryKey: ["destinos-recursos", destinoActivo?.id],
     queryFn: () => obtenerRecursosDestino(destinoActivo?.id ?? ""),
     retry: false,
-    enabled: tieneBase && Boolean(destinoActivo),
+    enabled: configurada && Boolean(destinoActivo),
   });
 
   const { data: tablasHeredadas = [], isLoading: cargandoTablasHeredadas } = useQuery<
@@ -86,18 +96,19 @@ export function PaginaNuevaAutomatizacion() {
     queryKey: ["impala-tablas"],
     queryFn: obtenerTablasImpala,
     retry: false,
-    enabled: tieneBase && !destinoActivo,
+    enabled: configurada && modoActivo === 1 && !destinoActivo,
   });
 
-  const tablas: RecursoDestino[] = destinoActivo
-    ? recursosDestino
-    : tablasHeredadas.map((tabla) => ({
-        id: tabla.nombre,
-        nombre: tabla.nombre,
-        tipo: "tabla",
-        espacioDeNombres: "default",
-        metadatos: {},
-      }));
+  const tablas: RecursoDestino[] =
+    modoActivo === 2
+      ? recursosDestino
+      : tablasHeredadas.map((tabla) => ({
+          id: tabla.nombre,
+          nombre: tabla.nombre,
+          tipo: "tabla",
+          espacioDeNombres: "default",
+          metadatos: {},
+        }));
 
   useEffect(() => {
     if (flujoIdParam && !flujoId) {
@@ -119,9 +130,9 @@ export function PaginaNuevaAutomatizacion() {
         throw new Error("Debes seleccionar un flujo de datos válido");
       if (!tablaId)
         throw new Error("Debes seleccionar un recurso de destino");
-      if (!configTenant?.automatizacionBaseIdQlik) {
+      if (modoActivo === 2 && !destinoId) {
         throw new Error(
-          "El tenant no tiene una automatización base configurada",
+          "El modo 2 requiere seleccionar una conexión destino y una tabla.",
         );
       }
       return crearAutomatizacionDesdePlantilla({
@@ -161,7 +172,7 @@ export function PaginaNuevaAutomatizacion() {
     );
   }
 
-  if (!tieneBase) {
+  if (!configurada) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <h2 className="text-2xl font-bold text-gray-900">
@@ -188,12 +199,17 @@ export function PaginaNuevaAutomatizacion() {
       automatizaciones={automatizaciones}
       espacioId={espacioIdActual}
       isLoadingFlujos={cargandoFlujos}
-       isLoadingTablas={cargandoRecursos || cargandoTablasHeredadas}
+      isLoadingTablas={cargandoRecursos || cargandoTablasHeredadas}
       onCrear={onCrear}
       isCreating={crear.isPending}
-      puedeCrear={!!(flujoId && tablaId && nombre.trim())}
-       configTenant={configTenant}
-       etiquetaDestino={destinoActivo?.nombre ?? "Impala heredado"}
+      puedeCrear={!!(flujoId && tablaId && nombre.trim() && (modoActivo !== 2 || Boolean(destinoId)))}
+      modoActivo={modoActivo}
+      plantillaEfectivaNombre={configTenant?.plantillaEfectivaNombre ?? null}
+      destinoId={destinoId}
+      setDestinoId={setDestinoId}
+      conexiones={conexiones}
+      requiereDestino={modoActivo === 2}
+      etiquetaDestino={destinoActivo?.nombre ?? "Impala heredado"}
     />
   );
 }

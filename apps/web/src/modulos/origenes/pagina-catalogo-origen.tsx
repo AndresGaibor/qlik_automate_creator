@@ -70,6 +70,19 @@ export function PaginaCatalogoOrigen() {
   const [conexionEditandoId, setConexionEditandoId] = useState<string | null>(
     null,
   );
+  const [valorSecretoJdbc, setValorSecretoJdbc] = useState("");
+  const [valorSecretoClavePrivada, setValorSecretoClavePrivada] = useState("");
+  const [contextoSecretos, setContextoSecretos] = useState<Record<string, string> | null>(null);
+  const [dialogoContextoAbierto, setDialogoContextoAbierto] = useState(false);
+
+  const contextoSecretosMutation = useMutation({
+    mutationFn: () => clienteApi.post<Record<string, string>>("/conexiones-origen/contexto-secretos"),
+    onSuccess: (data) => {
+      setContextoSecretos(data);
+      setDialogoContextoAbierto(true);
+    },
+    onError: (error: Error) => mostrarError(error.message),
+  });
 
   const conexiones = useQuery({
     queryKey: ["conexiones-origen"],
@@ -130,6 +143,9 @@ export function PaginaCatalogoOrigen() {
               driver: "org.postgresql.Driver",
               secreto_nombre: crearNombreSecreto(nombre, "JDBC"),
               propiedades: { fetchsize: "10000" },
+              ...(valorSecretoJdbc.trim()
+                ? { secreto_valor: valorSecretoJdbc.trim() }
+                : {}),
             },
           }
         : {
@@ -144,9 +160,14 @@ export function PaginaCatalogoOrigen() {
                 "SFTP_PRIVATE_KEY",
               ),
               ruta_base: rutaBase.trim(),
+              ...(valorSecretoClavePrivada.trim()
+                ? { secreto_clave_privada_valor: valorSecretoClavePrivada.trim() }
+                : {}),
             },
           };
     guardar.mutate({ id: conexionEditandoId, entrada });
+    setValorSecretoJdbc("");
+    setValorSecretoClavePrivada("");
   }
 
   function seleccionarSugerencia(sugerencia: ConexionSugerida) {
@@ -159,6 +180,8 @@ export function PaginaCatalogoOrigen() {
     setConexionEditandoId(conexion.id);
     setTipo(conexion.tipo);
     setNombre(conexion.nombre);
+    setValorSecretoJdbc("");
+    setValorSecretoClavePrivada("");
     if (conexion.tipo === "jdbc") {
       const url = String(conexion.config.url ?? "");
       const coincidencia = url.match(
@@ -173,6 +196,11 @@ export function PaginaCatalogoOrigen() {
     setPuerto(Number(conexion.config.puerto) || 22);
     setUsuario(String(conexion.config.usuario ?? ""));
     setRutaBase(String(conexion.config.ruta_base ?? "/upload"));
+  }
+
+  function cerrarDialogoContexto() {
+    setDialogoContextoAbierto(false);
+    setContextoSecretos(null);
   }
 
   return (
@@ -294,6 +322,31 @@ export function PaginaCatalogoOrigen() {
                         className={claseCampo}
                       />
                     </div>
+                    {conexionEditandoId &&
+                    (conexiones.data?.find((c) => c.id === conexionEditandoId)
+                      ?.config?.secreto_nombre as string | undefined) ? (
+                      <div className="rounded-md border border-line-200 bg-app/40 px-3 py-2">
+                        <span className="text-xs font-medium text-ink-600">
+                          Secreto configurado
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        <label
+                          htmlFor="secreto-jdbc"
+                          className="mb-1.5 block text-xs font-semibold text-ink-700"
+                        >
+                          Valor secreto (usuario:clave)
+                        </label>
+                        <input
+                          id="secreto-jdbc"
+                          value={valorSecretoJdbc}
+                          onChange={(e) => setValorSecretoJdbc(e.target.value)}
+                          placeholder="usuario:clave"
+                          className={claseCampo}
+                        />
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -360,6 +413,34 @@ export function PaginaCatalogoOrigen() {
                         className={claseCampo}
                       />
                     </div>
+                    {conexionEditandoId &&
+                    (conexiones.data?.find((c) => c.id === conexionEditandoId)
+                      ?.config?.secreto_clave_privada_nombre as string | undefined) ? (
+                      <div className="rounded-md border border-line-200 bg-app/40 px-3 py-2">
+                        <span className="text-xs font-medium text-ink-600">
+                          Secreto configurado
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        <label
+                          htmlFor="secreto-sftp"
+                          className="mb-1.5 block text-xs font-semibold text-ink-700"
+                        >
+                          Llave privada (contenido PEM)
+                        </label>
+                        <textarea
+                          id="secreto-sftp"
+                          value={valorSecretoClavePrivada}
+                          onChange={(e) =>
+                            setValorSecretoClavePrivada(e.target.value)
+                          }
+                          placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
+                          className={`${claseCampo} min-h-[80px] resize-y font-mono text-xs`}
+                          rows={3}
+                        />
+                      </div>
+                    )}
                   </>
                 )}
                 <Button
@@ -386,9 +467,23 @@ export function PaginaCatalogoOrigen() {
           </form>
         </div>
         <section className="min-w-0 rounded-xl border border-line-200 bg-surface p-5 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-ink-900">
-            Conexiones registradas
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-ink-900">
+              Conexiones registradas
+            </h2>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => contextoSecretosMutation.mutate()}
+              disabled={contextoSecretosMutation.isPending}
+            >
+              <Icon name="copy" size="sm" />
+              {contextoSecretosMutation.isPending
+                ? "Cargando..."
+                : "Copiar JSON de secretos para el job"}
+            </Button>
+          </div>
           {conexiones.isLoading ? (
             <p className="text-sm text-ink-500">Cargando catálogo...</p>
           ) : conexiones.data?.length ? (
@@ -439,6 +534,47 @@ export function PaginaCatalogoOrigen() {
           )}
         </section>
       </div>
+
+      {dialogoContextoAbierto && contextoSecretos && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-lg rounded-xl border border-line-200 bg-surface p-6 shadow-lg">
+            <div className="mb-4 flex items-center gap-2 text-amber-600">
+              <Icon name="bell" size="md" />
+              <h3 className="font-semibold text-ink-900">Contenido sensible</h3>
+            </div>
+            <p className="mb-4 text-sm text-ink-600">
+              Los valores mostrados a continuación son secretos de conexión.
+              No los compartas. Copia el JSON y úsalo exclusivamente en el job
+              de la automatización.
+            </p>
+            <pre className="mb-4 max-h-64 overflow-auto rounded-md border border-line-200 bg-app/50 p-3 font-mono text-xs text-ink-800">
+              {JSON.stringify(contextoSecretos, null, 2)}
+            </pre>
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={cerrarDialogoContexto}
+              >
+                Cerrar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    JSON.stringify(contextoSecretos, null, 2),
+                  );
+                  mostrarExito("JSON copiado al portapapeles");
+                  cerrarDialogoContexto();
+                }}
+              >
+                <Icon name="copy" size="sm" />
+                Copiar JSON
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageLayout>
   );
 }
