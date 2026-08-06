@@ -15,6 +15,7 @@ interface OrigenPreflight {
   estado: "sin_probar" | "disponible" | "error";
   probadaEn: Date | null;
   mensajeError: string | null;
+  secretoConfigurado?: boolean;
 }
 
 interface DestinoPreflight {
@@ -59,13 +60,20 @@ export class PreflightAutomatizacion {
           (item) =>
             item.tipo === requisito.tipo && item.nombre === requisito.nombre,
         );
+        const incompleta = conexion?.secretoConfigurado === false;
         return {
           tipo: requisito.tipo,
           nombre: requisito.nombre,
-          estado: conexion?.estado ?? "faltante",
+          estado: incompleta
+            ? ("incompleta" as const)
+            : (conexion?.estado ?? "faltante"),
           conexionId: conexion?.id ?? null,
-          probadaEn: conexion?.probadaEn?.toISOString() ?? null,
-          mensaje: conexion?.mensajeError ?? null,
+          probadaEn: incompleta
+            ? null
+            : (conexion?.probadaEn?.toISOString() ?? null),
+          mensaje: incompleta
+            ? "Falta configurar la credencial segura"
+            : (conexion?.mensajeError ?? null),
         };
       }),
       destinosPostgres: destinos

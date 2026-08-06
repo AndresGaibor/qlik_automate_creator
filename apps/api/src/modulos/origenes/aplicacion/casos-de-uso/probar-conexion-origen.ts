@@ -33,7 +33,8 @@ export class ProbarConexionOrigen {
     } catch (error) {
       if (
         error instanceof ErrorAplicacion &&
-        error.codigo === "JDBC_NO_SOPORTADO"
+        (error.codigo === "JDBC_NO_SOPORTADO" ||
+          error.codigo === "CONEXION_ORIGEN_SIN_SECRETO")
       ) {
         throw error;
       }
@@ -63,7 +64,7 @@ export class ProbarConexionOrigen {
         conexion.id,
         nombreSecreto,
       );
-      if (!credenciales) throw new Error("missing secret");
+      if (!credenciales) throw errorSinSecreto();
       const separador = credenciales.indexOf(":");
       if (separador <= 0) throw new Error("invalid credentials");
       return this.probador.probarPostgres({
@@ -79,7 +80,7 @@ export class ProbarConexionOrigen {
       conexion.id,
       nombreSecreto,
     );
-    if (!llavePrivada) throw new Error("missing secret");
+    if (!llavePrivada) throw errorSinSecreto();
     return this.probador.probarSftp({
       host: texto(conexion.config.host),
       puerto: numero(conexion.config.puerto, 22),
@@ -97,4 +98,12 @@ function numero(valor: unknown, predeterminado: number): number {
   return typeof valor === "number" && Number.isFinite(valor)
     ? valor
     : predeterminado;
+}
+
+function errorSinSecreto(): ErrorAplicacion & { mensaje: string } {
+  const mensaje = "Falta configurar la credencial segura";
+  return Object.assign(
+    new ErrorAplicacion("CONEXION_ORIGEN_SIN_SECRETO", mensaje, 422),
+    { mensaje },
+  );
 }

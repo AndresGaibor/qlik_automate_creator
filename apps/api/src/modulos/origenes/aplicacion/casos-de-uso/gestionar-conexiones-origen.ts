@@ -14,7 +14,19 @@ export class GestionarConexionesOrigen {
 
   async listar(organizacionId: string): Promise<ConexionOrigen[]> {
     const conexiones = await this.repositorio.listar(organizacionId);
-    return conexiones.map(sanitizarConexion);
+    return Promise.all(
+      conexiones.map(async (conexion) => {
+        const nombre = nombreSecreto(conexion);
+        const secretoConfigurado = nombre
+          ? await this.repositorio.existeSecreto(
+              organizacionId,
+              conexion.id,
+              nombre,
+            )
+          : false;
+        return sanitizarConexion({ ...conexion, secretoConfigurado });
+      }),
+    );
   }
 
   async crear(
@@ -71,6 +83,14 @@ export class GestionarConexionesOrigen {
   ): Promise<string | null> {
     return this.repositorio.leerSecreto(organizacionId, conexionId, nombre);
   }
+}
+
+function nombreSecreto(conexion: ConexionOrigen): string {
+  const campo =
+    conexion.tipo === "jdbc"
+      ? conexion.config.secreto_nombre
+      : conexion.config.secreto_clave_privada_nombre;
+  return typeof campo === "string" ? campo.trim() : "";
 }
 
 function prepararEntrada(

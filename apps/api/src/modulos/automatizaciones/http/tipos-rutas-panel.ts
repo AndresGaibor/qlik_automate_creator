@@ -37,6 +37,7 @@ export interface DependenciasRutasPanel {
       estado?: "sin_probar" | "disponible" | "error";
       probadaEn?: Date | null;
       mensajeError?: string | null;
+      secretoConfigurado?: boolean;
     }>
   >;
   consultarConexionesDestino?: (organizacionId: string) => Promise<

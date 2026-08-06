@@ -51,6 +51,7 @@ export function registrarRutaPreflight(
               estado: item.estado ?? "sin_probar",
               probadaEn: item.probadaEn ?? null,
               mensajeError: item.mensajeError ?? null,
+              secretoConfigurado: item.secretoConfigurado,
             }),
           ),
       },
