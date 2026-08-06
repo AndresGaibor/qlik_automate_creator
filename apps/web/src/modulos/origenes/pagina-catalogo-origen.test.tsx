@@ -83,7 +83,9 @@ describe("PaginaCatalogoOrigen", () => {
     await screen.findByText("Ventas JDBC");
 
     fireEvent.click(screen.getByRole("button", { name: "Editar" }));
-    const secreto = await screen.findByLabelText("Valor secreto (usuario:clave)");
+    const secreto = await screen.findByLabelText(
+      "Valor secreto (usuario:clave)",
+    );
     fireEvent.change(secreto, { target: { value: "lector:clave" } });
     fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
 

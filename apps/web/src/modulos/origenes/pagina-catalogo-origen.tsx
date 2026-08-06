@@ -25,6 +25,7 @@ interface ConexionOrigen {
   tipo: TipoConexionOrigen;
   nombre: string;
   config: Record<string, unknown>;
+  secretoConfigurado: boolean;
 }
 
 const claseCampo =
@@ -109,6 +110,9 @@ export function PaginaCatalogoOrigen({
       !conexiones.data?.some(
         (conexion) => conexion.nombre === sugerencia.nombre,
       ),
+  );
+  const conexionEditando = conexiones.data?.find(
+    (conexion) => conexion.id === conexionEditandoId,
   );
   const conexionYaRegistrada = Boolean(
     conexiones.data?.some(
@@ -312,8 +316,7 @@ export function PaginaCatalogoOrigen({
                       />
                     </div>
                     {conexionEditandoId &&
-                    (conexiones.data?.find((c) => c.id === conexionEditandoId)
-                      ?.config?.secreto_nombre as string | undefined) ? (
+                    conexionEditando?.secretoConfigurado === true ? (
                       <div className="rounded-md border border-line-200 bg-app/40 px-3 py-2">
                         <span className="text-xs font-medium text-ink-600">
                           Secreto configurado
@@ -329,6 +332,7 @@ export function PaginaCatalogoOrigen({
                         </label>
                         <input
                           id="secreto-jdbc"
+                          required
                           value={valorSecretoJdbc}
                           onChange={(e) => setValorSecretoJdbc(e.target.value)}
                           placeholder="usuario:clave"
@@ -403,10 +407,7 @@ export function PaginaCatalogoOrigen({
                       />
                     </div>
                     {conexionEditandoId &&
-                    (conexiones.data?.find((c) => c.id === conexionEditandoId)
-                      ?.config?.secreto_clave_privada_nombre as
-                      | string
-                      | undefined) ? (
+                    conexionEditando?.secretoConfigurado === true ? (
                       <div className="rounded-md border border-line-200 bg-app/40 px-3 py-2">
                         <span className="text-xs font-medium text-ink-600">
                           Secreto configurado
@@ -422,6 +423,7 @@ export function PaginaCatalogoOrigen({
                         </label>
                         <textarea
                           id="secreto-sftp"
+                          required
                           value={valorSecretoClavePrivada}
                           onChange={(e) =>
                             setValorSecretoClavePrivada(e.target.value)
@@ -481,6 +483,11 @@ export function PaginaCatalogoOrigen({
                         ? `Base de datos PostgreSQL: ${String(conexion.config.url)}`
                         : `Servidor SFTP: ${String(conexion.config.usuario)}@${String(conexion.config.host)}:${String(conexion.config.puerto)}`}
                     </p>
+                    {!conexion.secretoConfigurado && (
+                      <p className="mt-2 text-xs font-semibold text-amber-700">
+                        Credencial pendiente
+                      </p>
+                    )}
                   </div>
                   <div className="flex shrink-0 gap-1">
                     <Button

@@ -49,6 +49,11 @@ export interface RepositorioConexionesOrigen {
     entrada: EntradaConexionOrigen,
   ): Promise<ConexionOrigen | null>;
   eliminar(organizacionId: string, id: string): Promise<boolean>;
+  existeSecreto(
+    organizacionId: string,
+    conexionId: string,
+    nombre: string,
+  ): Promise<boolean>;
   leerSecreto(
     organizacionId: string,
     conexionId: string,

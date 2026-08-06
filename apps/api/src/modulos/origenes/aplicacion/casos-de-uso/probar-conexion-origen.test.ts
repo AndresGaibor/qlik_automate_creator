@@ -73,7 +73,7 @@ describe("ProbarConexionOrigen", () => {
       casoUso.ejecutar(base.organizacionId, base.id),
     ).rejects.toMatchObject({
       codigo: "CONEXION_ORIGEN_SIN_SECRETO",
-      mensaje: "Falta configurar la credencial segura",
+      message: "Falta configurar la credencial segura",
       estadoHttp: 422,
     });
     expect(probador.probarPostgres).not.toHaveBeenCalled();

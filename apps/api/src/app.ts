@@ -228,7 +228,7 @@ export async function crearAplicacion(
   const consultaConexionesOrigen = {
     async listarPorOrganizacion(organizacionId: string) {
       return (await gestorConexionesOrigen.listar(organizacionId)).map(
-        ({ id, tipo, nombre, config, estado, probadaEn, mensajeError }) => ({
+        ({
           id,
           tipo,
           nombre,
@@ -236,6 +236,16 @@ export async function crearAplicacion(
           estado,
           probadaEn,
           mensajeError,
+          secretoConfigurado,
+        }) => ({
+          id,
+          tipo,
+          nombre,
+          config,
+          estado,
+          probadaEn,
+          mensajeError,
+          secretoConfigurado,
         }),
       );
     },

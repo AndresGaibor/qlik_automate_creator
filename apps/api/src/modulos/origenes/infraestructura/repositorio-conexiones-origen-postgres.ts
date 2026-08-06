@@ -157,6 +157,24 @@ export class RepositorioConexionesOrigenPostgres
     return Boolean(eliminada);
   }
 
+  async existeSecreto(
+    organizacionId: string,
+    conexionId: string,
+    nombre: string,
+  ): Promise<boolean> {
+    const conexion = await this.db.query.conexionesOrigen.findFirst({
+      where: (tabla, { and, eq }) =>
+        and(eq(tabla.organizacionId, organizacionId), eq(tabla.id, conexionId)),
+    });
+    if (!conexion) return false;
+    const fila = await this.db.query.secretosConexionOrigen.findFirst({
+      where: (tabla, { and, eq }) =>
+        and(eq(tabla.conexionOrigenId, conexionId), eq(tabla.nombre, nombre)),
+      columns: { nombre: true },
+    });
+    return Boolean(fila);
+  }
+
   async leerSecreto(
     organizacionId: string,
     conexionId: string,

@@ -52,7 +52,9 @@ class RepositorioFalso implements RepositorioConexionesOrigen {
     nombre: string,
   ) {
     const conexion = await this.buscarPorId(organizacionId, conexionId);
-    return Boolean(conexion && this.secretosConfigurados.has(`${conexionId}:${nombre}`));
+    return Boolean(
+      conexion && this.secretosConfigurados.has(`${conexionId}:${nombre}`),
+    );
   }
 
   async leerSecreto() {

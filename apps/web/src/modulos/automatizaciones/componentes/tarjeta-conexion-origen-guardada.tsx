@@ -18,6 +18,7 @@ const ETIQUETA_ESTADO = {
   disponible: "Disponible",
   error: "Con error",
   faltante: "No configurada",
+  incompleta: "Credencial pendiente",
 } as const;
 
 export function TarjetaConexionOrigenGuardada({
@@ -27,6 +28,7 @@ export function TarjetaConexionOrigenGuardada({
   onProbar,
 }: Props) {
   const esError = requisito.estado === "error";
+  const incompleta = requisito.estado === "incompleta";
   const etiquetaAccion = esError
     ? "Volver a probar"
     : "Probar conexión guardada";
@@ -67,28 +69,38 @@ export function TarjetaConexionOrigenGuardada({
 
       <p className="mt-3 text-xs text-ink-500">Última prueba: {fecha}</p>
       {requisito.mensaje && (
-        <p className="mt-2 rounded-md bg-red-50 px-3 py-2 text-xs text-danger-700">
+        <p
+          className={
+            incompleta
+              ? "mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800"
+              : "mt-2 rounded-md bg-red-50 px-3 py-2 text-xs text-danger-700"
+          }
+        >
           {requisito.mensaje}
         </p>
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          size="sm"
-          disabled={!conexionId || probando}
-          onClick={() => {
-            if (conexionId) onProbar(conexionId);
-          }}
-        >
-          {probando ? "Probando…" : etiquetaAccion}
-        </Button>
+        {!incompleta && (
+          <Button
+            type="button"
+            size="sm"
+            disabled={!conexionId || probando}
+            onClick={() => {
+              if (conexionId) onProbar(conexionId);
+            }}
+          >
+            {probando ? "Probando…" : etiquetaAccion}
+          </Button>
+        )}
         {puedeAdministrar && conexionId && (
           <a
             href={`/configuracion#conexion-origen-${conexionId}`}
             className="text-sm font-semibold text-brand-700 hover:underline"
           >
-            Editar en Configuración
+            {incompleta
+              ? "Completar en Configuración"
+              : "Editar en Configuración"}
           </a>
         )}
       </div>
