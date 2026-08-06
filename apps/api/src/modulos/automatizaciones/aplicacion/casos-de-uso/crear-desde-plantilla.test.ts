@@ -6,6 +6,7 @@ import type {
   RegistroIdempotencia,
 } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
 import type { ServicioQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
+import type { ParametrosPlantilla } from "../servicios/preparar-parametros-plantilla.js";
 import { CrearAutomatizacionDesdePlantilla } from "./crear-desde-plantilla.js";
 
 function crearQlik() {
@@ -144,6 +145,7 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
       id: "copia-1",
       nombre: "Nueva",
       plantillaIdQlik: "plantilla-1",
+      modoPlantilla: 1,
     });
     expect(qlik.cambiarEspacioAutomatizacion).toHaveBeenCalledWith(
       "copia-1",
@@ -217,6 +219,80 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
     expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("copia-1");
     expect(auditoria.registrar).toHaveBeenCalledWith(
       expect.objectContaining({ resultado: "error", entidadId: "copia-1" }),
+    );
+  });
+
+  it("ejecutar con modo 2 incluye modoPlantilla 2 y pasa parametros a copiarAutomatizacion", async () => {
+    const mockQlik = {
+      copiarAutomatizacion: vi.fn(async () => ({ id: "copia-m2" })),
+      cambiarEspacioAutomatizacion: vi.fn(async () => undefined),
+      cambiarPropietarioAutomatizacion: vi.fn(async () => undefined),
+      obtenerAutomatizacion: vi.fn(async () => ({
+        id: "copia-m2",
+        name: "Nueva Modo 2",
+        schedules: [],
+        workspace: {
+          variables: [
+            { name: "DataflowId", value: "" },
+            { name: "RutasSftpContenido", value: "" },
+            { name: "EsquemaTablaDestino", value: "" },
+            { name: "EjecucionId", value: "" },
+            { name: "TablaDestino", value: "" },
+          ],
+          blocks: [],
+        },
+        description: "",
+        maxConcurrentRuns: 1,
+      })),
+      actualizarAutomatizacion: vi.fn(async () => ({})),
+      eliminarAutomatizacion: vi.fn(async () => undefined),
+    } as unknown as ServicioQlik;
+
+    const idempotencia = crearIdempotencia();
+    const outbox = crearOutbox();
+    const auditoria = crearAuditoria();
+    const caso = new CrearAutomatizacionDesdePlantilla(
+      mockQlik,
+      idempotencia.puerto,
+      outbox.puerto,
+      auditoria.puerto,
+    );
+
+    const parametros: ParametrosPlantilla = {
+      modo: 2,
+      DataflowId: "flujo-2",
+      RutasSftpContenido: '[{"ruta":"/data"}]',
+      EsquemaTablaDestino: '{"columnas":["a","b"]}',
+      EjecucionId: "ejec-2",
+      TablaDestino: "tabla-2",
+    };
+
+    const resultado = await caso.ejecutar(
+      {
+        nombre: "Nueva Modo 2",
+        plantillaIdQlik: "plantilla-m2",
+        flujoId: "flujo-2",
+        tablaId: "tabla-2",
+        destinoId: "destino-2",
+        reemplazosWorkspace: [],
+      },
+      contexto,
+      { parametros, modoPlantilla: 2 },
+    );
+
+    expect(resultado.modoPlantilla).toBe(2);
+    expect(mockQlik.copiarAutomatizacion).toHaveBeenCalled();
+    expect(outbox.guardar).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          datos: expect.objectContaining({ modoPlantilla: 2 }),
+        }),
+      ]),
+    );
+    expect(auditoria.registrar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        datosNuevos: expect.objectContaining({ modoPlantilla: 2 }),
+      }),
     );
   });
 });

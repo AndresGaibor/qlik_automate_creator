@@ -8,6 +8,10 @@ export function mapearTenantParaAutomatizaciones(
     host: string;
     automatizacionBaseIdQlik?: string | null;
     automatizacionBaseNombre?: string | null;
+    automatizacionPlantillaModo1IdQlik?: string | null;
+    automatizacionPlantillaModo1Nombre?: string | null;
+    automatizacionPlantillaModo2IdQlik?: string | null;
+    automatizacionPlantillaModo2Nombre?: string | null;
     destinoApiUrl?: string | null;
     impalaHost?: string | null;
     impalaPort?: number | null;
@@ -17,6 +21,10 @@ export function mapearTenantParaAutomatizaciones(
     host: fila.host,
     automatizacionBaseIdQlik: fila.automatizacionBaseIdQlik,
     automatizacionBaseNombre: fila.automatizacionBaseNombre,
+    automatizacionPlantillaModo1IdQlik: fila.automatizacionPlantillaModo1IdQlik,
+    automatizacionPlantillaModo1Nombre: fila.automatizacionPlantillaModo1Nombre,
+    automatizacionPlantillaModo2IdQlik: fila.automatizacionPlantillaModo2IdQlik,
+    automatizacionPlantillaModo2Nombre: fila.automatizacionPlantillaModo2Nombre,
     destinoApiUrl: fila.destinoApiUrl,
     impalaHost: fila.impalaHost,
     impalaPort: fila.impalaPort,

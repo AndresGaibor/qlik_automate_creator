@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { esquemaIdQlik } from "../qlik/comunes.js";
 
+export const esquemaModoPlantilla = z.union([z.literal(1), z.literal(2)]);
+export type ModoPlantilla = z.infer<typeof esquemaModoPlantilla>;
+
 export const esquemaResumenAutomatizacion = z.object({
   id: esquemaIdQlik,
   nombre: z.string(),
@@ -48,6 +51,7 @@ export const esquemaResultadoCrearDesdePlantilla = z.object({
   id: esquemaIdQlik,
   nombre: z.string(),
   plantillaIdQlik: esquemaIdQlik,
+  modoPlantilla: esquemaModoPlantilla,
 });
 export type ResultadoCrearDesdePlantilla = z.infer<
   typeof esquemaResultadoCrearDesdePlantilla
@@ -82,3 +86,11 @@ export const esquemaEspacioDisponible = z.object({
   acciones: z.array(z.string()),
 });
 export type EspacioDisponible = z.infer<typeof esquemaEspacioDisponible>;
+
+export const esquemaConfiguracionTenant = z.object({
+  modoAutomatizacionActivo: esquemaModoPlantilla,
+  plantillaEfectivaIdQlik: z.string().nullable(),
+  plantillaEfectivaNombre: z.string().nullable(),
+  configurada: z.boolean(),
+});
+export type ConfiguracionTenant = z.infer<typeof esquemaConfiguracionTenant>;

@@ -2,12 +2,14 @@ import type {
   CrearDesdePlantilla,
   ResultadoCrearDesdePlantilla,
 } from "@qlik/contratos/automatizaciones";
+import type { ModoPlantilla } from "@qlik/contratos/automatizaciones";
 import type { PuertoAuditoria } from "../../../../nucleo/auditoria/puerto-auditoria.js";
 import { ErrorAplicacion } from "../../../../nucleo/errores/error-aplicacion.js";
 import type { PuertoOutbox } from "../../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
 import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
+import type { ParametrosPlantilla } from "../servicios/preparar-parametros-plantilla.js";
 import { copiarAutomatizacion } from "../servicios/servicio-copia-automatizacion.js";
 import {
   completarIdempotencia,
@@ -25,6 +27,11 @@ export interface ContextoCreacionAutomatizacion {
   agenteUsuario?: string;
 }
 
+export interface PreparacionCreacion {
+  parametros?: ParametrosPlantilla;
+  modoPlantilla: ModoPlantilla;
+}
+
 export class CrearAutomatizacionDesdePlantilla {
   constructor(
     private readonly qlik: PuertoQlik,
@@ -36,10 +43,12 @@ export class CrearAutomatizacionDesdePlantilla {
   async ejecutar(
     entrada: CrearDesdePlantilla,
     contexto: ContextoCreacionAutomatizacion,
+    preparacion?: PreparacionCreacion,
   ): Promise<ResultadoCrearDesdePlantilla> {
     const alcance = "automatizaciones.crear-desde-plantilla";
     const hashSolicitud = await hashCanonico(entrada);
     const clave = entrada.claveIdempotencia;
+    const modoPlantilla = preparacion?.modoPlantilla ?? 1;
 
     if (clave) {
       const { esNuevo, resultadoPrevio } = await verificarIdempotencia(
@@ -57,7 +66,13 @@ export class CrearAutomatizacionDesdePlantilla {
     }
 
     let copiaId: string | undefined;
-    const resultadoCopia = await copiarAutomatizacion(this.qlik, entrada);
+    const entradaConParametros = preparacion?.parametros
+      ? { ...entrada, parametros: preparacion.parametros }
+      : entrada;
+    const resultadoCopia = await copiarAutomatizacion(
+      this.qlik,
+      entradaConParametros,
+    );
     copiaId = resultadoCopia.id;
 
     if (resultadoCopia.error) {
@@ -95,6 +110,7 @@ export class CrearAutomatizacionDesdePlantilla {
       id: resultadoCopia.id,
       nombre: resultadoCopia.nombre,
       plantillaIdQlik: resultadoCopia.plantillaIdQlik,
+      modoPlantilla,
     };
 
     try {

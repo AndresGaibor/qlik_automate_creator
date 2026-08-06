@@ -1,5 +1,5 @@
 import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { RepositorioAdministracionPostgres } from "./modulos/admin/infraestructura/publico.js";
@@ -68,7 +68,9 @@ import { AuditoriaPostgres } from "./plataforma/persistencia/auditoria-postgres.
 import { db, dbHolder } from "./plataforma/persistencia/conexion.js";
 import {
   appConfig,
+  configuracionesPlataforma,
   conexionesDestino,
+  conexionesOrigen,
   tenantsQlik,
 } from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
@@ -341,6 +343,37 @@ export async function crearAplicacion(
       resolverQlik,
       resolverSesion,
       consultaTenant: new ConsultaTenantQlikPostgres(),
+      obtenerModoGlobal: async () => {
+        const fila = await db.query.configuracionesPlataforma.findFirst({
+          where: eq(configuracionesPlataforma.id, 1),
+        });
+        return {
+          modoAutomatizacionActivo: (
+            fila?.modoAutomatizacionActivo ?? 1
+          ) as 1 | 2,
+        };
+      },
+      consultarConexionesOrigen: async (organizacionId) => {
+        const filas = await db.query.conexionesOrigen.findMany({
+          where: (t, { eq }) => eq(t.organizacionId, organizacionId),
+        });
+        return filas.map((f) => ({
+          tipo: f.tipo,
+          nombre: f.nombre,
+          config: (f.config as Record<string, unknown>) ?? {},
+        }));
+      },
+      consultarConexionDestino: async (destinoId, organizacionId) => {
+        const fila = await db.query.conexionesDestino.findFirst({
+          where: (t, { and, eq }) =>
+            and(eq(t.id, destinoId), eq(t.organizacionId, organizacionId)),
+        });
+        if (!fila) return null;
+        return {
+          tipo: fila.tipo,
+          config: (fila.config as Record<string, unknown>) ?? {},
+        };
+      },
       bloqueos: new BloqueoEjecucionPostgres(db),
       idempotencia,
       outbox,
