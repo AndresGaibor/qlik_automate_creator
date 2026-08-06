@@ -15,15 +15,16 @@ import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type ConexionDestino,
   type RecursoDestino,
+  type TablaImpala,
   type TipoDestino,
   obtenerAutomatizaciones,
   obtenerConexionesDestino,
   obtenerDetalleRecursoDestino,
   obtenerRecursosDestino,
-  type TablaImpala,
   obtenerTablasImpala,
 } from "@/modulos/automatizaciones/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -70,6 +71,9 @@ export function PaginaTablasDestino() {
     Boolean(sesion?.esSuperadmin) ||
     sesion?.membresias?.some((m) => m.rol === "admin") ||
     false;
+
+  const { estado } = useVistaUsuarioFinal();
+  const puedeVerAdministracion = esAdmin && !estado.modoUsuarioFinal;
 
   // La ruta heredada sigue siendo fallback mientras se migran las conexiones.
   const { data: conexiones = [], isLoading: cargandoConexiones } = useQuery<
@@ -216,12 +220,11 @@ export function PaginaTablasDestino() {
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2">
-              {esAdmin && organizacionActivaId ? (
+              {puedeVerAdministracion && organizacionActivaId ? (
                 <Button
                   onClick={() =>
                     navegar({
-                      to: "/admin/tenants/$tenantId",
-                      params: { tenantId: organizacionActivaId },
+                      to: "/configuracion",
                     })
                   }
                   className="gap-1.5"
@@ -259,7 +262,7 @@ export function PaginaTablasDestino() {
         actions={
           <Button
             onClick={() => {
-              if (esAdmin) {
+              if (puedeVerAdministracion) {
                 mostrarExito(
                   "Modo Administrador: Abriendo editor para nuevo reporte",
                 );
@@ -269,7 +272,9 @@ export function PaginaTablasDestino() {
             className="gap-1.5 bg-brand-600 hover:bg-brand-700 text-white"
           >
             <Icon name="plus" size="sm" />
-            {esAdmin ? "Crear nuevo reporte" : "Solicitar un nuevo reporte"}
+            {puedeVerAdministracion
+              ? "Crear nuevo reporte"
+              : "Solicitar un nuevo reporte"}
           </Button>
         }
       />
@@ -442,7 +447,7 @@ export function PaginaTablasDestino() {
                         variant="outline"
                         onClick={() =>
                           mostrarExito(
-                            esAdmin
+                            puedeVerAdministracion
                               ? `Modo Admin: Editando reporte ${tablaSeleccionada}`
                               : `Solicitud de edición enviada al Administrador para ${tablaSeleccionada}`,
                           )
@@ -450,7 +455,7 @@ export function PaginaTablasDestino() {
                         className="gap-1 text-xs"
                       >
                         <Icon name="edit" size="sm" />
-                        {esAdmin
+                        {puedeVerAdministracion
                           ? "Editar reporte"
                           : "Editar (Requiere Administrador)"}
                       </Button>
@@ -493,7 +498,7 @@ export function PaginaTablasDestino() {
                       <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                         Permisos de edición
                       </span>
-                      {esAdmin ? (
+                      {puedeVerAdministracion ? (
                         <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block mt-0.5">
                           Tienes permiso para editar
                         </span>
