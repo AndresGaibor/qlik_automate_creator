@@ -6,14 +6,6 @@ import { describe, expect, it, vi } from "vitest";
 import { VistaProvider, useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { PaginaInicio } from "./pagina-inicio";
 
-class MockIntersectionObserver {
-  observe = vi.fn();
-  disconnect = vi.fn();
-  unobserve = vi.fn();
-}
-globalThis.IntersectionObserver =
-  MockIntersectionObserver as unknown as typeof IntersectionObserver;
-
 const mocks = vi.hoisted(() => ({
   obtenerSesion: vi.fn(),
   Link: ({ to, children }: { to: string; children: React.ReactNode }) =>
