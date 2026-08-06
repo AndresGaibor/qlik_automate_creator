@@ -1,9 +1,7 @@
 import { eq } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { credencialesQlik } from "../../../plataforma/persistencia/esquema.js";
-import type {
-  ConexionDb,
-  ServicioCifradoPuerto,
-} from "../aplicacion/puertos/repositorio-autenticacion.js";
+import type { ServicioCifradoPuerto } from "../aplicacion/puertos/repositorio-autenticacion.js";
 import type { InfoSesion } from "../dominio/modelos.js";
 import type { CredencialesQlik } from "../dominio/modelos.js";
 

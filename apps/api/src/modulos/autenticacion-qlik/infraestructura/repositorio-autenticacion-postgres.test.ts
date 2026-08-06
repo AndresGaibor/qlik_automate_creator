@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { RepositorioAutenticacionPostgres } from "./repositorio-autenticacion-postgres.js";
-import type { ConexionDb } from "../aplicacion/puertos/repositorio-autenticacion.js";
 
 const cifradoFalso = {
   cifrar: () => ({ cifrado: "x", iv: "x", tag: "x" }),

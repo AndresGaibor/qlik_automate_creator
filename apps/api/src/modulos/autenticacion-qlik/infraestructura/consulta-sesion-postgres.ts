@@ -1,6 +1,6 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { sesionesUsuario } from "../../../plataforma/persistencia/esquema.js";
-import type { ConexionDb } from "../aplicacion/puertos/repositorio-autenticacion.js";
 import { hash } from "./hashing-postgres.js";
 
 export async function buscarSesionValida(db: ConexionDb, tokenSesion: string) {

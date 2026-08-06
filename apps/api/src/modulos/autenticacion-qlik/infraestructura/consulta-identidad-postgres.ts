@@ -1,14 +1,12 @@
 import { and, eq, sql } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   membresiasOrganizacion,
   organizaciones,
   tenantsQlik,
   usuarios,
 } from "../../../plataforma/persistencia/esquema.js";
-import type {
-  ConexionDb,
-  TenantQlikAutenticable,
-} from "../aplicacion/puertos/repositorio-autenticacion.js";
+import type { TenantQlikAutenticable } from "../aplicacion/puertos/repositorio-autenticacion.js";
 import { resolverEsSuperadministrador } from "../dominio/superadministrador.js";
 import { validarYNormalizarHost } from "../dominio/validador-host-qlik.js";
 

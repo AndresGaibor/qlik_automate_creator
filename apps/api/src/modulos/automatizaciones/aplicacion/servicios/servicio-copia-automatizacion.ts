@@ -1,8 +1,8 @@
 import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
-import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
-import { aplicarReemplazosEnWorkspace } from "./servicio-reemplazo-workspace.js";
-import type { ParametrosPlantilla } from "./preparar-parametros-plantilla.js";
+import type { PuertoQlik } from "../../../qlik/publico.js";
 import { configurarWorkspacePlantilla } from "./configurar-workspace-plantilla.js";
+import type { ParametrosPlantilla } from "./preparar-parametros-plantilla.js";
+import { aplicarReemplazosEnWorkspace } from "./servicio-reemplazo-workspace.js";
 
 export interface ResultadoCopiaAutomatizacion {
   id: string;

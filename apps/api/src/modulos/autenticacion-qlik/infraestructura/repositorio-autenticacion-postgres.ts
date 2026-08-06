@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
+import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   credencialesQlik,
   identidadesQlik,
@@ -10,7 +11,6 @@ import {
   usuarios,
 } from "../../../plataforma/persistencia/esquema.js";
 import type {
-  ConexionDb,
   DatosNuevaSesion,
   RepositorioAutenticacion,
   ServicioCifradoPuerto,

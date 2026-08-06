@@ -1,4 +1,3 @@
-import type { ConexionDb as ConexionDbPostgres } from "../../../../plataforma/persistencia/conexion.js";
 import type {
   CredencialesQlik,
   InfoSesion,
@@ -6,8 +5,6 @@ import type {
   TokensQlik,
   UsuarioOAuthQlik,
 } from "../../dominio/modelos.js";
-
-export type ConexionDb = ConexionDbPostgres;
 
 export interface ServicioCifradoPuerto {
   cifrar(valor: string): { cifrado: string; iv: string; tag: string };
