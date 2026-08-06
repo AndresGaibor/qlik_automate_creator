@@ -224,7 +224,8 @@ export function PaginaTablasDestino() {
                 <Button
                   onClick={() =>
                     navegar({
-                      to: "/configuracion",
+                      to: "/admin/tenants/$tenantId",
+                      params: { tenantId: organizacionActivaId },
                     })
                   }
                   className="gap-1.5"
