@@ -64,8 +64,9 @@ describe("PaginaInicio", () => {
     renderizar(false);
 
     await waitFor(() => {
-      expect(screen.getByText("Administrador")).toBeInTheDocument();
+      expect(screen.getByText("Tenant Demo")).toBeInTheDocument();
     });
+    expect(screen.getByText("Administrador")).toBeInTheDocument();
     expect(
       screen.getByText("Configuración de la plataforma"),
     ).toBeInTheDocument();
@@ -76,8 +77,9 @@ describe("PaginaInicio", () => {
     renderizar(true);
 
     await waitFor(() => {
-      expect(screen.getByText("Usuario final")).toBeInTheDocument();
+      expect(screen.getByText("Tenant Demo")).toBeInTheDocument();
     });
+    expect(screen.getByText("Usuario final")).toBeInTheDocument();
     expect(
       screen.queryByText("Configuración de la plataforma"),
     ).not.toBeInTheDocument();
