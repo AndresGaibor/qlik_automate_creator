@@ -309,7 +309,7 @@ describe("PaginaNuevaAutomatizacion", () => {
     await waitFor(() => expect(flujo).not.toBeDisabled());
     fireEvent.click(flujo);
     fireEvent.click(
-      await screen.findByRole("button", { name: /dataflow ventas/i }),
+      await screen.findByRole("option", { name: /dataflow ventas/i }),
     );
     expect(
       screen.getByLabelText(/conexión destino.*modo 2/i),
