@@ -11,95 +11,31 @@ import type {
   FlujoQlik,
   UsuarioQlik,
 } from "../dominio/modelos-qlik.js";
-import { ErrorApiQlik } from "./error-api-qlik.js";
+import { mapearItemsAFlujos } from "./mapeador-flujos-qlik.js";
+import { TransporteHttpQlik } from "./transporte-http-qlik.js";
 
 interface ListaQlik<T> {
   data?: T[];
   links?: Record<string, unknown>;
 }
 
-const esListaQlik = <T>(valor: unknown): valor is ListaQlik<T> =>
-  !!valor &&
-  typeof valor === "object" &&
-  Array.isArray((valor as ListaQlik<T>).data);
-
 export class ClienteHttpQlik implements ServicioQlik {
-  private readonly origen: string;
+  private readonly transporte: TransporteHttpQlik;
 
   constructor(
     host: string,
-    private readonly tokenAcceso: string,
-    private readonly fetchFn: typeof fetch = fetch,
+    tokenAcceso: string,
+    fetchFn: typeof fetch = fetch,
   ) {
-    const conProtocolo = /^https?:\/\//i.test(host) ? host : `https://${host}`;
-    const url = new URL(conProtocolo);
-    if (url.protocol !== "https:") {
-      throw new Error("El host de Qlik debe usar HTTPS");
-    }
-    if (url.pathname !== "/" || url.search || url.hash) {
-      throw new Error(
-        "El host de Qlik no puede incluir ruta, query ni fragmento",
-      );
-    }
-    this.origen = url.origin;
+    this.transporte = new TransporteHttpQlik(host, tokenAcceso, fetchFn);
   }
 
-  async solicitarCrudo(solicitud: SolicitudQlik): Promise<RespuestaCrudaQlik> {
-    if (!solicitud.ruta.startsWith("/api/")) {
-      throw new Error("La ruta de Qlik debe comenzar con /api/");
-    }
-
-    const url = new URL(solicitud.ruta, this.origen);
-    if (solicitud.consulta instanceof URLSearchParams) {
-      url.search = solicitud.consulta.toString();
-    } else if (solicitud.consulta) {
-      for (const [clave, valor] of Object.entries(solicitud.consulta)) {
-        if (valor !== undefined) url.searchParams.set(clave, String(valor));
-      }
-    }
-
-    const tieneCuerpo = solicitud.cuerpo !== undefined;
-    const respuesta = await this.fetchFn(url, {
-      method: solicitud.metodo,
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${this.tokenAcceso}`,
-        ...(tieneCuerpo ? { "Content-Type": "application/json" } : {}),
-        ...solicitud.encabezados,
-      },
-      body: tieneCuerpo ? JSON.stringify(solicitud.cuerpo) : undefined,
-    });
-
-    if (!respuesta.ok) {
-      const cuerpo = await leerCuerpoError(respuesta);
-      throw new ErrorApiQlik(
-        respuesta.status,
-        respuesta.statusText,
-        `${url.pathname}${url.search}`,
-        cuerpo,
-        respuesta.headers.get("x-qlik-trace-id") ??
-          (cuerpo && typeof cuerpo === "object"
-            ? String((cuerpo as Record<string, unknown>).traceId ?? "") ||
-              undefined
-            : undefined),
-      );
-    }
-
-    return {
-      estado: respuesta.status,
-      estadoTexto: respuesta.statusText,
-      encabezados: respuesta.headers,
-      cuerpo: respuesta.body,
-    };
+  solicitarCrudo(solicitud: SolicitudQlik): Promise<RespuestaCrudaQlik> {
+    return this.transporte.solicitarCrudo(solicitud);
   }
 
-  async solicitarJson<T>(solicitud: SolicitudQlik): Promise<T> {
-    const respuesta = await this.solicitarCrudo(solicitud);
-    if (respuesta.estado === 204 || !respuesta.cuerpo) return undefined as T;
-    return new Response(respuesta.cuerpo, {
-      status: respuesta.estado,
-      headers: respuesta.encabezados,
-    }).json() as Promise<T>;
+  solicitarJson<T>(solicitud: SolicitudQlik): Promise<T> {
+    return this.transporte.solicitarJson<T>(solicitud);
   }
 
   async listarEspacios(
@@ -248,37 +184,7 @@ export class ClienteHttpQlik implements ServicioQlik {
       ruta: "/api/v1/items",
       consulta,
     });
-    if (
-      respuesta &&
-      typeof respuesta === "object" &&
-      "data" in respuesta &&
-      Array.isArray((respuesta as Record<string, unknown>).data)
-    ) {
-      const items = (respuesta as { data: Array<Record<string, unknown>> })
-        .data;
-      return items
-        .filter(
-          (item) =>
-            item.resourceSubType === "qix-df" ||
-            (item.resourceCustomAttributes as Record<string, unknown>)
-              ?.usage === "DATAFLOW_PREP" ||
-            (item.resourceAttributes as Record<string, unknown>)?.usage ===
-              "DATAFLOW_PREP",
-        )
-        .map((item) => ({
-          id: String(item.resourceId ?? item.id),
-          name: String(item.name ?? ""),
-          spaceId: item.spaceId ? String(item.spaceId) : undefined,
-          ownerId: item.ownerId ? String(item.ownerId) : undefined,
-          createdAt: item.resourceCreatedAt
-            ? String(item.resourceCreatedAt)
-            : undefined,
-          updatedAt: item.resourceUpdatedAt
-            ? String(item.resourceUpdatedAt)
-            : undefined,
-        }));
-    }
-    return [];
+    return mapearItemsAFlujos(respuesta);
   }
 
   obtenerScriptApp(
@@ -290,13 +196,4 @@ export class ClienteHttpQlik implements ServicioQlik {
       ruta: `/api/v1/apps/${encodeURIComponent(appId)}/scripts/${encodeURIComponent(scriptId)}`,
     });
   }
-}
-
-async function leerCuerpoError(respuesta: Response): Promise<unknown> {
-  const tipo = respuesta.headers.get("content-type") ?? "";
-  if (tipo.includes("application/json")) {
-    return respuesta.json().catch(() => undefined);
-  }
-  const texto = await respuesta.text().catch(() => "");
-  return texto ? { detail: texto.slice(0, 4000) } : undefined;
 }
