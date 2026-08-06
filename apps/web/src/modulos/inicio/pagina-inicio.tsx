@@ -1,5 +1,6 @@
 import { Icon, type IconName } from "@/compartido/componentes/ui/icon";
 import { Reveal } from "@/compartido/componentes/ui/reveal";
+import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -58,6 +59,8 @@ export function PaginaInicio() {
   const esAdmin =
     (sesion?.esSuperadmin ?? false) ||
     (sesion?.membresias ?? []).some((m) => m.rol === "admin");
+  const { estado } = useVistaUsuarioFinal();
+  const puedeVerAdministracion = esAdmin && !estado.modoUsuarioFinal;
 
   return (
     <div className="mx-auto w-full max-w-[1180px]">
@@ -94,7 +97,7 @@ export function PaginaInicio() {
           )}
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-600 animate-dot-pulse" />
-            {esAdmin ? "Administrador" : "Usuario final"}
+            {puedeVerAdministracion ? "Administrador" : "Usuario final"}
           </span>
         </div>
       </Reveal>
@@ -119,7 +122,7 @@ export function PaginaInicio() {
               titulo="Automatizaciones funcionando"
               descripcion="Explora los procesos de Qlik Automate que están corriendo o programados para mantener tus datos al día."
             />
-            {esAdmin && (
+            {puedeVerAdministracion && (
               <Link
                 to="/admin/tenants"
                 className="group flex items-center gap-4 rounded-lg border border-dashed border-line-300 bg-surface/60 p-4 transition-colors hover:border-brand-600 hover:bg-brand-50 sm:col-span-12"
