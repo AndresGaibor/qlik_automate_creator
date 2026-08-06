@@ -166,8 +166,11 @@ bun run dev       # Frontend en http://localhost:5173
 ## Calidad
 
 ```bash
-bun run typecheck
-bun run test
 bun run lint
+bun run typecheck
+bun run test:api   # Bun Test: backend y contratos
+bun run test:web   # Vitest: frontend con DOM
 bun run build
 ```
+
+`bun run test` ejecuta `test:api` y `test:web` en ese orden.

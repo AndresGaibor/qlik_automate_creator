@@ -111,10 +111,40 @@ apps/web/src/
 ├── app/                    # router, layout y providers
 ├── compartido/             # API client, UI y feedback transversal
 └── modulos/
+    ├── admin/
     ├── autenticacion/
     ├── automatizaciones/
     ├── flujos/
-    └── inicio/
+    ├── inicio/
+    ├── origenes/
+    ├── setup/
+    └── tablas/
 ```
 
-Cada feature contiene su API, páginas, rutas y `publico.ts`. La feature no conoce Drizzle ni la forma cruda de Qlik.
+Cada feature contiene su API, páginas, rutas y `publico.ts`. Los consumidores externos importan únicamente desde `publico.ts`; los componentes internos pueden importar archivos de su propia feature.
+
+Las páginas coordinan selección, navegación y composición. Las llamadas HTTP viven en `api.ts`, React Query se agrupa en hooks de consulta y los componentes reciben datos y callbacks explícitos. La interfaz no muestra historiales, aprobaciones ni resultados simulados como si provinieran del backend.
+## Comentarios y nombres
+
+Un comentario debe explicar una restricción externa, una decisión de seguridad, una compatibilidad heredada o una invariante que no resulte evidente al leer el código. No se usan comentarios para numerar pasos, rotular secciones JSX ni repetir el nombre de la función siguiente.
+
+Los nombres describen el concepto de negocio. Se evitan nombres genéricos como `manager`, `helper`, `processor` o `data` cuando existe un término concreto en español.
+
+## Reglas ejecutables
+
+La documentación se protege con pruebas de arquitectura:
+
+- `apps/api/src/arquitectura.test.ts` verifica las dependencias permitidas del backend.
+- `apps/web/src/arquitectura.test.ts` exige una API pública por feature y evita imports internos entre features.
+
+Los comandos canónicos son:
+
+```bash
+bun run lint
+bun run typecheck
+bun run test:api
+bun run test:web
+bun run build
+```
+
+Backend y contratos usan Bun Test. El frontend usa Vitest; no deben ejecutarse ambos runtimes con un único descubrimiento global de archivos.
