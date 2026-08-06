@@ -24,11 +24,6 @@ export interface EntradaConexionOrigen {
   };
 }
 
-export interface ResultadoRevelarSecretos {
-  secretos: Record<string, string>;
-  faltantes: string[];
-}
-
 export interface RepositorioConexionesOrigen {
   listar(organizacionId: string): Promise<ConexionOrigen[]>;
   buscarPorNombre(
@@ -68,5 +63,4 @@ export interface RepositorioConexionesOrigen {
       mensajeError: string | null;
     },
   ): Promise<boolean>;
-  revelarSecretos(organizacionId: string): Promise<ResultadoRevelarSecretos>;
 }

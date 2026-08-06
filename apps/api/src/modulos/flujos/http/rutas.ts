@@ -1,12 +1,11 @@
 import { type Context, Hono } from "hono";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
-import { db } from "../../../plataforma/persistencia/conexion.js";
-import { conexionesOrigen } from "../../../plataforma/persistencia/esquema.js";
 import { ListarFlujos } from "../aplicacion/casos-de-uso/listar-flujos.js";
 import {
   construirCatalogoConexionesSpark,
   parsearScriptQlik,
 } from "../aplicacion/generador-catalogo-spark.js";
+import type { ConsultaConexionesOrigen } from "../aplicacion/puertos/consulta-conexiones-origen.js";
 import type { PuertoConsultaFlujos } from "../aplicacion/puertos/puerto-consulta-flujos.js";
 
 export function crearRutasFlujos(
@@ -15,15 +14,62 @@ export function crearRutasFlujos(
     c: Context,
   ) => Promise<import("../../qlik/publico.js").ServicioQlik>,
   resolverSesion?: (c: Context) => Promise<{ organizacionId: string }>,
+  resolverPoliticaEspacios?: (c: Context) => Promise<{
+    restringida: boolean;
+    puedeVer(espacioId?: string | null): boolean;
+  }>,
+  consultaConexionesOrigen?: ConsultaConexionesOrigen,
 ) {
   const rutas = new Hono();
+
+  function responderEspacioNoAutorizado(c: Context) {
+    return c.json(
+      {
+        exito: false,
+        error: {
+          mensaje: "No tienes acceso a este recurso",
+          codigo: "ESPACIO_NO_AUTORIZADO",
+        },
+      },
+      403,
+    );
+  }
+
+  async function flujoEstaAutorizado(c: Context, id: string) {
+    if (!resolverPoliticaEspacios) return true;
+    const politica = await resolverPoliticaEspacios(c);
+    if (!politica.restringida) return true;
+    const consulta = await resolverConsulta(c);
+    const flujo = (await consulta.listar()).find((item) => item.id === id);
+    return !flujo || politica.puedeVer(flujo.espacioId);
+  }
+
   rutas.get("/", async (c) => {
     const consulta = await resolverConsulta(c);
     const espacioId = c.req.query("espacioId")?.trim() || undefined;
     const q =
       c.req.query("q")?.trim() || c.req.query("busqueda")?.trim() || undefined;
 
+    const politica = resolverPoliticaEspacios
+      ? await resolverPoliticaEspacios(c)
+      : null;
+    if (espacioId && politica?.restringida && !politica.puedeVer(espacioId)) {
+      return c.json(
+        {
+          exito: false,
+          error: {
+            mensaje: "No tienes acceso a este espacio de Qlik Cloud",
+            codigo: "ESPACIO_NO_AUTORIZADO",
+          },
+        },
+        403,
+      );
+    }
+
     let lista = await new ListarFlujos(consulta).ejecutar(espacioId);
+    if (politica?.restringida) {
+      lista = lista.filter((flujo) => politica.puedeVer(flujo.espacioId));
+    }
     if (q) {
       const qLower = q.toLowerCase();
       lista = lista.filter((flujo) =>
@@ -45,6 +91,9 @@ export function crearRutasFlujos(
       );
     }
     const id = c.req.param("id");
+    if (!(await flujoEstaAutorizado(c, id))) {
+      return responderEspacioNoAutorizado(c);
+    }
     const qlik = await resolverQlik(c);
     try {
       const resultadoScript = await qlik.obtenerScriptApp(id, "current");
@@ -80,23 +129,21 @@ export function crearRutasFlujos(
       );
     }
     const id = c.req.param("id");
+    if (!(await flujoEstaAutorizado(c, id))) {
+      return responderEspacioNoAutorizado(c);
+    }
     const qlik = await resolverQlik(c);
     try {
       const resultadoScript = await qlik.obtenerScriptApp(id, "current");
       const descubierto = parsearScriptQlik(resultadoScript.script);
 
       const sesion = resolverSesion ? await resolverSesion(c) : null;
-      const conexionesBD = sesion
-        ? await db.query.conexionesOrigen.findMany({
-            where: (tabla, { eq }) =>
-              eq(tabla.organizacionId, sesion.organizacionId),
-          })
-        : [];
-      const configuracionesCatalogos = conexionesBD.map((conn) => ({
-        tipo: conn.tipo,
-        nombre: conn.nombre,
-        config: (conn.config as Record<string, unknown>) || {},
-      }));
+      const configuracionesCatalogos =
+        sesion && consultaConexionesOrigen
+          ? await consultaConexionesOrigen.listarPorOrganizacion(
+              sesion.organizacionId,
+            )
+          : [];
 
       const catalogoSpark = construirCatalogoConexionesSpark(
         descubierto,

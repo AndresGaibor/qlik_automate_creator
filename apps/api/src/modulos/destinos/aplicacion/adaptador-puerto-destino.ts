@@ -1,6 +1,6 @@
+import type { RecursoDestino } from "../dominio/tipos-destino.js";
 import type { PuertoCatalogoDestinos } from "./puertos/puerto-catalogo-destinos.js";
 import type { PuertoDestino } from "./puertos/puerto-destino.js";
-import type { RecursoDestino } from "../dominio/tipos-destino.js";
 
 export class AdaptadorPuertoDestinoACatalogo implements PuertoCatalogoDestinos {
   constructor(private readonly destino: PuertoDestino) {}
@@ -38,16 +38,23 @@ export class AdaptadorPuertoDestinoACatalogo implements PuertoCatalogoDestinos {
       tabla,
       columnas: detalle.columnas ?? [],
       especificacionEsquema: (detalle.columnas ?? [])
-        .map((col: { nombre: string; tipo: string }) => `${col.nombre}:${col.tipo}`)
+        .map(
+          (col: { nombre: string; tipo: string }) =>
+            `${col.nombre}:${col.tipo}`,
+        )
         .join("|"),
     };
   }
 
-  async listarFlujosDatos(): Promise<import("../dominio/modelos.js").FlujoDatosDestino[]> {
+  async listarFlujosDatos(): Promise<
+    import("../dominio/modelos.js").FlujoDatosDestino[]
+  > {
     return [];
   }
 
-  async obtenerFlujoDatos(id: string): Promise<import("../dominio/modelos.js").FlujoDatosDestino> {
+  async obtenerFlujoDatos(
+    id: string,
+  ): Promise<import("../dominio/modelos.js").FlujoDatosDestino> {
     return { id, nombre: `Flujo ${id}` };
   }
 }

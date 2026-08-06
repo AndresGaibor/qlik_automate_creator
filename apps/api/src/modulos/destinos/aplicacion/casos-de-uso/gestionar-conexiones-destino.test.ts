@@ -8,6 +8,7 @@ import { GestionarConexionesDestino } from "./gestionar-conexiones-destino.js";
 
 class RepositorioFalso implements RepositorioConexionesDestino {
   conexiones: ConexionDestino[] = [];
+  entradaCreada: unknown = null;
 
   async listarPorOrganizacion(organizacionId: string) {
     return this.conexiones.filter(
@@ -24,10 +25,20 @@ class RepositorioFalso implements RepositorioConexionesDestino {
     );
   }
 
+  async obtenerConSecreto(organizacionId: string, id: string) {
+    const conexion = await this.obtener(organizacionId, id);
+    return conexion ? { ...conexion, secreto: null } : null;
+  }
+
   async crear(entrada: EntradaConexionDestino) {
+    this.entradaCreada = entrada;
     const conexion = crearConexion("destino-1", entrada);
     this.conexiones.push(conexion);
     return conexion;
+  }
+
+  async guardarParaTenant(entrada: EntradaConexionDestino) {
+    return this.crear(entrada);
   }
 
   async actualizar(
@@ -62,6 +73,7 @@ function crearConexion(
     nombre: entrada.nombre,
     estado: "activo",
     mensajeError: null,
+    probadaEn: null,
     config: entrada.config,
     secretoRefs: entrada.secretoRefs,
   };
@@ -159,5 +171,53 @@ describe("GestionarConexionesDestino", () => {
     await expect(
       gestor.eliminar("org-1", "destino-1"),
     ).resolves.toBeUndefined();
+  });
+  it("extrae password antes de persistir Postgres", async () => {
+    const repositorio = new RepositorioFalso();
+    const gestor = new GestionarConexionesDestino(repositorio);
+
+    await gestor.crear({
+      organizacionId: "org-1",
+      tipo: "postgres",
+      nombre: "Destino demo",
+      config: {
+        host: "db.internal",
+        port: 5432,
+        database: "demo",
+        schema: "public",
+        user: "demo",
+        password: "secreto",
+        ssl: true,
+      },
+      secretoRefs: {},
+    });
+
+    expect(repositorio.entradaCreada).toEqual(
+      expect.objectContaining({
+        config: expect.not.objectContaining({ password: expect.anything() }),
+        secreto: {
+          nombre: expect.stringMatching(/^POSTGRES_DESTINO_/),
+          valor: "secreto",
+        },
+      }),
+    );
+  });
+
+  it("nunca devuelve password al listar", async () => {
+    const repositorio = new RepositorioFalso();
+    repositorio.conexiones.push(
+      crearConexion("destino-1", {
+        organizacionId: "org-1",
+        tipo: "postgres",
+        nombre: "Destino",
+        config: { host: "db", password: "legacy" },
+        secretoRefs: {},
+      }),
+    );
+    const gestor = new GestionarConexionesDestino(repositorio);
+
+    const listado = await gestor.listar("org-1");
+    expect(listado[0].config).not.toHaveProperty("password");
+    expect(JSON.stringify(listado)).not.toContain("legacy");
   });
 });

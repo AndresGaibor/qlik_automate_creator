@@ -1,9 +1,9 @@
+import { VistaProvider, useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import React, { useEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { VistaProvider, useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { PaginaInicio } from "./pagina-inicio";
 
 const mocks = vi.hoisted(() => ({

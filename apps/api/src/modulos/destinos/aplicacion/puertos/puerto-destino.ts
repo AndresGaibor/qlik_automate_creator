@@ -7,6 +7,7 @@ import type {
 
 export interface PuertoDestino {
   readonly tipo: TipoDestino;
+  probar(): Promise<void>;
   obtenerCapacidades(): CapacidadesDestino;
   listarRecursos(): Promise<RecursoDestino[]>;
   obtenerRecurso(id: string): Promise<DetalleRecursoDestino>;

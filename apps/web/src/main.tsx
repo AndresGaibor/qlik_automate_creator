@@ -12,7 +12,11 @@ import { router } from "./app/router";
 clienteApi.onUnauthorized = (codigo) => {
   clienteConsultas.clear();
   const motivo = obtenerMotivoSesion(codigo);
-  router.navigate({ to: "/login", replace: true, search: { motivo_sesion: motivo } });
+  router.navigate({
+    to: "/login",
+    replace: true,
+    search: { motivo_sesion: motivo },
+  });
 };
 
 const raiz = document.getElementById("root");

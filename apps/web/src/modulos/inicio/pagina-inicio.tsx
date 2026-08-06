@@ -1,6 +1,6 @@
+import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { Icon, type IconName } from "@/compartido/componentes/ui/icon";
 import { Reveal } from "@/compartido/componentes/ui/reveal";
-import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { obtenerSesion } from "@/modulos/autenticacion/publico";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -124,7 +124,7 @@ export function PaginaInicio() {
             />
             {puedeVerAdministracion && (
               <Link
-                to="/admin/tenants"
+                to="/configuracion"
                 className="group flex items-center gap-4 rounded-lg border border-dashed border-line-300 bg-surface/60 p-4 transition-colors hover:border-brand-600 hover:bg-brand-50 sm:col-span-12"
               >
                 <span className="grid h-10 w-10 place-items-center rounded-md bg-hover text-ink-500 transition-colors group-hover:bg-brand-100 group-hover:text-brand-700">
@@ -135,8 +135,8 @@ export function PaginaInicio() {
                     Configuración de la plataforma
                   </div>
                   <div className="truncate text-sm text-ink-500">
-                    Gestiona organizaciones, conexiones a Qlik Cloud y destinos,
-                    plantillas base y permisos de usuarios.
+                    Gestiona la organización, las conexiones a Qlik Cloud,
+                    Impala, los orígenes, la plantilla base y los usuarios.
                   </div>
                 </div>
                 <Icon

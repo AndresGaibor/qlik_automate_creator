@@ -275,7 +275,9 @@ describe("rutas-configuracion-tenant · automatizacion-base por modo", () => {
     expect(respuesta.status).toBe(200);
     const cuerpo = await respuesta.json();
     expect(cuerpo.datos.automatizacionPlantillaModo1IdQlik).toBe("plantilla-1");
-    expect(cuerpo.datos.automatizacionPlantillaModo1Nombre).toBe("Mi Automatizacion Modo 1");
+    expect(cuerpo.datos.automatizacionPlantillaModo1Nombre).toBe(
+      "Mi Automatizacion Modo 1",
+    );
   });
 
   it("devuelve 400 cuando modo no es 1 ni 2", async () => {

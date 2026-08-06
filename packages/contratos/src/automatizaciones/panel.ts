@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { type ModoPlantilla, esquemaModoPlantilla } from "../admin/index.js";
 import { esquemaIdQlik } from "../qlik/comunes.js";
-import { esquemaModoPlantilla, type ModoPlantilla } from "../admin/index.js";
 export { esquemaModoPlantilla, type ModoPlantilla };
 
 export const esquemaResumenAutomatizacion = z.object({
@@ -91,5 +91,6 @@ export const esquemaConfiguracionTenant = z.object({
   plantillaEfectivaIdQlik: z.string().nullable(),
   plantillaEfectivaNombre: z.string().nullable(),
   configurada: z.boolean(),
+  puedeAdministrarConexiones: z.boolean(),
 });
 export type ConfiguracionTenant = z.infer<typeof esquemaConfiguracionTenant>;

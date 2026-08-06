@@ -1,9 +1,9 @@
+import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { act } from "react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { SeccionModoGlobalAutomatizacion } from "./seccion-modo-global-automatizacion";
 
 const { obtenerMock, guardarMock } = vi.hoisted(() => ({

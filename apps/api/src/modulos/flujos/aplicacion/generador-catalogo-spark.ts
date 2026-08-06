@@ -40,6 +40,11 @@ export interface EstructuraConexionesSpark {
   sftp: CatalogoConexionSftp[];
 }
 
+export interface RequisitoConexionDescubierto {
+  tipo: "jdbc" | "sftp";
+  nombre: string;
+}
+
 export interface ScriptDescubierto {
   conexionesJdbc: Array<{
     nombre: string;
@@ -96,7 +101,7 @@ export function parsearScriptQlik(script: string): ScriptDescubierto {
     { rutaBase: string; allowlist: Map<string, AllowlistItem> }
   >();
 
-  // 1. Extraer LIB CONNECT TO [NombreConexion]
+  // El nombre entre corchetes identifica la conexión que usan los SELECT siguientes.
   let conexionJdbcActual = "";
   let bloqueSelect = "";
 
@@ -113,7 +118,7 @@ export function parsearScriptQlik(script: string): ScriptDescubierto {
       }
     }
 
-    // 2. Extraer SELECT <campos> FROM "esquema"."tabla", incluso en varias líneas.
+    // Un SELECT puede ocupar varias líneas; se acumula hasta encontrar FROM.
     if (conexionJdbcActual) {
       if (/^\s*(?:SQL\s+)?SELECT\b/i.test(linea)) {
         bloqueSelect = linea;
@@ -175,7 +180,7 @@ export function parsearScriptQlik(script: string): ScriptDescubierto {
     }
   }
 
-  // 3. Extraer STORE ... INTO [lib://Conexion...] globalmente (soporta multilínea)
+  // STORE puede ser multilínea, por eso se analiza sobre el script completo.
   const regexStoreGlobal =
     /STORE\s+[\s\S]*?\s+INTO\s+\[lib:\/\/([^/\]]+)(?:\/+([^\]]+))?\]/gi;
   let matchStore = regexStoreGlobal.exec(script);
@@ -235,6 +240,25 @@ export function parsearScriptQlik(script: string): ScriptDescubierto {
   };
 }
 
+export function descubrirRequisitosConexion(
+  script: string,
+): RequisitoConexionDescubierto[] {
+  const descubierto = parsearScriptQlik(script);
+  return [
+    ...descubierto.conexionesJdbc.map(({ nombre }) => ({
+      tipo: "jdbc" as const,
+      nombre,
+    })),
+    ...descubierto.conexionesSftp.map(({ nombre }) => ({
+      tipo: "sftp" as const,
+      nombre,
+    })),
+  ];
+}
+
+const claveConexion = (tipo: string, nombre: string) =>
+  `${tipo}\u0000${nombre}`;
+
 export function construirCatalogoConexionesSpark(
   descubierto: ScriptDescubierto,
   configuracionesCatalogos: Array<{
@@ -245,38 +269,36 @@ export function construirCatalogoConexionesSpark(
   descripcion = "Dataflow Bancolombia ejecutado por Spark",
 ): EstructuraConexionesSpark {
   const catalogosMap = new Map(
-    configuracionesCatalogos.map((c) => [c.nombre, c]),
+    configuracionesCatalogos.map((c) => [claveConexion(c.tipo, c.nombre), c]),
   );
 
   const jdbc: CatalogoConexionJdbc[] = descubierto.conexionesJdbc.map((c) => {
-    const configGuardada = catalogosMap.get(c.nombre)?.config || {};
+    const configGuardada =
+      catalogosMap.get(claveConexion("jdbc", c.nombre))?.config || {};
     return {
       tipo: "jdbc",
       nombre: c.nombre,
       url: textoConfig(configGuardada, "url", ""),
-      driver: textoConfig(configGuardada, "driver", "org.postgresql.Driver"),
-      secreto_nombre: textoConfig(
-        configGuardada,
-        "secreto_nombre",
-        "POSTGRES_BANCOLOMBIA",
-      ),
+      driver: textoConfig(configGuardada, "driver", ""),
+      secreto_nombre: textoConfig(configGuardada, "secreto_nombre", ""),
       allowlist: c.allowlist,
       propiedades: propiedadesConfig(configGuardada),
     };
   });
 
   const sftp: CatalogoConexionSftp[] = descubierto.conexionesSftp.map((c) => {
-    const configGuardada = catalogosMap.get(c.nombre)?.config || {};
+    const configGuardada =
+      catalogosMap.get(claveConexion("sftp", c.nombre))?.config || {};
     return {
       tipo: "sftp",
       nombre: c.nombre,
-      host: textoConfig(configGuardada, "host", "__SFTP_HOST__"),
+      host: textoConfig(configGuardada, "host", ""),
       puerto: Number(configGuardada.puerto) || 22,
-      usuario: textoConfig(configGuardada, "usuario", "sftpqlik"),
+      usuario: textoConfig(configGuardada, "usuario", ""),
       secreto_clave_privada_nombre: textoConfig(
         configGuardada,
         "secreto_clave_privada_nombre",
-        "SFTP_PRIVATE_KEY_B64",
+        "",
       ),
       ruta_base: textoConfig(
         configGuardada,
@@ -289,7 +311,8 @@ export function construirCatalogoConexionesSpark(
 
   const locales: CatalogoConexionLocal[] = descubierto.conexionesLocales.map(
     (c) => {
-      const configGuardada = catalogosMap.get(c.nombre)?.config || {};
+      const configGuardada =
+        catalogosMap.get(claveConexion("local", c.nombre))?.config || {};
       return {
         tipo: "local",
         nombre: c.nombre,

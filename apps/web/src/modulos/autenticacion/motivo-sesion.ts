@@ -1,6 +1,4 @@
-export type MotivoSesion =
-  | "credenciales_qlik_invalidas"
-  | "sesion_terminada";
+export type MotivoSesion = "credenciales_qlik_invalidas" | "sesion_terminada";
 
 const MENSAJES_SESION: Record<MotivoSesion, string> = {
   credenciales_qlik_invalidas:
@@ -20,7 +18,6 @@ export function obtenerMensajeMotivoSesion(
   if (motivo === null) return null;
   if (motivo === "credenciales_qlik_invalidas")
     return MENSAJES_SESION.credenciales_qlik_invalidas;
-  if (motivo === "sesion_terminada")
-    return MENSAJES_SESION.sesion_terminada;
+  if (motivo === "sesion_terminada") return MENSAJES_SESION.sesion_terminada;
   return null;
 }

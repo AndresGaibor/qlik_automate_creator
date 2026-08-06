@@ -4,7 +4,6 @@ import type {
   ConexionOrigen,
   EntradaConexionOrigen,
   RepositorioConexionesOrigen,
-  ResultadoRevelarSecretos,
 } from "../puertos/repositorio-conexiones-origen.js";
 import { GestionarConexionesOrigen } from "./gestionar-conexiones-origen.js";
 
@@ -12,11 +11,8 @@ class RepositorioFalso implements RepositorioConexionesOrigen {
   conexiones: ConexionOrigen[] = [];
   secretoRecibido?: string;
   secretoLeido: string | null = null;
+  secretosConfigurados = new Set<string>();
   busquedasTipoNombre: Array<[string, string, string]> = [];
-  resultadoSecretos: ResultadoRevelarSecretos = {
-    secretos: {},
-    faltantes: [],
-  };
 
   async listar(organizacionId: string) {
     return this.conexiones.filter(
@@ -48,6 +44,15 @@ class RepositorioFalso implements RepositorioConexionesOrigen {
           conexion.nombre === nombre,
       ) ?? null
     );
+  }
+
+  async existeSecreto(
+    organizacionId: string,
+    conexionId: string,
+    nombre: string,
+  ) {
+    const conexion = await this.buscarPorId(organizacionId, conexionId);
+    return Boolean(conexion && this.secretosConfigurados.has(`${conexionId}:${nombre}`));
   }
 
   async leerSecreto() {
@@ -96,10 +101,6 @@ class RepositorioFalso implements RepositorioConexionesOrigen {
         conexion.organizacionId !== organizacionId || conexion.id !== id,
     );
     return this.conexiones.length < cantidadAnterior;
-  }
-
-  async revelarSecretos() {
-    return this.resultadoSecretos;
   }
 }
 
@@ -151,6 +152,35 @@ describe("GestionarConexionesOrigen", () => {
 
     expect(conexion.config).not.toHaveProperty("secretoValor");
     expect(JSON.stringify(conexion)).not.toContain("usuario:clave");
+  });
+
+  it("informa si la credencial segura realmente está almacenada", async () => {
+    const repositorio = new RepositorioFalso();
+    repositorio.conexiones.push({
+      id: "conexion-1",
+      organizacionId: "org-1",
+      tipo: "jdbc",
+      nombre: "Ventas",
+      config: {
+        url: "jdbc:postgresql://localhost/ventas",
+        secreto_nombre: "JDBC_VENTAS",
+      },
+      estado: "sin_probar",
+      probadaEn: null,
+      mensajeError: null,
+      creadoEn: new Date(),
+      actualizadoEn: new Date(),
+    });
+    const gestor = new GestionarConexionesOrigen(repositorio, crearAuditoria());
+
+    expect((await gestor.listar("org-1"))[0]).toMatchObject({
+      secretoConfigurado: false,
+    });
+
+    repositorio.secretosConfigurados.add("conexion-1:JDBC_VENTAS");
+    expect((await gestor.listar("org-1"))[0]).toMatchObject({
+      secretoConfigurado: true,
+    });
   });
 
   it("rechaza nombres repetidos dentro de la organización", async () => {
@@ -210,49 +240,6 @@ describe("GestionarConexionesOrigen", () => {
 
     expect(await gestor.eliminar("org-2", "conexion-1")).toBe(false);
     expect(await gestor.eliminar("org-1", "conexion-1")).toBe(true);
-  });
-
-  it("audita la revelación de secretos", async () => {
-    const repositorio = new RepositorioFalso();
-    repositorio.resultadoSecretos = {
-      secretos: { JDBC_VENTAS: "usuario:clave" },
-      faltantes: [],
-    };
-    const auditoria = crearAuditoria();
-    const gestor = new GestionarConexionesOrigen(repositorio, auditoria);
-
-    const secretos = await gestor.revelarSecretos({
-      organizacionId: "org-1",
-      usuarioId: "usuario-1",
-    });
-
-    expect(secretos).toEqual({ JDBC_VENTAS: "usuario:clave" });
-    expect(auditoria.registrar).toHaveBeenCalledWith(
-      expect.objectContaining({
-        accion: "conexion-origen.revelar-contexto-secretos",
-        resultado: "exito",
-      }),
-    );
-  });
-
-  it("informa todos los secretos declarados que no existen", async () => {
-    const repositorio = new RepositorioFalso();
-    repositorio.resultadoSecretos = {
-      secretos: {},
-      faltantes: ["JDBC_VENTAS", "SFTP_KEY"],
-    };
-    const gestor = new GestionarConexionesOrigen(repositorio, crearAuditoria());
-
-    expect(
-      gestor.revelarSecretos({
-        organizacionId: "org-1",
-        usuarioId: "usuario-1",
-      }),
-    ).rejects.toMatchObject({
-      codigo: "SECRETOS_FALTANTES",
-      estadoHttp: 422,
-      detalles: { nombres: ["JDBC_VENTAS", "SFTP_KEY"] },
-    });
   });
 
   it("permite el mismo nombre para tipos diferentes", async () => {

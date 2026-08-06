@@ -16,14 +16,14 @@ export function PaginacionLista({
   total,
 }: Props) {
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-lg border shadow-sm gap-4 text-sm text-gray-600">
+    <div className="flex flex-col items-center justify-between gap-3 rounded-lg border border-line-200 bg-surface px-4 py-3 text-sm text-ink-500 sm:flex-row">
       <span>
         Mostrando{" "}
-        <span className="font-semibold text-gray-900">{inicio + 1}</span> -{" "}
-        <span className="font-semibold text-gray-900">
+        <span className="font-semibold text-ink-900">{inicio + 1}</span> -{" "}
+        <span className="font-semibold text-ink-900">
           {Math.min(inicio + 10, total)}
         </span>{" "}
-        de <span className="font-semibold text-gray-900">{total}</span>{" "}
+        de <span className="font-semibold text-ink-900">{total}</span>{" "}
         automatizaciones
       </span>
       <div className="flex items-center gap-3">
@@ -36,7 +36,7 @@ export function PaginacionLista({
         >
           Anterior
         </Button>
-        <span className="font-semibold text-gray-800 text-xs">
+        <span className="text-xs font-semibold text-ink-700">
           Página {paginaActual} de {totalPaginas}
         </span>
         <Button

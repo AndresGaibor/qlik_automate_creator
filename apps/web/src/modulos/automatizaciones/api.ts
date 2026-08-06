@@ -1,18 +1,20 @@
 import { clienteApi } from "@/compartido/api/cliente";
 import type {
+  CrearDesdePlantilla,
+  DetalleAutomatizacion,
+  EntradaCrearModo1,
+  EspacioDisponible,
+  PreflightAutomatizacion,
+  ResultadoCrearDesdePlantilla,
+  ResumenAutomatizacion,
+} from "@qlik/contratos/automatizaciones";
+import type {
   CapacidadesDestino,
   ConexionDestino,
   CrearConexionDestino,
   RecursoDestino,
   TipoDestino,
 } from "@qlik/contratos/destinos";
-import type {
-  CrearDesdePlantilla,
-  DetalleAutomatizacion,
-  EspacioDisponible,
-  ResultadoCrearDesdePlantilla,
-  ResumenAutomatizacion,
-} from "@qlik/contratos/automatizaciones";
 
 const RUTA = "/automatizaciones";
 
@@ -21,6 +23,14 @@ export interface ConfiguracionTenant {
   plantillaEfectivaIdQlik: string | null;
   plantillaEfectivaNombre: string | null;
   configurada: boolean;
+  puedeAdministrarConexiones: boolean;
+  accesoEspacios: {
+    restringido: boolean;
+    configurado: boolean;
+    cerrado: boolean;
+    cantidadEspacios: number;
+    permitirRecursosSinEspacio: boolean;
+  };
 }
 
 export function obtenerConfiguracionTenant(): Promise<ConfiguracionTenant> {
@@ -30,11 +40,61 @@ export function obtenerConfiguracionTenant(): Promise<ConfiguracionTenant> {
 export type {
   CrearDesdePlantilla,
   DetalleAutomatizacion,
+  EntradaCrearModo1,
   EspacioDisponible,
+  PreflightAutomatizacion,
   ResumenAutomatizacion,
   ResultadoCrearDesdePlantilla,
 };
 export type EjecucionResumen = DetalleAutomatizacion["ejecuciones"][number];
+
+export interface ResultadoPruebaConexionOrigen {
+  estado: "disponible";
+  probadaEn: string;
+  mensaje: null;
+}
+
+export type EntradaConexionOrigen =
+  | {
+      tipo: "jdbc";
+      nombre: string;
+      config: {
+        url: string;
+        driver: string;
+        secreto_nombre: string;
+        propiedades: Record<string, string>;
+        secretoValor?: string;
+      };
+    }
+  | {
+      tipo: "sftp";
+      nombre: string;
+      config: {
+        host: string;
+        puerto: number;
+        usuario: string;
+        secreto_clave_privada_nombre: string;
+        ruta_base: string;
+        secretoClavePrivadaValor?: string;
+      };
+    };
+
+export function obtenerPreflightAutomatizacion(flujoId: string) {
+  return clienteApi.post<PreflightAutomatizacion>(`${RUTA}/preflight`, {
+    flujoId,
+  });
+}
+
+export function guardarConexionOrigen(entrada: EntradaConexionOrigen) {
+  return clienteApi.post<{ id: string }>("/conexiones-origen", entrada);
+}
+
+export function probarConexionOrigen(id: string) {
+  return clienteApi.post<ResultadoPruebaConexionOrigen>(
+    `/conexiones-origen/${encodeURIComponent(id)}/probar`,
+    {},
+  );
+}
 
 export function obtenerAutomatizaciones() {
   return clienteApi.get<ResumenAutomatizacion[]>(RUTA);
@@ -75,9 +135,11 @@ export function detenerEjecucion(id: string, ejecucionId: string) {
 }
 
 export function crearAutomatizacionDesdePlantilla(
-  entrada: Omit<CrearDesdePlantilla, "plantillaIdQlik"> & {
-    plantillaIdQlik?: string;
-  },
+  entrada:
+    | EntradaCrearModo1
+    | (Omit<CrearDesdePlantilla, "plantillaIdQlik"> & {
+        plantillaIdQlik?: string;
+      }),
 ) {
   const clave = entrada.claveIdempotencia ?? crypto.randomUUID();
   return clienteApi.post<ResultadoCrearDesdePlantilla>(
@@ -104,16 +166,19 @@ export function obtenerConexionesDestino(): Promise<ConexionDestino[]> {
 }
 
 /** Prueba la conexión de un destino */
-export function probarConexionDestino(
-  id: string,
-): Promise<{ exitoso: boolean; mensaje: string; capacidades?: CapacidadesDestino }> {
-  return clienteApi.post(`/destinos/conexiones/${encodeURIComponent(id)}/probar`, {});
+export function probarConexionDestino(id: string): Promise<{
+  exitoso: boolean;
+  mensaje: string;
+  capacidades?: CapacidadesDestino;
+}> {
+  return clienteApi.post(
+    `/destinos/conexiones/${encodeURIComponent(id)}/probar`,
+    {},
+  );
 }
 
 /** Recursos disponibles en una conexión de destino */
-export function obtenerRecursosDestino(
-  id: string,
-): Promise<RecursoDestino[]> {
+export function obtenerRecursosDestino(id: string): Promise<RecursoDestino[]> {
   return clienteApi.get<RecursoDestino[]>(
     `/destinos/conexiones/${encodeURIComponent(id)}/recursos`,
   );

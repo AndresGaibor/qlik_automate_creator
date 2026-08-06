@@ -8,6 +8,8 @@
       "**/dist/**",
       "**/coverage/**",
       "**/node_modules/**",
+      ".worktrees/**",
+      ".superpowers/**",
       "**/drizzle/meta/**",
       "**/*.tsbuildinfo",
       "docs/toolkits/**",

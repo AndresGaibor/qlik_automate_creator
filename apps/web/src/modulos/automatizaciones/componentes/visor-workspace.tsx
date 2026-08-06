@@ -110,7 +110,7 @@ function extraerVariables(workspace: Record<string, unknown>): VariableInfo[] {
   const blocks = workspace.blocks;
   const mapaValores: Record<string, unknown> = {};
 
-  // 1. Recorrer los bloques para encontrar los VariableBlock y sus operations
+  // Qlik guarda las variables dentro de operaciones anidadas en bloques VariableBlock.
   if (Array.isArray(blocks)) {
     for (const b of blocks) {
       const block = b as Record<string, unknown>;

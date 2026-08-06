@@ -12,6 +12,7 @@
     "db:migrate": "bun --env-file=../../.env run drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:check": "bun --env-file=../../.env run src/plataforma/bootstrap/check.ts",
+    "db:backfill-secretos-destino": "bun --env-file=../../.env run src/plataforma/persistencia/backfills/ejecutar-cifrar-secretos-destino.ts",
     "db:seed": "bun --env-file=../../.env run src/plataforma/bootstrap/seed.ts"
   },
   "dependencies": {

@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-export const esquemaTipoDestino = z.enum(["impala", "postgres", "bigquery", "sftp"]);
+export const esquemaTipoDestino = z.enum([
+  "impala",
+  "postgres",
+  "bigquery",
+  "sftp",
+]);
 export type TipoDestino = z.infer<typeof esquemaTipoDestino>;
 
 export const esquemaCapacidadesDestino = z.object({
@@ -29,7 +34,9 @@ export const esquemaDetalleRecursoDestino = esquemaRecursoDestino.extend({
   totalFilas: z.number().optional(),
   actualizadoEn: z.string(),
 });
-export type DetalleRecursoDestino = z.infer<typeof esquemaDetalleRecursoDestino>;
+export type DetalleRecursoDestino = z.infer<
+  typeof esquemaDetalleRecursoDestino
+>;
 
 export const esquemaConexionDestino = z.object({
   id: z.string(),
@@ -37,6 +44,7 @@ export const esquemaConexionDestino = z.object({
   nombre: z.string(),
   estado: z.enum(["activo", "error", "desconectado"]),
   mensajeError: z.string().nullable().optional(),
+  probadaEn: z.string().datetime().nullable().optional(),
 });
 export type ConexionDestino = z.infer<typeof esquemaConexionDestino>;
 
@@ -50,7 +58,9 @@ export type CrearConexionDestino = z.infer<typeof esquemaCrearConexionDestino>;
 export const esquemaConfigImpala = z.object({
   host: z.string().min(1),
   port: z.number().int().min(1).max(65535).default(21050),
-  authMechanism: z.enum(["NOSASL", "PLAIN", "LDAP", "KERBEROS"]).default("NOSASL"),
+  authMechanism: z
+    .enum(["NOSASL", "PLAIN", "LDAP", "KERBEROS"])
+    .default("NOSASL"),
   user: z.string().optional(),
   password: z.string().optional(),
   database: z.string().default("default"),

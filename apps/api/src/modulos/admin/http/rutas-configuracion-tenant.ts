@@ -151,7 +151,11 @@ export function crearRutasConfiguracionTenant({
     async (c) => {
       try {
         if (!guardarConexionDestino) {
-          return responderError(c, "Configuración de destinos no disponible", 503);
+          return responderError(
+            c,
+            "Configuración de destinos no disponible",
+            503,
+          );
         }
         const organizacionId = obtenerParametroRequerido(c, "id");
         const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");

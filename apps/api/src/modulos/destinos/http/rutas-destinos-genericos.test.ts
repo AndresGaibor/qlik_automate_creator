@@ -1,17 +1,21 @@
-import { describe, expect, it } from "bun:test";
-import { crearRutasDestinosGenericas } from "./rutas-destinos-genericos.js";
+import { describe, expect, it, vi } from "bun:test";
+import { GestionarConexionesDestino } from "../aplicacion/casos-de-uso/gestionar-conexiones-destino.js";
 import type { PuertoDestino } from "../aplicacion/puertos/puerto-destino.js";
+import type { RepositorioConexionesDestino } from "../aplicacion/puertos/repositorio-conexiones-destino.js";
 import type {
   DetalleRecursoDestino,
   RecursoDestino,
 } from "../dominio/tipos-destino.js";
+import { crearRutasDestinosGenericas } from "./rutas-destinos-genericos.js";
 
 interface ConexionFake {
   id: string;
-  tipo: string;
+  organizacionId: string;
+  tipo: "impala";
   nombre: string;
-  estado: string;
+  estado: "activo" | "error" | "desconectado";
   mensajeError: string | null;
+  probadaEn: Date | null;
   config: Record<string, unknown>;
   secretoRefs: Record<string, unknown>;
 }
@@ -24,6 +28,7 @@ function clienteFake(
 ): PuertoDestino {
   return {
     tipo: "impala",
+    probar: async () => undefined,
     obtenerCapacidades: () => ({
       listarRecursos: true,
       esquema: true,
@@ -52,23 +57,48 @@ function crearApp(
   fabricarCliente: () => PuertoDestino,
   conexion: ConexionFake | null = {
     id: "conn-1",
+    organizacionId: "org-1",
     tipo: "impala",
     nombre: "Impala principal",
     estado: "activo",
     mensajeError: null,
+    probadaEn: null,
     config: { host: "localhost" },
     secretoRefs: {},
   },
 ) {
-  return crearRutasDestinosGenericas(
-    async () => (conexion ? [conexion] : []),
-    async () => ({ id: "conn-1" }),
-    async () => undefined,
-    async () => undefined,
-    async (_c, id) => (conexion && conexion.id === id ? conexion : null),
-    async () => "org-1",
-    () => fabricarCliente(),
-  );
+  const repositorio: RepositorioConexionesDestino = {
+    listarPorOrganizacion: async () => (conexion ? [conexion] : []),
+    obtener: async (_organizacionId, id) =>
+      conexion && conexion.id === id ? conexion : null,
+    crear: async (entrada) => ({
+      ...(conexion ?? {
+        id: "conn-1",
+        estado: "activo",
+        mensajeError: null,
+        probadaEn: null,
+      }),
+      ...entrada,
+    }),
+    guardarParaTenant: async (entrada) => ({
+      ...(conexion ?? {
+        id: "conn-1",
+        estado: "activo",
+        mensajeError: null,
+        probadaEn: null,
+      }),
+      ...entrada,
+    }),
+    obtenerConSecreto: async (_organizacionId, id) =>
+      conexion && conexion.id === id ? { ...conexion, secreto: null } : null,
+    actualizar: async () => Boolean(conexion),
+    eliminar: async () => Boolean(conexion),
+  };
+  return crearRutasDestinosGenericas({
+    resolverOrganizacion: async () => "org-1",
+    gestor: new GestionarConexionesDestino(repositorio),
+    crearCliente: () => fabricarCliente(),
+  });
 }
 
 describe("rutas genéricas de destinos", () => {
@@ -103,7 +133,9 @@ describe("rutas genéricas de destinos", () => {
     const app = crearApp(() =>
       clienteFake({
         listarRecursos: async () => {
-          throw new Error("Access Denied: Permission bigquery.tables.list denied");
+          throw new Error(
+            "Access Denied: Permission bigquery.tables.list denied",
+          );
         },
       }),
     );
@@ -128,5 +160,63 @@ describe("rutas genéricas de destinos", () => {
     expect(respuesta.status).toBe(502);
     expect(cuerpo.error.codigo).toBe("DESTINO_NO_DISPONIBLE");
     expect(cuerpo.error.mensaje).toContain("Tabla inexistente");
+  });
+  it("POST /probar ejecuta conectividad y guarda la fecha", async () => {
+    const probar = vi.fn(async () => undefined);
+    const actualizar = vi.fn(async () => true);
+    const conexion = {
+      id: "destino-1",
+      organizacionId: "org-1",
+      tipo: "postgres" as const,
+      nombre: "Postgres",
+      estado: "desconectado" as const,
+      mensajeError: null,
+      probadaEn: null,
+      config: { host: "db" },
+      secretoRefs: {},
+    };
+    const repositorio: RepositorioConexionesDestino = {
+      listarPorOrganizacion: async () => [conexion],
+      obtener: async () => conexion,
+      obtenerConSecreto: async () => ({ ...conexion, secreto: null }),
+      crear: async () => conexion,
+      guardarParaTenant: async () => conexion,
+      actualizar,
+      eliminar: async () => true,
+    };
+    const app = crearRutasDestinosGenericas({
+      resolverOrganizacion: async () => "org-1",
+      gestor: new GestionarConexionesDestino(repositorio),
+      crearCliente: () => ({
+        tipo: "postgres",
+        probar,
+        obtenerCapacidades: () => ({
+          listarRecursos: true,
+          esquema: true,
+          conteoRegistros: true,
+          vistaPrevia: true,
+          escritura: true,
+        }),
+        listarRecursos: async () => [],
+        obtenerRecurso: async () => {
+          throw new Error("no usado");
+        },
+      }),
+    });
+
+    const respuesta = await app.request("/destino-1/probar", {
+      method: "POST",
+    });
+
+    expect(respuesta.status).toBe(200);
+    expect(probar).toHaveBeenCalledTimes(1);
+    expect(actualizar).toHaveBeenCalledWith(
+      "org-1",
+      "destino-1",
+      expect.objectContaining({
+        estado: "activo",
+        probadaEn: expect.any(Date),
+      }),
+    );
   });
 });

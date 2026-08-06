@@ -1,5 +1,4 @@
 import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
-import { eq, and } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { RepositorioAdministracionPostgres } from "./modulos/admin/infraestructura/publico.js";
@@ -22,15 +21,31 @@ import {
 import { ConsultaTenantQlikPostgres } from "./modulos/automatizaciones/infraestructura/consulta-tenant-qlik-postgres.js";
 import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
 import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
-import { ClienteImpalaDirecto } from "./modulos/destinos/infraestructura/publico.js";
 import {
+  ClienteImpalaDirecto,
+  ConsultaConfiguracionImpalaPostgres,
+  RepositorioConexionesDestinoPostgres,
+  crearClienteDestino,
+} from "./modulos/destinos/infraestructura/publico.js";
+import {
+  GestionarConexionesDestino,
   type PuertoCatalogoDestinos,
   crearRutasDestinos,
   crearRutasDestinosGenericas,
 } from "./modulos/destinos/publico.js";
+import { RepositorioEspaciosVisiblesPostgres } from "./modulos/espacios-visibles/infraestructura/repositorio-espacios-visibles-postgres.js";
+import { crearPoliticaEspacios } from "./modulos/espacios-visibles/publico.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/publico.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
-import { crearRutasConexionesOrigen } from "./modulos/origenes/publico.js";
+import {
+  ProbadorConexionOrigenReal,
+  RepositorioConexionesOrigenPostgres,
+} from "./modulos/origenes/infraestructura/publico.js";
+import {
+  GestionarConexionesOrigen,
+  ProbarConexionOrigen,
+  crearRutasConexionesOrigen,
+} from "./modulos/origenes/publico.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
   type ServicioQlik,
@@ -66,16 +81,8 @@ import {
 } from "./plataforma/observabilidad/registrador.js";
 import { AuditoriaPostgres } from "./plataforma/persistencia/auditoria-postgres.js";
 import { db, dbHolder } from "./plataforma/persistencia/conexion.js";
-import {
-  appConfig,
-  configuracionesPlataforma,
-  conexionesDestino,
-  conexionesOrigen,
-  tenantsQlik,
-} from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
 import { OutboxPostgres } from "./plataforma/persistencia/outbox-postgres.js";
-import { leerSecretoCifrado } from "./plataforma/seguridad/secreto-cifrado.js";
 import { servicioCifrado } from "./plataforma/seguridad/servicio-cifrado.js";
 
 export interface DependenciasAplicacion {
@@ -102,7 +109,9 @@ export async function crearAplicacion(
 ): Promise<Hono> {
   const configuracion = dependencias.configuracion;
   const registrador = dependencias.registrador ?? registradorConsola;
-  const frontendUrlGuardado = await obtenerFrontendUrlGuardado();
+  const configuracionApp = new ConfiguracionAppPostgres(db);
+  const frontendUrlGuardado =
+    await obtenerFrontendUrlGuardado(configuracionApp);
   const frontendUrl =
     frontendUrlGuardado ??
     configuracion?.FRONTEND_URL ??
@@ -117,26 +126,7 @@ export async function crearAplicacion(
     : (redirectUriConfigurado ??
       "http://localhost:3000/api/auth/qlik/callback");
 
-  await servicioCifrado.inicializarConDb({
-    async guardar(clave, valor) {
-      await db
-        .insert(appConfig)
-        .values({ clave, valor: valor as Record<string, unknown> })
-        .onConflictDoUpdate({
-          target: appConfig.clave,
-          set: {
-            valor: valor as Record<string, unknown>,
-            actualizadoEn: new Date(),
-          },
-        });
-    },
-    async obtener(clave) {
-      const fila = await db.query.appConfig.findFirst({
-        where: (tc, { eq }) => eq(tc.clave, clave),
-      });
-      return fila?.valor ?? null;
-    },
-  });
+  await servicioCifrado.inicializarConDb(configuracionApp);
 
   const repositorioAutenticacion =
     dependencias.repositorioAutenticacion ??
@@ -163,6 +153,8 @@ export async function crearAplicacion(
         tenantId: contexto.tenantQlikId,
         usuarioId: contexto.usuarioId,
         organizacionId: contexto.organizacionId,
+        esSuperadmin: contexto.esSuperadmin,
+        roles: contexto.roles,
       };
     });
   const resolverQlik =
@@ -182,42 +174,79 @@ export async function crearAplicacion(
       return new ClienteHttpQlik(credenciales.host, credenciales.token);
     });
 
+  const consultaConfiguracionImpala = new ConsultaConfiguracionImpalaPostgres(
+    db,
+    servicioCifrado,
+  );
   const resolverCatalogoDestinos = async (
     c: Context,
   ): Promise<PuertoCatalogoDestinos> => {
     if (dependencias.catalogoDestinos) return dependencias.catalogoDestinos;
 
     const contexto = await resolverContextoSolicitud(c);
-    const tenant = await db.query.tenantsQlik.findFirst({
-      where: eq(tenantsQlik.id, contexto.tenantQlikId),
-    });
-
-    if (!tenant) {
-      throw new Error("Tenant no encontrado");
-    }
-
-    if (tenant.impalaHost) {
-      return new ClienteImpalaDirecto({
-        host: tenant.impalaHost,
-        port: tenant.impalaPort ?? 21050,
-        authMechanism: tenant.impalaAuthMechanism ?? "NOSASL",
-        user: tenant.impalaUser ?? undefined,
-        password: leerSecretoCifrado(
-          servicioCifrado,
-          tenant.impalaPasswordCifrada,
-        ),
-        database: tenant.impalaDatabase ?? "default",
-      });
-    }
-
-    throw new Error(
-      "El tenant no tiene configurado un servidor Impala. Configúralo en la sección de administración.",
+    const configuracionImpala = await consultaConfiguracionImpala.obtener(
+      contexto.tenantQlikId,
     );
+    if (!configuracionImpala) {
+      throw new Error(
+        "El tenant no tiene configurado un servidor Impala. Configúralo en la sección de administración.",
+      );
+    }
+    return new ClienteImpalaDirecto(configuracionImpala);
+  };
+
+  const repositorioEspaciosVisibles = new RepositorioEspaciosVisiblesPostgres(
+    db,
+  );
+  const resolverPoliticaEspacios = async (c: Context) => {
+    const contexto = await resolverContextoSolicitud(c);
+    const configuracion = await repositorioEspaciosVisibles.obtener(
+      contexto.tenantQlikId,
+    );
+    return crearPoliticaEspacios(configuracion, {
+      esAdministrador:
+        contexto.esSuperadmin || contexto.roles.includes("admin"),
+      forzarVistaUsuarioFinal: c.req.header("x-vista-usuario-final") === "1",
+    });
   };
 
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
   const outbox = dependencias.outbox ?? new OutboxPostgres();
   const auditoria = dependencias.auditoria ?? new AuditoriaPostgres();
+  const repositorioConexionesOrigen = new RepositorioConexionesOrigenPostgres(
+    db,
+    servicioCifrado,
+  );
+  const gestorConexionesOrigen = new GestionarConexionesOrigen(
+    repositorioConexionesOrigen,
+    auditoria,
+  );
+  const probarConexionOrigen = new ProbarConexionOrigen(
+    repositorioConexionesOrigen,
+    new ProbadorConexionOrigenReal(),
+  );
+  const consultaConexionesOrigen = {
+    async listarPorOrganizacion(organizacionId: string) {
+      return (await gestorConexionesOrigen.listar(organizacionId)).map(
+        ({ id, tipo, nombre, config, estado, probadaEn, mensajeError }) => ({
+          id,
+          tipo,
+          nombre,
+          config,
+          estado,
+          probadaEn,
+          mensajeError,
+        }),
+      );
+    },
+  };
+  const repositorioConexionesDestino = new RepositorioConexionesDestinoPostgres(
+    db,
+    servicioCifrado,
+  );
+  const gestorConexionesDestino = new GestionarConexionesDestino(
+    repositorioConexionesDestino,
+  );
   const repositorioAdministracion =
     dependencias.repositorioAdministracion ??
     new RepositorioAdministracionPostgres(db, servicioCifrado);
@@ -296,7 +325,7 @@ export async function crearAplicacion(
   aplicacion.route(
     "/api/setup",
     crearRutasSetup(
-      new ConfiguracionAppPostgres(db),
+      configuracionApp,
       async (entrada) => {
         const resultado = await ejecutarBootstrap(
           new RepositorioBootstrapPostgres(dbHolder.client),
@@ -326,15 +355,16 @@ export async function crearAplicacion(
       async (c) => new ConsultaFlujosQlik(await resolverQlik(c)),
       resolverQlik,
       resolverSesion,
+      resolverPoliticaEspacios,
+      consultaConexionesOrigen,
     ),
   );
   aplicacion.route(
     "/api/conexiones-origen",
     crearRutasConexionesOrigen({
       resolverSesion,
-      servicioCifrado,
-      auditoria,
-      resolverContextoAdmin,
+      gestor: gestorConexionesOrigen,
+      probarConexion: probarConexionOrigen,
     }),
   );
   aplicacion.route(
@@ -343,41 +373,76 @@ export async function crearAplicacion(
       resolverQlik,
       resolverSesion,
       consultaTenant: new ConsultaTenantQlikPostgres(),
-      obtenerModoGlobal: async () => {
-        const fila = await db.query.configuracionesPlataforma.findFirst({
-          where: eq(configuracionesPlataforma.id, 1),
-        });
-        return {
-          modoAutomatizacionActivo: (
-            fila?.modoAutomatizacionActivo ?? 1
-          ) as 1 | 2,
-        };
+      obtenerModoGlobal:
+        repositorioAdministracion.obtenerModoAutomatizacionGlobal.bind(
+          repositorioAdministracion,
+        ),
+      consultarConexionesOrigen:
+        consultaConexionesOrigen.listarPorOrganizacion.bind(
+          consultaConexionesOrigen,
+        ),
+      consultarConexionesDestino: async (organizacionId) =>
+        (await gestorConexionesDestino.listar(organizacionId)).map(
+          ({ id, tipo, nombre, estado, probadaEn, mensajeError }) => ({
+            id,
+            tipo,
+            nombre,
+            estado,
+            probadaEn,
+            mensajeError,
+          }),
+        ),
+      probarConexionOrigen: (organizacionId, conexionId) =>
+        probarConexionOrigen.ejecutar(organizacionId, conexionId),
+      leerSecretoOrigen: (organizacionId, conexionId, nombre) =>
+        repositorioConexionesOrigen.leerSecreto(
+          organizacionId,
+          conexionId,
+          nombre,
+        ),
+      obtenerConexionDestinoConSecreto: async (destinoId, organizacionId) => {
+        try {
+          return await gestorConexionesDestino.obtenerConSecreto(
+            organizacionId,
+            destinoId,
+          );
+        } catch {
+          return null;
+        }
       },
-      consultarConexionesOrigen: async (organizacionId) => {
-        const filas = await db.query.conexionesOrigen.findMany({
-          where: (t, { eq }) => eq(t.organizacionId, organizacionId),
+      probarConexionDestino: async (organizacionId, destinoId) => {
+        const conexion = await gestorConexionesDestino.obtenerConSecreto(
+          organizacionId,
+          destinoId,
+        );
+        const cliente = crearClienteDestino({
+          tipo: conexion.tipo,
+          config: conexion.secreto
+            ? { ...conexion.config, password: conexion.secreto.valor }
+            : conexion.config,
         });
-        return filas.map((f) => ({
-          tipo: f.tipo,
-          nombre: f.nombre,
-          config: (f.config as Record<string, unknown>) ?? {},
-        }));
+        await cliente.probar();
+        await gestorConexionesDestino.actualizar(organizacionId, destinoId, {
+          estado: "activo",
+          mensajeError: null,
+          probadaEn: new Date(),
+        });
       },
       consultarConexionDestino: async (destinoId, organizacionId) => {
-        const fila = await db.query.conexionesDestino.findFirst({
-          where: (t, { and, eq }) =>
-            and(eq(t.id, destinoId), eq(t.organizacionId, organizacionId)),
-        });
-        if (!fila) return null;
-        return {
-          tipo: fila.tipo,
-          config: (fila.config as Record<string, unknown>) ?? {},
-        };
+        const conexion = await gestorConexionesDestino.buscar(
+          organizacionId,
+          destinoId,
+        );
+        return conexion
+          ? { tipo: conexion.tipo, config: conexion.config }
+          : null;
       },
+      crearClienteDestino,
       bloqueos: new BloqueoEjecucionPostgres(db),
       idempotencia,
       outbox,
       auditoria,
+      resolverPoliticaEspacios,
     }),
   );
   aplicacion.route(
@@ -386,84 +451,12 @@ export async function crearAplicacion(
   );
   aplicacion.route(
     "/api/destinos/conexiones",
-    crearRutasDestinosGenericas(
-      async (c: Context) => {
-        const sesion = await resolverSesion(c);
-        const filas = await db.query.conexionesDestino.findMany({
-          where: (t, { eq }) => eq(t.organizacionId, sesion.organizacionId),
-        });
-        return filas.map((f) => ({
-          id: f.id,
-          tipo: f.tipo,
-          nombre: f.nombre,
-          estado: f.estado,
-          mensajeError: f.mensajeError,
-          config: f.config as Record<string, unknown>,
-          secretoRefs: f.secretoRefs as Record<string, unknown>,
-        }));
-      },
-      async (
-        c: Context,
-        conexion: {
-          organizacionId: string;
-          tipo: string;
-          nombre: string;
-          config: Record<string, unknown>;
-          secretoRefs: Record<string, unknown>;
-        },
-      ) => {
-        const sesion = await resolverSesion(c);
-        const [creada] = await db
-          .insert(conexionesDestino)
-          .values({
-            organizacionId: sesion.organizacionId,
-            tipo: conexion.tipo,
-            nombre: conexion.nombre,
-            config: conexion.config,
-            secretoRefs: conexion.secretoRefs,
-            estado: "activo",
-          })
-          .returning({ id: conexionesDestino.id });
-        return { id: creada.id };
-      },
-      async (
-        c: Context,
-        id: string,
-        cambios: {
-          nombre?: string;
-          config?: Record<string, unknown>;
-          estado?: string;
-          mensajeError?: string | null;
-        },
-      ) => {
-        await db
-          .update(conexionesDestino)
-          .set({
-            ...cambios,
-            ...(cambios.config ? { config: cambios.config } : {}),
-          })
-          .where(eq(conexionesDestino.id, id));
-      },
-      async (c: Context, id: string) => {
-        await db.delete(conexionesDestino).where(eq(conexionesDestino.id, id));
-      },
-      async (c: Context, id: string) => {
-        const fila = await db.query.conexionesDestino.findFirst({
-          where: (t, { eq }) => eq(t.id, id),
-        });
-        if (!fila) return null;
-        return {
-          id: fila.id,
-          tipo: fila.tipo,
-          nombre: fila.nombre,
-          estado: fila.estado,
-          mensajeError: fila.mensajeError,
-          config: fila.config as Record<string, unknown>,
-          secretoRefs: fila.secretoRefs as Record<string, unknown>,
-        };
-      },
-      async (c: Context) => (await resolverSesion(c)).organizacionId,
-    ),
+    crearRutasDestinosGenericas({
+      resolverOrganizacion: async (c: Context) =>
+        (await resolverSesion(c)).organizacionId,
+      gestor: gestorConexionesDestino,
+      crearCliente: crearClienteDestino,
+    }),
   );
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));
   aplicacion.route(
@@ -472,31 +465,17 @@ export async function crearAplicacion(
       repositorio: repositorioAdministracion,
       resolverContexto: resolverContextoAdmin,
       guardarConexionDestino: async (entrada) => {
-        const [conexion] = await db
-          .insert(conexionesDestino)
-          .values({
-            organizacionId: entrada.organizacionId,
-            tenantQlikId: entrada.tenantQlikId,
-            tipo: entrada.tipo,
-            nombre: entrada.nombre,
-            config: entrada.config,
-            secretoRefs: {},
-            estado: "activo",
-          })
-          .onConflictDoUpdate({
-            target: [
-              conexionesDestino.organizacionId,
-              conexionesDestino.tipo,
-              conexionesDestino.nombre,
-            ],
-            set: {
-              tenantQlikId: entrada.tenantQlikId,
-              config: entrada.config,
-              actualizadoEn: new Date(),
-            },
-          })
-          .returning({ id: conexionesDestino.id });
-        return conexion;
+        if (
+          !["impala", "postgres", "bigquery", "sftp"].includes(entrada.tipo)
+        ) {
+          throw new Error("Tipo de destino no soportado");
+        }
+        const conexion = await gestorConexionesDestino.guardarParaTenant({
+          ...entrada,
+          tipo: entrada.tipo as "impala" | "postgres" | "bigquery" | "sftp",
+          secretoRefs: {},
+        });
+        return { id: conexion.id };
       },
       redirectUri: redirectUriOAuth,
       configuracionHeredada: {
@@ -507,6 +486,9 @@ export async function crearAplicacion(
         scopes: scopesOAuthHeredados,
       },
       auditoria,
+      repositorioEspacios: repositorioEspaciosVisibles,
+      resolverQlik,
+      resolverSesion,
     }),
   );
 
@@ -520,12 +502,11 @@ export async function crearAplicacion(
   return aplicacion;
 }
 
-async function obtenerFrontendUrlGuardado(): Promise<string | null> {
+async function obtenerFrontendUrlGuardado(
+  configuracionApp: Pick<ConfiguracionAppPostgres, "obtener">,
+): Promise<string | null> {
   try {
-    const fila = await db.query.appConfig.findFirst({
-      where: (tabla, { eq }) => eq(tabla.clave, "frontend_url"),
-    });
-    const valor = fila?.valor;
+    const valor = await configuracionApp.obtener("frontend_url");
     if (typeof valor !== "object" || valor === null) return null;
     const url = (valor as Record<string, unknown>).valor;
     if (typeof url !== "string") return null;

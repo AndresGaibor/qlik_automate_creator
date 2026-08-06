@@ -26,10 +26,7 @@ export class ConsultaConfiguracionImpalaPostgres {
       port: tenant.impalaPort ?? 21050,
       authMechanism: tenant.impalaAuthMechanism ?? "NOSASL",
       user: tenant.impalaUser ?? undefined,
-      password: leerSecretoCifrado(
-        this.cifrado,
-        tenant.impalaPasswordCifrada,
-      ),
+      password: leerSecretoCifrado(this.cifrado, tenant.impalaPasswordCifrada),
       database: tenant.impalaDatabase ?? "default",
     };
   }

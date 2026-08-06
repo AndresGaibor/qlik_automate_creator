@@ -20,9 +20,12 @@ export class ClientePostgres implements PuertoDestino {
   private readonly sql;
 
   constructor(opciones: OpcionesPostgres) {
-    if (!opciones.host.trim()) throw new Error("El host de PostgreSQL es obligatorio");
-    if (!opciones.database.trim()) throw new Error("La base de datos de PostgreSQL es obligatoria");
-    if (!opciones.user.trim()) throw new Error("El usuario de PostgreSQL es obligatorio");
+    if (!opciones.host.trim())
+      throw new Error("El host de PostgreSQL es obligatorio");
+    if (!opciones.database.trim())
+      throw new Error("La base de datos de PostgreSQL es obligatoria");
+    if (!opciones.user.trim())
+      throw new Error("El usuario de PostgreSQL es obligatorio");
 
     this.sql = postgres({
       host: opciones.host.trim(),
@@ -33,6 +36,14 @@ export class ClientePostgres implements PuertoDestino {
       ssl: opciones.ssl ? "require" : false,
       max: 4,
     });
+  }
+
+  async probar(): Promise<void> {
+    try {
+      await this.sql`SELECT 1 AS ok`;
+    } finally {
+      await this.sql.end({ timeout: 1 });
+    }
   }
 
   obtenerCapacidades(): CapacidadesDestino {
@@ -66,10 +77,14 @@ export class ClientePostgres implements PuertoDestino {
   async obtenerRecurso(id: string): Promise<DetalleRecursoDestino> {
     const [schema, tabla] = id.split(".");
     if (!schema || !tabla || id.split(".").length !== 2) {
-      throw new Error("El identificador de PostgreSQL debe tener formato esquema.tabla");
+      throw new Error(
+        "El identificador de PostgreSQL debe tener formato esquema.tabla",
+      );
     }
 
-    const columnas = await this.sql<{ column_name: string; data_type: string }[]>`
+    const columnas = await this.sql<
+      { column_name: string; data_type: string }[]
+    >`
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_schema = ${schema} AND table_name = ${tabla}

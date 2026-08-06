@@ -11,6 +11,7 @@ interface Props {
   errorEspacios?: boolean;
   espacioFiltrado?: string;
   onEspacioChange: (id: string) => void;
+  mostrarFiltroEspacio?: boolean;
 }
 
 export function BarraFiltrosFlujos({
@@ -22,20 +23,25 @@ export function BarraFiltrosFlujos({
   errorEspacios,
   espacioFiltrado,
   onEspacioChange,
+  mostrarFiltroEspacio = true,
 }: Props) {
   return (
-    <div className="bg-white p-4 rounded-lg border shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-      <SelectBuscable
-        etiqueta="Filtrar por espacio de Qlik Cloud"
-        placeholder="Todos los espacios"
-        searchPlaceholder="Escribe el nombre del espacio…"
-        emptyText="No encontramos ese espacio. Intenta con otro nombre."
-        allowClear
-        opciones={espacios}
-        error={errorEspacios}
-        valorSeleccionado={espacioFiltrado ?? ""}
-        onSeleccionar={onEspacioChange}
-      />
+    <div
+      className={`bg-white p-4 rounded-lg border shadow-sm grid grid-cols-1 gap-4 items-end ${mostrarFiltroEspacio ? "md:grid-cols-2" : ""}`}
+    >
+      {mostrarFiltroEspacio && (
+        <SelectBuscable
+          etiqueta="Filtrar por espacio de Qlik Cloud"
+          placeholder="Todos los espacios"
+          searchPlaceholder="Escribe el nombre del espacio…"
+          emptyText="No encontramos ese espacio. Intenta con otro nombre."
+          allowClear
+          opciones={espacios}
+          error={errorEspacios}
+          valorSeleccionado={espacioFiltrado ?? ""}
+          onSeleccionar={onEspacioChange}
+        />
+      )}
 
       <form onSubmit={buscar}>
         <label

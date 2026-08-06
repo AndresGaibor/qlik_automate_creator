@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "bun:test";
 import { Hono } from "hono";
+import type { PuertoAuditoria } from "../../../nucleo/auditoria/puerto-auditoria.js";
+import type { PuertoOutbox } from "../../../nucleo/eventos/puerto-outbox.js";
+import type { PuertoIdempotencia } from "../../../nucleo/idempotencia/puerto-idempotencia.js";
 import type { ServicioQlik } from "../../qlik/publico.js";
 import type { PuertoBloqueoEjecucion } from "../aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import type { PuertoConsultaTenantQlik } from "../aplicacion/puertos/puerto-consulta-tenant-qlik.js";
 import { crearRutasPanelAutomatizaciones } from "./rutas-panel.js";
-import type { PuertoAuditoria } from "../../../../nucleo/auditoria/puerto-auditoria.js";
-import type { PuertoOutbox } from "../../../../nucleo/eventos/puerto-outbox.js";
-import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
 
 interface ContextoSesion {
   tenantId: string;
@@ -14,9 +14,15 @@ interface ContextoSesion {
   organizacionId: string;
 }
 
+interface ContextoSolicitudPrueba {
+  idSolicitud: string;
+  esSuperadmin: boolean;
+  roles: Array<"admin" | "usuario">;
+}
+
 function crearIdempotencia() {
   const puerto: PuertoIdempotencia = {
-    iniciar: vi.fn(async () => "iniciada"),
+    iniciar: vi.fn(async () => "iniciada" as const),
     obtener: vi.fn(async () => null),
     completar: vi.fn(async () => undefined),
     fallar: vi.fn(async () => undefined),
@@ -43,7 +49,10 @@ function crearAuditoria() {
 
 function crearBloqueos(): PuertoBloqueoEjecucion {
   const mock = vi.fn(
-    async <T>(_clave: string, _tarea: () => Promise<T>): Promise<T | undefined> => {
+    async <T>(
+      _clave: string,
+      _tarea: () => Promise<T>,
+    ): Promise<T | undefined> => {
       return await _tarea();
     },
   );
@@ -63,7 +72,9 @@ function crearApp(deps: {
   obtenerModoGlobal: () => Promise<{ modoAutomatizacionActivo: 1 | 2 }>;
   consultarConexionesOrigen: (
     organizacionId: string,
-  ) => Promise<Array<{ tipo: string; nombre: string; config: Record<string, unknown> }>>;
+  ) => Promise<
+    Array<{ tipo: string; nombre: string; config: Record<string, unknown> }>
+  >;
   consultarConexionDestino: (
     destinoId: string,
     organizacionId: string,
@@ -72,8 +83,29 @@ function crearApp(deps: {
   idempotencia: PuertoIdempotencia;
   outbox: PuertoOutbox;
   auditoria: PuertoAuditoria;
+  resolverPoliticaEspacios?: () => Promise<{
+    restringida: boolean;
+    configurada: boolean;
+    espaciosPermitidosIds: string[];
+    permitirRecursosSinEspacio: boolean;
+    puedeVer(espacioId?: string | null): boolean;
+  }>;
+  contextoSolicitud?: ContextoSolicitudPrueba;
 }) {
-  const app = new Hono();
+  const app = new Hono<{
+    Variables: { contextoSolicitud: ContextoSolicitudPrueba };
+  }>();
+  app.use("*", async (c, next) => {
+    c.set(
+      "contextoSolicitud",
+      deps.contextoSolicitud ?? {
+        idSolicitud: "solicitud-test",
+        esSuperadmin: false,
+        roles: ["usuario"],
+      },
+    );
+    await next();
+  });
 
   app.route(
     "/api/automatizaciones",
@@ -88,6 +120,9 @@ function crearApp(deps: {
       idempotencia: deps.idempotencia,
       outbox: deps.outbox,
       auditoria: deps.auditoria,
+      resolverPoliticaEspacios: deps.resolverPoliticaEspacios
+        ? deps.resolverPoliticaEspacios
+        : undefined,
     }),
   );
   return app;
@@ -131,7 +166,76 @@ describe("rutas-panel · GET /configuracion-tenant", () => {
       plantillaEfectivaIdQlik: "plantilla-talend",
       plantillaEfectivaNombre: "Talend SFTP",
       configurada: true,
+      puedeAdministrarConexiones: false,
+      accesoEspacios: {
+        restringido: false,
+        configurado: true,
+        cerrado: false,
+        cantidadEspacios: 0,
+        permitirRecursosSinEspacio: false,
+      },
     });
+  });
+
+  it("expone permisos administrativos desde el contexto autenticado", async () => {
+    const crearConfiguracion = async (
+      contextoSolicitud: ContextoSolicitudPrueba,
+    ) => {
+      const app = crearApp({
+        mockResolverQlik: async () => ({}) as unknown as ServicioQlik,
+        mockResolverSesion: async () => sesionBase,
+        consultaTenant: {
+          obtenerTenant: vi.fn(async () => ({
+            host: "empresa.us.qlikcloud.com",
+            automatizacionBaseIdQlik: "base-1",
+            automatizacionBaseNombre: "Base",
+            automatizacionPlantillaModo1IdQlik: "plantilla-modo1",
+            automatizacionPlantillaModo1Nombre: "Plantilla Modo 1",
+            automatizacionPlantillaModo2IdQlik: null,
+            automatizacionPlantillaModo2Nombre: null,
+            destinoApiUrl: null,
+            impalaHost: null,
+            impalaPort: null,
+          })),
+        },
+        obtenerModoGlobal: async () => ({
+          modoAutomatizacionActivo: 1 as const,
+        }),
+        consultarConexionesOrigen: async () => [],
+        consultarConexionDestino: async () => null,
+        bloqueos: crearBloqueos(),
+        idempotencia: crearIdempotencia(),
+        outbox: crearOutbox(),
+        auditoria: crearAuditoria(),
+        contextoSolicitud,
+      });
+      const respuesta = await app.request(
+        "/api/automatizaciones/configuracion-tenant",
+      );
+      return (await respuesta.json()).datos;
+    };
+
+    expect(
+      await crearConfiguracion({
+        idSolicitud: "solicitud-admin",
+        esSuperadmin: false,
+        roles: ["admin"],
+      }),
+    ).toMatchObject({ puedeAdministrarConexiones: true });
+    expect(
+      await crearConfiguracion({
+        idSolicitud: "solicitud-usuario",
+        esSuperadmin: false,
+        roles: ["usuario"],
+      }),
+    ).toMatchObject({ puedeAdministrarConexiones: false });
+    expect(
+      await crearConfiguracion({
+        idSolicitud: "solicitud-superadmin",
+        esSuperadmin: true,
+        roles: ["usuario"],
+      }),
+    ).toMatchObject({ puedeAdministrarConexiones: true });
   });
 
   it("devuelve plantilla modo 1 cuando modo global es 1", async () => {
@@ -390,5 +494,148 @@ describe("rutas-panel · POST /desde-plantilla", () => {
     expect(respuesta.status).toBe(422);
     const cuerpo = await respuesta.json();
     expect(cuerpo.error.codigo).toBe("FLUJO_REQUERIDO");
+  });
+});
+
+describe("rutas-panel · autorización por espacios", () => {
+  function politicaRestringida() {
+    return Promise.resolve({
+      restringida: true,
+      configurada: true,
+      espaciosPermitidosIds: ["space-allowed"],
+      permitirRecursosSinEspacio: false,
+      puedeVer: (espacioId?: string | null) => espacioId === "space-allowed",
+    });
+  }
+
+  function dependenciasConQlik(qlik: ServicioQlik) {
+    return {
+      mockResolverQlik: async () => qlik,
+      mockResolverSesion: async () => sesionBase,
+      consultaTenant: {
+        obtenerTenant: vi.fn(async () => ({
+          host: "empresa.us.qlikcloud.com",
+          automatizacionBaseIdQlik: "base-1",
+          automatizacionBaseNombre: "Base",
+          automatizacionPlantillaModo1IdQlik: "base-1",
+          automatizacionPlantillaModo1Nombre: "Base",
+          automatizacionPlantillaModo2IdQlik: null,
+          automatizacionPlantillaModo2Nombre: null,
+          destinoApiUrl: null,
+          impalaHost: null,
+          impalaPort: null,
+        })),
+      } as PuertoConsultaTenantQlik,
+      obtenerModoGlobal: async () => ({ modoAutomatizacionActivo: 1 as const }),
+      consultarConexionesOrigen: async () => [],
+      consultarConexionDestino: async () => null,
+      bloqueos: crearBloqueos(),
+      idempotencia: crearIdempotencia(),
+      outbox: crearOutbox(),
+      auditoria: crearAuditoria(),
+      resolverPoliticaEspacios: politicaRestringida,
+    };
+  }
+
+  it("bloquea detalle, workspace y ejecución de automatización no autorizada", async () => {
+    const ejecutarAutomatizacion = vi.fn(async () => ({ runId: "run-1" }));
+    const listarEjecuciones = vi.fn(async () => []);
+    const qlik = {
+      obtenerAutomatizacion: vi.fn(async () => ({
+        id: "automation-denied",
+        name: "Oculta",
+        spaceId: "space-denied",
+      })),
+      listarEjecuciones,
+      ejecutarAutomatizacion,
+    } as unknown as ServicioQlik;
+    const app = crearApp(dependenciasConQlik(qlik));
+
+    for (const [ruta, metodo, body] of [
+      ["/api/automatizaciones/automation-denied", "GET", undefined],
+      ["/api/automatizaciones/automation-denied/workspace", "GET", undefined],
+      [
+        "/api/automatizaciones/automation-denied/workspace",
+        "PUT",
+        JSON.stringify({ workspace: {} }),
+      ],
+      ["/api/automatizaciones/automation-denied/clonar", "POST", "{}"],
+      [
+        "/api/automatizaciones/automation-denied/ejecuciones",
+        "POST",
+        undefined,
+      ],
+      [
+        "/api/automatizaciones/automation-denied/ejecuciones/run-1/detener",
+        "POST",
+        undefined,
+      ],
+    ] as const) {
+      const respuesta = await app.request(ruta, {
+        method: metodo,
+        ...(body
+          ? { headers: { "content-type": "application/json" }, body }
+          : {}),
+      });
+      expect(respuesta.status).toBe(403);
+      const cuerpo = await respuesta.json();
+      expect(cuerpo.error.codigo).toBe("ESPACIO_NO_AUTORIZADO");
+      expect(JSON.stringify(cuerpo)).not.toContain("Oculta");
+    }
+
+    expect(listarEjecuciones).not.toHaveBeenCalled();
+    expect(ejecutarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("bloquea creación desde un Dataflow no autorizado antes de copiar la plantilla", async () => {
+    const copiarAutomatizacion = vi.fn();
+    const qlik = {
+      listarFlujos: vi.fn(async () => [
+        { id: "flow-denied", name: "Flujo oculto", spaceId: "space-denied" },
+      ]),
+      copiarAutomatizacion,
+    } as unknown as ServicioQlik;
+    const app = crearApp(dependenciasConQlik(qlik));
+
+    const respuesta = await app.request(
+      "/api/automatizaciones/desde-plantilla",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          nombre: "Nueva",
+          flujoId: "flow-denied",
+          tablaId: "tabla",
+        }),
+      },
+    );
+
+    expect(respuesta.status).toBe(403);
+    expect(copiarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("bloquea clonar hacia un espacio destino no autorizado", async () => {
+    const copiarAutomatizacion = vi.fn(async () => ({ id: "copy-1" }));
+    const qlik = {
+      obtenerAutomatizacion: vi.fn(async () => ({
+        id: "automation-allowed",
+        name: "Permitida",
+        spaceId: "space-allowed",
+      })),
+      copiarAutomatizacion,
+    } as unknown as ServicioQlik;
+    const app = crearApp(dependenciasConQlik(qlik));
+
+    const respuesta = await app.request(
+      "/api/automatizaciones/automation-allowed/clonar",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ espacioIdQlik: "space-denied" }),
+      },
+    );
+
+    expect(respuesta.status).toBe(403);
+    expect(copiarAutomatizacion).not.toHaveBeenCalled();
   });
 });

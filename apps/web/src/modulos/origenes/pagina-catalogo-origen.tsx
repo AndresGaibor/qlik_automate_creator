@@ -54,7 +54,9 @@ function obtenerConexionesSugeridas(): ConexionSugerida[] {
   return Array.from(sugerencias.values());
 }
 
-export function PaginaCatalogoOrigen() {
+export function PaginaCatalogoOrigen({
+  integrada = false,
+}: { integrada?: boolean } = {}) {
   const { mostrarError, mostrarExito } = useNotificaciones();
   const queryClient = useQueryClient();
   const [tipo, setTipo] = useState<TipoConexionOrigen>("jdbc");
@@ -72,18 +74,6 @@ export function PaginaCatalogoOrigen() {
   );
   const [valorSecretoJdbc, setValorSecretoJdbc] = useState("");
   const [valorSecretoClavePrivada, setValorSecretoClavePrivada] = useState("");
-  const [contextoSecretos, setContextoSecretos] = useState<Record<string, string> | null>(null);
-  const [dialogoContextoAbierto, setDialogoContextoAbierto] = useState(false);
-
-  const contextoSecretosMutation = useMutation({
-    mutationFn: () => clienteApi.post<Record<string, string>>("/conexiones-origen/contexto-secretos"),
-    onSuccess: (data) => {
-      setContextoSecretos(data);
-      setDialogoContextoAbierto(true);
-    },
-    onError: (error: Error) => mostrarError(error.message),
-  });
-
   const conexiones = useQuery({
     queryKey: ["conexiones-origen"],
     queryFn: () => clienteApi.get<ConexionOrigen[]>("/conexiones-origen"),
@@ -144,7 +134,7 @@ export function PaginaCatalogoOrigen() {
               secreto_nombre: crearNombreSecreto(nombre, "JDBC"),
               propiedades: { fetchsize: "10000" },
               ...(valorSecretoJdbc.trim()
-                ? { secreto_valor: valorSecretoJdbc.trim() }
+                ? { secretoValor: valorSecretoJdbc.trim() }
                 : {}),
             },
           }
@@ -161,7 +151,9 @@ export function PaginaCatalogoOrigen() {
               ),
               ruta_base: rutaBase.trim(),
               ...(valorSecretoClavePrivada.trim()
-                ? { secreto_clave_privada_valor: valorSecretoClavePrivada.trim() }
+                ? {
+                    secretoClavePrivadaValor: valorSecretoClavePrivada.trim(),
+                  }
                 : {}),
             },
           };
@@ -198,17 +190,14 @@ export function PaginaCatalogoOrigen() {
     setRutaBase(String(conexion.config.ruta_base ?? "/upload"));
   }
 
-  function cerrarDialogoContexto() {
-    setDialogoContextoAbierto(false);
-    setContextoSecretos(null);
-  }
-
   return (
     <PageLayout>
-      <PageHeader
-        title="Conexiones para automatizaciones"
-        description="Selecciona una conexión detectada y completa dónde se encuentran los datos. La configuración técnica se prepara automáticamente."
-      />
+      {!integrada && (
+        <PageHeader
+          title="Conexiones para automatizaciones"
+          description="Selecciona una conexión detectada y completa dónde se encuentran los datos. La configuración técnica se prepara automáticamente."
+        />
+      )}
       <SeccionModoGlobalAutomatizacion />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <div className="min-w-0 space-y-4">
@@ -415,7 +404,9 @@ export function PaginaCatalogoOrigen() {
                     </div>
                     {conexionEditandoId &&
                     (conexiones.data?.find((c) => c.id === conexionEditandoId)
-                      ?.config?.secreto_clave_privada_nombre as string | undefined) ? (
+                      ?.config?.secreto_clave_privada_nombre as
+                      | string
+                      | undefined) ? (
                       <div className="rounded-md border border-line-200 bg-app/40 px-3 py-2">
                         <span className="text-xs font-medium text-ink-600">
                           Secreto configurado
@@ -467,23 +458,9 @@ export function PaginaCatalogoOrigen() {
           </form>
         </div>
         <section className="min-w-0 rounded-xl border border-line-200 bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-ink-900">
-              Conexiones registradas
-            </h2>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => contextoSecretosMutation.mutate()}
-              disabled={contextoSecretosMutation.isPending}
-            >
-              <Icon name="copy" size="sm" />
-              {contextoSecretosMutation.isPending
-                ? "Cargando..."
-                : "Copiar JSON de secretos para el job"}
-            </Button>
-          </div>
+          <h2 className="mb-4 text-base font-semibold text-ink-900">
+            Conexiones registradas
+          </h2>
           {conexiones.isLoading ? (
             <p className="text-sm text-ink-500">Cargando catálogo...</p>
           ) : conexiones.data?.length ? (
@@ -491,6 +468,8 @@ export function PaginaCatalogoOrigen() {
               {conexiones.data.map((conexion) => (
                 <div
                   key={conexion.id}
+                  id={`conexion-origen-${conexion.id}`}
+                  data-testid={`conexion-origen-${conexion.id}`}
                   className="flex items-start justify-between gap-3 rounded-lg border border-line-200 bg-app/30 p-4"
                 >
                   <div className="min-w-0">
@@ -534,47 +513,6 @@ export function PaginaCatalogoOrigen() {
           )}
         </section>
       </div>
-
-      {dialogoContextoAbierto && contextoSecretos && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-xl border border-line-200 bg-surface p-6 shadow-lg">
-            <div className="mb-4 flex items-center gap-2 text-amber-600">
-              <Icon name="bell" size="md" />
-              <h3 className="font-semibold text-ink-900">Contenido sensible</h3>
-            </div>
-            <p className="mb-4 text-sm text-ink-600">
-              Los valores mostrados a continuación son secretos de conexión.
-              No los compartas. Copia el JSON y úsalo exclusivamente en el job
-              de la automatización.
-            </p>
-            <pre className="mb-4 max-h-64 overflow-auto rounded-md border border-line-200 bg-app/50 p-3 font-mono text-xs text-ink-800">
-              {JSON.stringify(contextoSecretos, null, 2)}
-            </pre>
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={cerrarDialogoContexto}
-              >
-                Cerrar
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    JSON.stringify(contextoSecretos, null, 2),
-                  );
-                  mostrarExito("JSON copiado al portapapeles");
-                  cerrarDialogoContexto();
-                }}
-              >
-                <Icon name="copy" size="sm" />
-                Copiar JSON
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </PageLayout>
   );
 }

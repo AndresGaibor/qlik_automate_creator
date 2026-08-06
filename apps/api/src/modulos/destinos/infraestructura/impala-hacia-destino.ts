@@ -11,6 +11,10 @@ export class ImpalaHaciaDestino implements PuertoDestino {
 
   constructor(private readonly cliente: ClienteImpalaDirecto) {}
 
+  async probar(): Promise<void> {
+    await this.cliente.listarBasesDatos();
+  }
+
   obtenerCapacidades(): CapacidadesDestino {
     return {
       listarRecursos: true,

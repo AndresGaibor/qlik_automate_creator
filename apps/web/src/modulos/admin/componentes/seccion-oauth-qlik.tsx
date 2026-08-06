@@ -16,6 +16,7 @@ import {
   obtenerConfiguracionOauthTenant,
 } from "../api";
 import { normalizarScopesOauth, puedeGuardarOauth } from "./oauth-formulario";
+import { ResumenOauth } from "./resumen-oauth";
 
 const SCOPES_RECOMENDADOS = [
   "user_default",
@@ -90,6 +91,7 @@ function TarjetaOauthTenant({
 }) {
   const queryClient = useQueryClient();
   const { mostrarError, mostrarExito } = useNotificaciones();
+  const [editando, setEditando] = useState(false);
   const [clienteId, setClienteId] = useState("");
   const [clienteSecreto, setClienteSecreto] = useState("");
   const [scopesTexto, setScopesTexto] = useState(
@@ -142,7 +144,7 @@ function TarjetaOauthTenant({
       setClienteSecreto("");
 
       if (conectar) {
-        const retorno = `/admin/tenants/${organizacionId}`;
+        const retorno = "/configuracion";
         const inicio = await iniciarVerificacionOauth(tenant.host, retorno);
         if (!inicio.exito || !inicio.datos?.url) {
           throw new Error(
@@ -159,6 +161,7 @@ function TarjetaOauthTenant({
         queryKey: ["admin-oauth-qlik", organizacionId, tenant.id],
       });
       if (!conectar) {
+        setEditando(false);
         mostrarExito("Configuración OAuth guardada");
       }
     },
@@ -176,6 +179,21 @@ function TarjetaOauthTenant({
     existeConfiguracionPropia,
   });
 
+  const configurada =
+    consulta.data?.origen === "tenant" && Boolean(consulta.data.clienteId);
+
+  if (configurada && consulta.data && !editando) {
+    return (
+      <ResumenOauth
+        tenant={tenant}
+        configuracion={consulta.data}
+        verificando={guardar.isPending}
+        onEditar={() => setEditando(true)}
+        onVerificar={() => guardar.mutate(true)}
+      />
+    );
+  }
+
   return (
     <FormularioOauthTenant
       tenant={tenant}
@@ -190,6 +208,7 @@ function TarjetaOauthTenant({
       onClienteSecreto={setClienteSecreto}
       onScopesTexto={setScopesTexto}
       onGuardar={(conectar) => guardar.mutate(conectar)}
+      onCancelar={configurada ? () => setEditando(false) : undefined}
       onCopiar={async () => {
         const redirectUri = consulta.data?.redirectUri;
         if (!redirectUri) return;
@@ -212,6 +231,7 @@ interface FormularioOauthTenantProps {
   onClienteSecreto: (valor: string) => void;
   onScopesTexto: (valor: string) => void;
   onGuardar: (conectar: boolean) => void;
+  onCancelar?: () => void;
   onCopiar: () => void;
 }
 
@@ -228,8 +248,12 @@ function FormularioOauthTenant({
   onClienteSecreto,
   onScopesTexto,
   onGuardar,
+  onCancelar,
   onCopiar,
 }: FormularioOauthTenantProps) {
+  const [mostrarInstrucciones, setMostrarInstrucciones] = useState(false);
+  const [mostrarScopes, setMostrarScopes] = useState(false);
+
   return (
     <section className="rounded-xl border border-line-200 bg-app/20 p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -243,17 +267,37 @@ function FormularioOauthTenant({
       </div>
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="rounded-lg border border-line-200 bg-surface p-4">
-          <h4 className="text-sm font-semibold text-ink-900">
-            Instrucciones en Qlik Cloud
-          </h4>
-          <ol className="mt-3 list-decimal space-y-2 pl-5 text-xs leading-5 text-ink-600">
-            <li>Abre Administration y entra en la sección OAuth.</li>
-            <li>Crea un cliente nuevo de tipo Web.</li>
-            <li>Copia exactamente la URL de redirección mostrada abajo.</li>
-            <li>Agrega los scopes indicados en este formulario.</li>
-            <li>Copia el Client ID y el secreto antes de cerrar Qlik.</li>
-            <li>Guarda y conecta para comprobar la configuración real.</li>
-          </ol>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-ink-900">
+                Configuración en Qlik Cloud
+              </h4>
+              <p className="mt-1 text-xs text-ink-500">
+                Copia la URL de redirección en el cliente OAuth de tipo Web.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              aria-expanded={mostrarInstrucciones}
+              onClick={() => setMostrarInstrucciones((actual) => !actual)}
+            >
+              {mostrarInstrucciones
+                ? "Ocultar instrucciones"
+                : "Ver instrucciones"}
+            </Button>
+          </div>
+
+          {mostrarInstrucciones && (
+            <ol className="mt-4 list-decimal space-y-2 border-t border-line-200 pt-4 pl-5 text-xs leading-5 text-ink-600">
+              <li>Abre Administration y entra en la sección OAuth.</li>
+              <li>Crea un cliente nuevo de tipo Web.</li>
+              <li>Copia exactamente la URL de redirección.</li>
+              <li>Usa los permisos recomendados por la plataforma.</li>
+              <li>Copia el Client ID y el secreto antes de cerrar Qlik.</li>
+            </ol>
+          )}
 
           <label
             htmlFor={`oauth-redirect-${tenant.id}`}
@@ -261,7 +305,7 @@ function FormularioOauthTenant({
           >
             URL de redirección
           </label>
-          <div className="mt-1 flex gap-2">
+          <div className="mt-1 flex flex-col gap-2 sm:flex-row">
             <input
               id={`oauth-redirect-${tenant.id}`}
               readOnly
@@ -277,7 +321,7 @@ function FormularioOauthTenant({
               className="gap-1"
             >
               <Icon name="copy" size="sm" />
-              Copiar
+              Copiar URL
             </Button>
           </div>
         </div>
@@ -329,23 +373,48 @@ function FormularioOauthTenant({
               Déjalo vacío al editar para conservar el secreto actual.
             </p>
           </div>
-          <div>
-            <label
-              htmlFor={`oauth-scopes-${tenant.id}`}
-              className="block text-xs font-semibold text-ink-700"
-            >
-              Scopes OAuth
-            </label>
-            <textarea
-              id={`oauth-scopes-${tenant.id}`}
-              rows={7}
-              value={scopesTexto}
-              onChange={(evento) => onScopesTexto(evento.target.value)}
-              className="mt-1 w-full rounded-md border border-line-200 bg-surface px-3 py-2 font-mono text-xs text-ink-900 focus:border-brand-600 focus:outline-none"
-            />
-            <p className="mt-1 text-[11px] text-ink-500">
-              Puedes separarlos por espacios, comas o líneas.
-            </p>
+          <div className="rounded-lg border border-line-200 bg-app/40 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-ink-700">
+                  Permisos OAuth recomendados
+                </p>
+                <p className="mt-1 text-[11px] text-ink-500">
+                  {normalizarScopesOauth(scopesTexto).length} permisos
+                  configurados.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                aria-expanded={mostrarScopes}
+                onClick={() => setMostrarScopes((actual) => !actual)}
+              >
+                {mostrarScopes ? "Ocultar avanzado" : "Editar avanzado"}
+              </Button>
+            </div>
+            {mostrarScopes && (
+              <div className="mt-3 border-t border-line-200 pt-3">
+                <label
+                  htmlFor={`oauth-scopes-${tenant.id}`}
+                  className="block text-xs font-semibold text-ink-700"
+                >
+                  Scopes OAuth
+                </label>
+                <textarea
+                  id={`oauth-scopes-${tenant.id}`}
+                  rows={7}
+                  value={scopesTexto}
+                  onChange={(evento) => onScopesTexto(evento.target.value)}
+                  className="mt-1 w-full rounded-md border border-line-200 bg-surface px-3 py-2 font-mono text-xs text-ink-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+                />
+                <p className="mt-1 text-[11px] text-ink-500">
+                  Modifica esta lista solo cuando Qlik requiera permisos
+                  distintos.
+                </p>
+              </div>
+            )}
           </div>
 
           {configuracion?.ultimoError && (
@@ -354,14 +423,24 @@ function FormularioOauthTenant({
             </div>
           )}
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-line-200 pt-4 sm:flex-row sm:justify-end">
+            {onCancelar && (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={guardando}
+                onClick={onCancelar}
+              >
+                Cancelar
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
               disabled={!habilitado || guardando}
               onClick={() => onGuardar(false)}
             >
-              Guardar configuración
+              Guardar sin verificar
             </Button>
             <Button
               type="button"
@@ -370,7 +449,7 @@ function FormularioOauthTenant({
               className="gap-1.5"
             >
               <Icon name="play" size="sm" />
-              {guardando ? "Guardando…" : "Guardar y conectar con Qlik"}
+              {guardando ? "Guardando…" : "Guardar y verificar"}
             </Button>
           </div>
         </div>

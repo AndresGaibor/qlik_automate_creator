@@ -1,3 +1,5 @@
+import { ErrorClienteApi } from "@/compartido/api/cliente";
+import { EstadoAccesoRecursoQlik } from "@/compartido/componentes/feedback/estado-acceso-recurso-qlik";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { Button } from "@/compartido/componentes/ui/button";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
@@ -47,7 +49,6 @@ export function PaginaDetalleFlujo() {
 
   const { tenant: tenantActivo } = useTenantActivo();
 
-  // 1. Obtener lista de flujos para encontrar metadatos del flujo por ID
   const {
     data: flujos = [],
     isLoading: cargandoFlujos,
@@ -58,25 +59,27 @@ export function PaginaDetalleFlujo() {
     staleTime: 60 * 1000,
   });
 
-  // 2. Obtener el script de carga original desde Qlik Cloud (/api/v1/apps/{id}/scripts/current)
   const {
     data: datosScript,
     isLoading: cargandoScript,
     isError: errorScript,
+    error: errorScriptDetalle,
   } = useQuery({
     queryKey: ["flujo-script", id],
     queryFn: () => obtenerScriptFlujo(id),
     staleTime: 60 * 1000,
   });
 
-  // 3. Obtener el catálogo Spark derivado
-  const { data: datosSpark, isLoading: cargandoSpark } = useQuery({
+  const {
+    data: datosSpark,
+    isLoading: cargandoSpark,
+    error: errorSparkDetalle,
+  } = useQuery({
     queryKey: ["flujo-catalogo-spark", id],
     queryFn: () => obtenerCatalogoSparkFlujo(id),
     staleTime: 60 * 1000,
   });
 
-  // 3. Obtener automatizaciones asociadas para ver si está vinculado
   const { data: automatizaciones = [] } = useQuery<ResumenAutomatizacion[]>({
     queryKey: ["automatizaciones"],
     queryFn: () => obtenerAutomatizaciones(),
@@ -98,6 +101,16 @@ export function PaginaDetalleFlujo() {
 
   if (cargandoFlujos) {
     return <EstadoCarga mensaje="Cargando información del flujo de datos..." />;
+  }
+
+  const accesoDenegado = [errorScriptDetalle, errorSparkDetalle].some(
+    (error) =>
+      error instanceof ErrorClienteApi &&
+      error.codigo === "ESPACIO_NO_AUTORIZADO",
+  );
+
+  if (accesoDenegado) {
+    return <EstadoAccesoRecursoQlik />;
   }
 
   if (errorFlujos || !flujo) {

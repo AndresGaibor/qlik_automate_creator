@@ -1,14 +1,12 @@
-import {
-  esquemaActualizarModoAutomatizacion,
-} from "@qlik/contratos/admin";
+import { esquemaActualizarModoAutomatizacion } from "@qlik/contratos/admin";
 import { type Context, Hono } from "hono";
-import { responderError, responderExito } from "../../../nucleo/http/respuestas.js";
+import {
+  responderError,
+  responderExito,
+} from "../../../nucleo/http/respuestas.js";
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
 import type { ResolverContextoAdmin } from "./rutas-comunes.js";
-import {
-  responderErrorAdmin,
-  servicioAdmin,
-} from "./rutas-comunes.js";
+import { responderErrorAdmin, servicioAdmin } from "./rutas-comunes.js";
 
 export interface DependenciasRutasConfiguracionPlataforma {
   repositorio: RepositorioAdministracion;
@@ -35,9 +33,14 @@ export function crearRutasConfiguracionPlataforma({
     try {
       const contexto = await resolverContexto(c);
       if (!servicioAdmin.puedeCambiarModoGlobal(contexto)) {
-        return responderError(c, "No tienes permisos para cambiar el modo global", 403, {
-          codigo: "NO_AUTORIZADO",
-        });
+        return responderError(
+          c,
+          "No tienes permisos para cambiar el modo global",
+          403,
+          {
+            codigo: "NO_AUTORIZADO",
+          },
+        );
       }
 
       const cuerpo = await c.req.json();
@@ -54,8 +57,14 @@ export function crearRutasConfiguracionPlataforma({
     }
   };
 
-  rutas.get("/configuracion-plataforma/modo-automatizacion", handlerObtenerModo);
-  rutas.put("/configuracion-plataforma/modo-automatizacion", handlerActualizarModo);
+  rutas.get(
+    "/configuracion-plataforma/modo-automatizacion",
+    handlerObtenerModo,
+  );
+  rutas.put(
+    "/configuracion-plataforma/modo-automatizacion",
+    handlerActualizarModo,
+  );
 
   return rutas;
 }

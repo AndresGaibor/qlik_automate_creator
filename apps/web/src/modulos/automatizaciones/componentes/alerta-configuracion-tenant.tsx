@@ -23,19 +23,20 @@ export function AlertaConfiguracionTenant({ configTenant, onVolver }: Props) {
             Para poder crear automatizaciones, el administrador primero debe
             configurar la plantilla del{" "}
             <strong>
-              {esModo2 ? "Modo 2 — Dataflow → SFTP → Talend" : "Modo 1 — Dataflow Spark/Python"}
+              {esModo2
+                ? "Modo 2 — Dataflow → SFTP → Talend"
+                : "Modo 1 — Dataflow Spark/Python"}
             </strong>{" "}
-            en{" "}
-            <strong>Administración → Tenants</strong>.
+            en <strong>Configuración → Plantilla base</strong>.
           </p>
         </div>
       </div>
       <div className="flex gap-3 mt-1">
         <a
-          href="/admin"
+          href="/configuracion#plantilla"
           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
         >
-          Ir a Administración
+          Ir a Configuración
         </a>
         <Button variant="outline" onClick={onVolver}>
           Volver

@@ -18,13 +18,19 @@ export class ClienteBigQuery implements PuertoDestino {
   private readonly dataset: string;
 
   constructor(opciones: OpcionesBigQuery) {
-    if (!opciones.projectId.trim()) throw new Error("El proyecto de BigQuery es obligatorio");
-    if (!opciones.dataset.trim()) throw new Error("El dataset de BigQuery es obligatorio");
+    if (!opciones.projectId.trim())
+      throw new Error("El proyecto de BigQuery es obligatorio");
+    if (!opciones.dataset.trim())
+      throw new Error("El dataset de BigQuery es obligatorio");
     this.cliente = new BigQuery({
       projectId: opciones.projectId.trim(),
       ...(opciones.keyFilename ? { keyFilename: opciones.keyFilename } : {}),
     });
     this.dataset = opciones.dataset.trim();
+  }
+
+  async probar(): Promise<void> {
+    await this.cliente.query({ query: "SELECT 1 AS ok", useLegacySql: false });
   }
 
   obtenerCapacidades(): CapacidadesDestino {
@@ -49,7 +55,10 @@ export class ClienteBigQuery implements PuertoDestino {
   }
 
   async obtenerRecurso(id: string): Promise<DetalleRecursoDestino> {
-    const [metadata] = await this.cliente.dataset(this.dataset).table(id).getMetadata();
+    const [metadata] = await this.cliente
+      .dataset(this.dataset)
+      .table(id)
+      .getMetadata();
     const columnas = (metadata.schema?.fields ?? []).map(
       (campo: { name?: string; type?: string }) => ({
         nombre: campo.name ?? "",

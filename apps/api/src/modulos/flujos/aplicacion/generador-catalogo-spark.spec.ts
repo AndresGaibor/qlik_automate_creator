@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   construirCatalogoConexionesSpark,
+  descubrirRequisitosConexion,
   parsearScriptQlik,
 } from "./generador-catalogo-spark.js";
 
@@ -69,9 +70,12 @@ INTO [lib://Bancolombia prueba:SFTP//upload/ventas_curadas.csv] (txt);
     expect(catalogo.jdbc[0].nombre).toBe(
       "Bancolombia prueba:Postgres_BanColombia_Prueba",
     );
-    expect(catalogo.jdbc[0].driver).toBe("org.postgresql.Driver");
+    expect(catalogo.jdbc[0].driver).toBe("");
+    expect(catalogo.jdbc[0].secreto_nombre).toBe("");
     expect(catalogo.sftp[0].nombre).toBe("Bancolombia prueba:SFTP");
-    expect(catalogo.sftp[0].host).toBe("__SFTP_HOST__");
+    expect(catalogo.sftp[0].host).toBe("");
+    expect(catalogo.sftp[0].usuario).toBe("");
+    expect(catalogo.sftp[0].secreto_clave_privada_nombre).toBe("");
   });
 
   test("debe combinar los datos técnicos del catálogo por nombre", () => {
@@ -143,12 +147,69 @@ INTO [lib://Bancolombia prueba:SFTP//upload/ventas_curadas.csv] (txt);
       },
     ]);
 
-    expect(catalogo.jdbc[0]).toHaveProperty("secreto_nombre", "POSTGRES_BANCOLOMBIA");
+    expect(catalogo.jdbc[0]).toHaveProperty(
+      "secreto_nombre",
+      "POSTGRES_BANCOLOMBIA",
+    );
     expect(catalogo.jdbc[0]).not.toHaveProperty("secretoValor");
     expect(JSON.stringify(catalogo.jdbc[0])).not.toContain("usuario:clave");
 
-    expect(catalogo.sftp[0]).toHaveProperty("secreto_clave_privada_nombre", "SFTP_PRIVATE_KEY_B64");
+    expect(catalogo.sftp[0]).toHaveProperty(
+      "secreto_clave_privada_nombre",
+      "SFTP_PRIVATE_KEY_B64",
+    );
     expect(catalogo.sftp[0]).not.toHaveProperty("secretoClavePrivadaValor");
-    expect(JSON.stringify(catalogo.sftp[0])).not.toContain("LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t");
+    expect(JSON.stringify(catalogo.sftp[0])).not.toContain(
+      "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t",
+    );
+  });
+
+  test("distingue conexiones JDBC y SFTP con el mismo nombre", () => {
+    const descubierto = {
+      conexionesJdbc: [{ nombre: "Compartida", allowlist: [] }],
+      conexionesSftp: [
+        { nombre: "Compartida", rutaBase: "/upload", allowlist: [] },
+      ],
+      conexionesLocales: [],
+    };
+    const catalogo = construirCatalogoConexionesSpark(descubierto, [
+      {
+        tipo: "jdbc",
+        nombre: "Compartida",
+        config: {
+          url: "jdbc:postgresql://db/demo",
+          driver: "org.postgresql.Driver",
+          secreto_nombre: "JDBC_COMPARTIDA",
+        },
+      },
+      {
+        tipo: "sftp",
+        nombre: "Compartida",
+        config: {
+          host: "sftp.internal",
+          puerto: 22,
+          usuario: "demo",
+          secreto_clave_privada_nombre: "SFTP_COMPARTIDA_B64",
+          ruta_base: "/upload",
+        },
+      },
+    ]);
+
+    expect(catalogo.jdbc[0].url).toContain("jdbc:postgresql");
+    expect(catalogo.sftp[0].host).toBe("sftp.internal");
+  });
+
+  test("devuelve todos los requisitos una sola vez y conserva mayusculas", () => {
+    const requisitos = descubrirRequisitosConexion(`
+      LIB CONNECT TO [Ventas DB];
+      SQL SELECT * FROM public.ventas;
+      STORE ventas INTO [lib://Salida SFTP/ventas.csv];
+      STORE ventas INTO [lib://Salida SFTP/ventas_2.csv];
+    `);
+
+    expect(requisitos).toEqual([
+      { tipo: "jdbc", nombre: "Ventas DB" },
+      { tipo: "sftp", nombre: "Salida SFTP" },
+    ]);
   });
 });

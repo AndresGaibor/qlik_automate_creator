@@ -1,7 +1,7 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import {
-  obtenerModoGlobalAutomatizacion,
   guardarModoGlobalAutomatizacion,
+  obtenerModoGlobalAutomatizacion,
 } from "@/modulos/admin/publico";
 import type { ModoPlantilla } from "@/modulos/admin/publico";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -18,10 +18,11 @@ export function SeccionModoGlobalAutomatizacion() {
   });
 
   const guardar = useMutation({
-    mutationFn: (modo: ModoPlantilla) =>
-      guardarModoGlobalAutomatizacion(modo),
+    mutationFn: (modo: ModoPlantilla) => guardarModoGlobalAutomatizacion(modo),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["modo-global-automatizacion"] });
+      queryClient.invalidateQueries({
+        queryKey: ["modo-global-automatizacion"],
+      });
       mostrarExito("Modo global actualizado");
     },
     onError: (err: Error) => mostrarError(err.message),
@@ -53,8 +54,8 @@ export function SeccionModoGlobalAutomatizacion() {
         Modo de automatización global
       </h2>
       <p className="mb-4 text-xs text-ink-500">
-        Este cambio afecta SOLO automatizaciones NUEVAS de todos los tenants y NO
-        modifica los clones existentes.
+        Este cambio afecta SOLO automatizaciones NUEVAS de todos los tenants y
+        NO modifica los clones existentes.
       </p>
       <div className="flex gap-6">
         <label className="flex items-center gap-2 cursor-pointer">

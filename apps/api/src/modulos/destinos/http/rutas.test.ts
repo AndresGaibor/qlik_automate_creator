@@ -2,8 +2,8 @@ import { describe, expect, it } from "bun:test";
 import { Hono } from "hono";
 import { crearManejadorErrores } from "../../../plataforma/errores/manejador-http.js";
 import type { Registrador } from "../../../plataforma/observabilidad/registrador.js";
-import { crearRutasDestinos } from "./rutas.js";
 import type { PuertoCatalogoDestinos } from "../aplicacion/puertos/puerto-catalogo-destinos.js";
+import { crearRutasDestinos } from "./rutas.js";
 
 const registrador: Registrador = {
   info: () => undefined,

@@ -1,8 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
-import type { ReactElement } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PaginaCatalogoOrigen } from "./pagina-catalogo-origen";
 
 vi.mock("@/modulos/admin/api", () => ({
@@ -51,100 +51,79 @@ const conexionesMock = [
       url: "jdbc:postgresql://localhost:5432/ventas",
       secreto_nombre: "JDBC_VENTAS",
     },
-  },
-  {
-    id: "conn-2",
-    tipo: "sftp" as const,
-    nombre: "SFTP Logs",
-    config: {
-      host: "sftp.miempresa.com",
-      puerto: 22,
-      usuario: "logs_user",
-      secreto_clave_privada_nombre: "SFTP_PRIVATE_KEY_LOGS",
-    },
+    secretoConfigurado: false,
   },
 ];
 
 describe("PaginaCatalogoOrigen", () => {
   beforeEach(() => {
-    getMock.mockReset();
+    getMock.mockReset().mockResolvedValue(conexionesMock);
     postMock.mockReset();
     putMock.mockReset();
     deleteMock.mockReset();
-    vi.stubGlobal(
-      "navigator",
-      Object.assign({}, navigator, {
-        clipboard: {
-          writeText: vi.fn().mockResolvedValue(undefined),
-        },
-      }),
+    window.history.pushState({}, "", "/origenes");
+  });
+
+  it("no ofrece revelar ni copiar secretos", async () => {
+    renderizar(<PaginaCatalogoOrigen />);
+    expect(await screen.findByText("Ventas JDBC")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /copiar json de secretos/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/contenido sensible/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId("conexion-origen-conn-1")).toHaveAttribute(
+      "id",
+      "conexion-origen-conn-1",
     );
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it("permite completar el secreto ausente de una conexión histórica", async () => {
+    putMock.mockResolvedValue({ id: "conn-1" });
+    renderizar(<PaginaCatalogoOrigen />);
+    await screen.findByText("Ventas JDBC");
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar" }));
+    const secreto = await screen.findByLabelText("Valor secreto (usuario:clave)");
+    fireEvent.change(secreto, { target: { value: "lector:clave" } });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => {
+      expect(putMock).toHaveBeenCalledWith(
+        "/conexiones-origen/conn-1",
+        expect.objectContaining({
+          config: expect.objectContaining({ secretoValor: "lector:clave" }),
+        }),
+      );
+    });
   });
 
-  it("la lista normal no muestra valores de secretos", async () => {
-    getMock.mockResolvedValue(conexionesMock);
+  it("envia secretoValor con el nombre aceptado por backend", async () => {
+    window.history.pushState({}, "", "/origenes?conexion=jdbc:Nueva%20JDBC");
+    postMock.mockResolvedValue({ id: "conn-2" });
     renderizar(<PaginaCatalogoOrigen />);
-    await waitFor(() => {
-      expect(screen.queryByText(/usuario:clave/)).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: /nueva jdbc/i }));
+
+    fireEvent.change(await screen.findByLabelText("Servidor"), {
+      target: { value: "db.internal" },
     });
-    await waitFor(() => {
-      expect(screen.getByText("Ventas JDBC")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Base de datos"), {
+      target: { value: "demo" },
     });
-    expect(screen.getByText("SFTP Logs")).toBeInTheDocument();
-  });
+    fireEvent.change(screen.getByLabelText("Valor secreto (usuario:clave)"), {
+      target: { value: "lector:clave" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar conexión" }));
 
-  it("copiar JSON de secretos para el job llama al endpoint y muestra dialogo con JSON", async () => {
-    getMock.mockResolvedValue(conexionesMock);
-    postMock.mockResolvedValue({ JDBC_VENTAS: "usuario:clave", SFTP_PRIVATE_KEY_LOGS: "contenido-pem" });
-
-    renderizar(<PaginaCatalogoOrigen />);
-
-    const botonCopiar = await waitFor(() =>
-      screen.getByRole("button", { name: /copiar json de secretos/i }),
+    await waitFor(() => {
+      expect(postMock).toHaveBeenCalledWith(
+        "/conexiones-origen",
+        expect.objectContaining({
+          config: expect.objectContaining({ secretoValor: "lector:clave" }),
+        }),
+      );
+    });
+    expect(JSON.stringify(postMock.mock.calls[0][1])).not.toContain(
+      "secreto_valor",
     );
-    fireEvent.click(botonCopiar);
-
-    await waitFor(() => {
-      expect(postMock).toHaveBeenCalled();
-      expect(postMock.mock.calls[postMock.mock.calls.length - 1][0]).toBe("/conexiones-origen/contexto-secretos");
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/usuario:clave/i)).toBeInTheDocument();
-    });
-
-    const botonCopiarJson = screen.getByRole("button", { name: /^copiar json$/i });
-    fireEvent.click(botonCopiarJson);
-
-    await waitFor(() => {
-      expect(navigator.clipboard.writeText).toHaveBeenCalled();
-    });
-  });
-
-  it("cerrar dialogo limpia el estado del contexto", async () => {
-    getMock.mockResolvedValue(conexionesMock);
-    postMock.mockResolvedValue({ JDBC_VENTAS: "usuario:clave" });
-
-    renderizar(<PaginaCatalogoOrigen />);
-
-    const botonCopiar = await waitFor(() =>
-      screen.getByRole("button", { name: /copiar json de secretos/i }),
-    );
-    fireEvent.click(botonCopiar);
-
-    await waitFor(() => {
-      expect(screen.getByText(/usuario:clave/i)).toBeInTheDocument();
-    });
-
-    const botonCerrar = screen.getByRole("button", { name: /cerrar/i });
-    fireEvent.click(botonCerrar);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/usuario:clave/i)).not.toBeInTheDocument();
-    });
   });
 });

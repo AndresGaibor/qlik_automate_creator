@@ -20,6 +20,8 @@ La solución será cerrada por defecto: mientras no exista al menos un espacio a
 - Ocultar en frontend no es suficiente: la API y las rutas directas deben bloquear recursos no autorizados.
 - Sin configuración, el resultado es acceso cerrado.
 - La autorización se guarda por ID estable de espacio, no por nombre.
+- El usuario final no verá un selector de espacio ni la opción **Todos los espacios**; los recursos autorizados se combinarán automáticamente.
+- El filtro por espacio permanecerá disponible únicamente para administradores en vista administrativa normal.
 
 ## 3. Enfoque arquitectónico
 
@@ -173,7 +175,8 @@ La política se aplicará a:
 ### Dataflows
 
 - listado y búsqueda;
-- catálogo de espacios para filtros;
+- combinación automática de todos los espacios autorizados para usuarios restringidos;
+- catálogo y selector de espacios únicamente para administradores en vista normal;
 - detalle;
 - script y metadatos;
 - enlaces de apertura en Qlik;
@@ -182,7 +185,8 @@ La política se aplicará a:
 ### Automatizaciones
 
 - listado y búsqueda;
-- catálogo de espacios para filtros;
+- combinación automática de todos los espacios autorizados para usuarios restringidos;
+- catálogo y selector de espacios únicamente para administradores en vista normal;
 - detalle;
 - historial y detalle de ejecuciones;
 - ejecución manual;
@@ -244,14 +248,16 @@ Cuando la política esté cerrada, Dataflows y automatizaciones mostrarán:
 > **No tienes espacios de Qlik Cloud habilitados**  
 > Solicita al administrador que autorice los espacios necesarios.
 
-El selector de espacios solo incluirá espacios autorizados y, cuando corresponda, una opción especial **Personales o sin espacio**.
+En la vista restringida no se mostrará el selector **Filtrar por espacio de Qlik Cloud**, la opción **Todos los espacios** ni una opción especial para recursos personales. El listado combinará automáticamente los Dataflows o automatizaciones de todos los espacios autorizados; los recursos personales se incorporarán silenciosamente cuando el administrador los permita.
 
-Si `localStorage` o la URL contienen un espacio que dejó de estar autorizado:
+El buscador por nombre puede permanecer visible porque no cambia el alcance de autorización.
 
-1. se descarta el filtro inválido;
+Si `localStorage` o la URL contienen `espacioId` al entrar en una vista restringida:
+
+1. se elimina el parámetro aunque el espacio siga autorizado;
 2. se limpia la persistencia local;
-3. se consulta el conjunto autorizado;
-4. no se envía una petición al espacio prohibido.
+3. se consulta el conjunto completo de recursos autorizados sin enviar `espacioId`;
+4. al volver a la vista administrativa normal, el administrador recupera el filtro por espacio.
 
 ## 12. Sincronización y recursos eliminados
 
@@ -298,7 +304,8 @@ No se almacenarán secretos ni payloads de Qlik en el evento.
 
 - Sin configuración: estado vacío explicativo.
 - URL no autorizada: pantalla `No tienes acceso a este recurso`.
-- Filtro ya no permitido: limpieza automática sin mostrar datos restringidos.
+- Selector de espacios: ausente en Dataflows y automatizaciones.
+- `espacioId` persistido o presente en URL: limpieza automática al entrar en modo restringido.
 - Error de política: acceso cerrado; nunca fallback a “mostrar todo”.
 
 ## 16. Pruebas
@@ -332,8 +339,10 @@ No se almacenarán secretos ni payloads de Qlik en el evento.
 - cambios sin guardar;
 - estados de carga, vacío y error;
 - usuario final sin espacios;
-- selector limitado a espacios autorizados;
-- limpieza de filtro persistido inválido;
+- ausencia del selector de espacios y de **Todos los espacios** en la vista restringida;
+- listado combinado de todos los espacios autorizados sin enviar `espacioId`;
+- limpieza de cualquier filtro persistido al entrar en vista restringida;
+- selector conservado para el administrador en vista normal;
 - administrador alternando Vista usuario final.
 
 ### Verificación final
@@ -365,5 +374,7 @@ No se almacenarán secretos ni payloads de Qlik en el evento.
 4. El mismo control protege listados, detalles, ejecuciones, creación y URLs directas.
 5. Los administradores normales conservan acceso completo.
 6. Vista usuario final reproduce las restricciones reales sin poder ampliar permisos.
-7. Una falla de Qlik o de sincronización no elimina ni abre la política guardada.
-8. Todos los cambios quedan auditados y cubiertos por pruebas.
+7. El usuario final no ve el selector de espacio ni **Todos los espacios**; recibe un listado combinado de recursos autorizados.
+8. El administrador en vista normal conserva el filtro por espacio.
+9. Una falla de Qlik o de sincronización no elimina ni abre la política guardada.
+10. Todos los cambios quedan auditados y cubiertos por pruebas.

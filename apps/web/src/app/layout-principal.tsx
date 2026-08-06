@@ -1,19 +1,14 @@
-import { ErrorClienteApi } from "@/compartido/api/cliente";
+import { ErrorClienteApi, clienteApi } from "@/compartido/api/cliente";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Avatar } from "@/compartido/componentes/ui/avatar";
 import { inicialesDe } from "@/compartido/componentes/ui/avatar-utils";
 import { Button } from "@/compartido/componentes/ui/button";
-import { ContextSwitcher } from "@/compartido/componentes/ui/context-switcher";
 import {
   Icon,
   type IconName,
   IconSprite,
 } from "@/compartido/componentes/ui/icon";
-import {
-  cambiarTenantActivo,
-  cerrarSesion,
-  obtenerSesion,
-} from "@/modulos/autenticacion/publico";
+import { cerrarSesion, obtenerSesion } from "@/modulos/autenticacion/publico";
 import { obtenerEstadoSetup } from "@/modulos/setup/publico";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
@@ -26,9 +21,7 @@ type RutaNav =
   | "/flujos"
   | "/automatizaciones"
   | "/tablas"
-  | "/configuracion"
-  | "/admin/tenants"
-  | "/admin/superadmins";
+  | "/configuracion";
 
 const NAVEGACION: readonly {
   to: RutaNav;
@@ -46,18 +39,6 @@ const NAVEGACION: readonly {
     etiqueta: "Configuración",
     icono: "admin",
     admin: true,
-  },
-  {
-    to: "/admin/tenants",
-    etiqueta: "Organizaciones",
-    icono: "shield",
-    admin: true,
-  },
-  {
-    to: "/admin/superadmins",
-    etiqueta: "Superadministradores",
-    icono: "users",
-    superadmin: true,
   },
 ] as const;
 
@@ -111,6 +92,12 @@ function ContenidoLayoutPrincipal() {
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const { estado, setModoUsuarioFinal } = useVistaUsuarioFinal();
 
+  useEffect(() => {
+    clienteApi.setVistaUsuarioFinal(estado.modoUsuarioFinal);
+    void queryClient.invalidateQueries({ queryKey: ["flujos"] });
+    void queryClient.invalidateQueries({ queryKey: ["automatizaciones"] });
+  }, [estado.modoUsuarioFinal, queryClient]);
+
   const esLogin = ubicacion.pathname === "/login";
   const esSetup = ubicacion.pathname === "/setup";
 
@@ -136,13 +123,6 @@ function ContenidoLayoutPrincipal() {
     }
   }, [consultaSetup.data, esSetup, navegar]);
 
-  const cambiarTenant = useMutation({
-    mutationFn: cambiarTenantActivo,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries();
-    },
-    onError: (error: Error) => mostrarError(error.message),
-  });
   const cerrar = useMutation({
     mutationFn: cerrarSesion,
     onSuccess: async () => {
@@ -167,12 +147,12 @@ function ContenidoLayoutPrincipal() {
   const puedeVerAdministracion = esAdmin && !estado.modoUsuarioFinal;
 
   useEffect(() => {
-    if (puedeVerAdministracion) return;
+    if (!consulta.data || puedeVerAdministracion) return;
     const rutaBloqueada =
       ubicacion.pathname === "/configuracion" ||
       ubicacion.pathname.startsWith("/admin/");
     if (rutaBloqueada) navegar({ to: "/tablas", replace: true });
-  }, [puedeVerAdministracion, ubicacion.pathname, navegar]);
+  }, [consulta.data, puedeVerAdministracion, ubicacion.pathname, navegar]);
 
   if (consultaSetup.isLoading) {
     return (
@@ -239,11 +219,6 @@ function ContenidoLayoutPrincipal() {
   }
 
   const sesion = consulta.data;
-  const tenantsDisponibles = Array.from(
-    new Map(
-      sesion.tenantsDisponibles.map((tenant) => [tenant.id, tenant]),
-    ).values(),
-  );
   const nombre = sesion.usuario?.nombre?.trim() || "Usuario Qlik";
 
   return (
@@ -276,17 +251,8 @@ function ContenidoLayoutPrincipal() {
             ))}
           </nav>
 
-          {/* Acciones del extremo derecho (Tenant selector + usuario + logout) */}
+          {/* Acciones del extremo derecho */}
           <div className="ml-auto hidden items-center gap-4 md:flex">
-            {tenantsDisponibles.length > 1 && (
-              <ContextSwitcher
-                tenants={tenantsDisponibles}
-                activoId={sesion.tenantActivoId}
-                cargando={cambiarTenant.isPending}
-                onCambiar={(id) => cambiarTenant.mutate(id)}
-              />
-            )}
-
             {esAdmin && (
               <label className="flex cursor-pointer items-center gap-2 select-none">
                 <input

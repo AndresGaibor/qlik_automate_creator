@@ -1,5 +1,5 @@
 import { type AnyRoute, createRoute } from "@tanstack/react-router";
-import { PaginaCatalogoOrigen } from "../origenes/pagina-catalogo-origen";
+import { PaginaConfiguracion } from "../admin/pagina-configuracion";
 import { PaginaTablasDestino } from "./pagina-tablas-destino";
 
 export function crearRutasTablas(rutaRaiz: AnyRoute) {
@@ -12,7 +12,7 @@ export function crearRutasTablas(rutaRaiz: AnyRoute) {
     createRoute({
       getParentRoute: () => rutaRaiz,
       path: "/configuracion",
-      component: PaginaCatalogoOrigen,
+      component: PaginaConfiguracion,
     }),
   ];
 }

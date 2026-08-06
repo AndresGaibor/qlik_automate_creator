@@ -23,6 +23,8 @@ interface SelectBuscableProps {
   emptyText?: string;
   /** Si se muestra la opción "Todos / Limpiar" al inicio de la lista */
   allowClear?: boolean;
+  disabled?: boolean;
+  disabledText?: string;
 }
 
 export function SelectBuscable({
@@ -36,6 +38,8 @@ export function SelectBuscable({
   searchPlaceholder = "Buscar por nombre...",
   emptyText,
   allowClear = false,
+  disabled = false,
+  disabledText,
 }: SelectBuscableProps) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -101,7 +105,7 @@ export function SelectBuscable({
         aria-expanded={abierto}
         aria-controls={listaId}
         aria-label={etiqueta || placeholder}
-        disabled={cargando}
+        disabled={cargando || disabled}
         onClick={() => setAbierto(!abierto)}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
@@ -113,12 +117,16 @@ export function SelectBuscable({
           abierto
             ? "border-brand-600 ring-2 ring-brand-100 shadow-panel"
             : "border-line-200 hover:border-line-300"
-        } ${cargando ? "opacity-60 cursor-not-allowed" : ""}`}
+        } ${cargando || disabled ? "opacity-60 cursor-not-allowed" : ""}`}
       >
         <div className="flex items-center gap-2.5 truncate min-w-0">
           <Icon name="cloud" size="sm" className="text-obj-600 shrink-0" />
           {cargando ? (
             <span className="text-ink-400 font-normal">Cargando...</span>
+          ) : disabled ? (
+            <span className="text-ink-400 font-normal">
+              {disabledText || placeholder}
+            </span>
           ) : opcionActual ? (
             <div className="flex items-center gap-2 truncate min-w-0">
               <span className="font-semibold text-ink-900 truncate">

@@ -1,13 +1,28 @@
-import { type AnyRoute, createRoute, useParams } from "@tanstack/react-router";
-import { PaginaSuperadmins } from "./PaginaSuperadmins";
+import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
+import {
+  type AnyRoute,
+  createRoute,
+  useNavigate,
+  useParams,
+} from "@tanstack/react-router";
+import { useEffect } from "react";
 import { PaginaDetalleTenant } from "./pagina-detalle-tenant";
-import { PaginaListaTenants } from "./pagina-lista-tenants";
+
+function RedireccionConfiguracion() {
+  const navegar = useNavigate();
+
+  useEffect(() => {
+    navegar({ to: "/configuracion", replace: true });
+  }, [navegar]);
+
+  return <EstadoCarga mensaje="Abriendo configuración..." />;
+}
 
 export function crearRutasAdmin(rutaRaiz: AnyRoute) {
-  const listado = createRoute({
+  const listadoHeredado = createRoute({
     getParentRoute: () => rutaRaiz,
     path: "/admin/tenants",
-    component: PaginaListaTenants,
+    component: RedireccionConfiguracion,
   });
 
   const detalle = createRoute({
@@ -15,15 +30,15 @@ export function crearRutasAdmin(rutaRaiz: AnyRoute) {
     path: "/admin/tenants/$tenantId",
     component: function RutaDetalleTenant() {
       const { tenantId } = useParams({ strict: false }) as { tenantId: string };
-      return <PaginaDetalleTenant tenantId={tenantId} />;
+      return <PaginaDetalleTenant tenantId={tenantId} modoConfiguracion />;
     },
   });
 
-  const superadmins = createRoute({
+  const superadminsOculto = createRoute({
     getParentRoute: () => rutaRaiz,
     path: "/admin/superadmins",
-    component: PaginaSuperadmins,
+    component: RedireccionConfiguracion,
   });
 
-  return [listado, detalle, superadmins];
+  return [listadoHeredado, detalle, superadminsOculto];
 }

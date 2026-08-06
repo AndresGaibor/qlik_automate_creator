@@ -7,8 +7,12 @@ function Consumidor() {
   return (
     <div>
       <span data-testid="modo">{String(estado.modoUsuarioFinal)}</span>
-      <button onClick={() => setModoUsuarioFinal(true)}>Activar</button>
-      <button onClick={() => setModoUsuarioFinal(false)}>Desactivar</button>
+      <button type="button" onClick={() => setModoUsuarioFinal(true)}>
+        Activar
+      </button>
+      <button type="button" onClick={() => setModoUsuarioFinal(false)}>
+        Desactivar
+      </button>
     </div>
   );
 }

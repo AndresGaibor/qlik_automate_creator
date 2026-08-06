@@ -1,4 +1,6 @@
+import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
+import { EstadoSinEspaciosQlik } from "@/compartido/componentes/feedback/estado-sin-espacios-qlik";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
@@ -14,6 +16,7 @@ import { construirUrlCrearFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import {
   type ResumenAutomatizacion,
   obtenerAutomatizaciones,
+  obtenerConfiguracionTenant,
 } from "@/modulos/automatizaciones/publico";
 import {
   type ResumenFlujo,
@@ -28,8 +31,18 @@ import { ListaFlujos } from "./componentes/lista-flujos";
 export function PaginaFlujos() {
   const { mostrarError } = useNotificaciones();
   const { tenant: tenantActivo, tenants } = useTenantActivo();
+  const { estado } = useVistaUsuarioFinal();
+  const configuracion = useQuery({
+    queryKey: ["configuracion-tenant", tenantActivo?.id],
+    queryFn: obtenerConfiguracionTenant,
+    retry: false,
+  });
+  const vistaRestringida =
+    configuracion.data?.accesoEspacios?.restringido ?? estado.modoUsuarioFinal;
+  const accesoCerrado = configuracion.data?.accesoEspacios?.cerrado ?? false;
   const { espacioId, establecerEspacioId } = useFiltroEspacioConPersistencia(
     tenantActivo?.id,
+    { habilitado: !vistaRestringida },
   );
   const espacioFiltrado = espacioId.trim() || undefined;
   const [modalTenantsAbierto, setModalTenantsAbierto] = useState(false);
@@ -46,18 +59,21 @@ export function PaginaFlujos() {
     queryKey: ["flujos", tenantActivo?.id, espacioFiltrado, busquedaActiva],
     queryFn: () => obtenerFlujosConFiltros(espacioFiltrado, busquedaActiva),
     retry: false,
+    enabled: configuracion.isSuccess && !accesoCerrado,
   });
 
   const { data: automatizaciones = [] } = useQuery<ResumenAutomatizacion[]>({
     queryKey: ["automatizaciones", tenantActivo?.id],
     queryFn: obtenerAutomatizaciones,
     retry: false,
+    enabled: configuracion.isSuccess && !accesoCerrado,
   });
 
   const espacios = useQuery({
     queryKey: ["flujos", "espacios", tenantActivo?.id],
     queryFn: obtenerEspacios,
     retry: false,
+    enabled: configuracion.isSuccess && !vistaRestringida && !accesoCerrado,
   });
 
   const { manejar } = useManejoError(mostrarError);
@@ -77,7 +93,7 @@ export function PaginaFlujos() {
     irPagina,
   } = usePaginacion(flujos ?? []);
 
-  if (isLoading) {
+  if (configuracion.isLoading || isLoading) {
     return <EstadoCarga mensaje="Cargando flujos de datos..." />;
   }
 
@@ -85,6 +101,17 @@ export function PaginaFlujos() {
     return <EstadoError mensaje={error.message} onReintentar={handleRefetch} />;
   }
 
+  if (accesoCerrado) {
+    return (
+      <PageLayout>
+        <PageHeader
+          title="Dataflows de Qlik"
+          description="Consulta los Dataflows autorizados para tu organización."
+        />
+        <EstadoSinEspaciosQlik />
+      </PageLayout>
+    );
+  }
   const targetHost = tenantActivo?.host;
   const targetUrlCrear = targetHost
     ? construirUrlCrearFlujoQlik(targetHost, espacioId)
@@ -96,7 +123,7 @@ export function PaginaFlujos() {
         title="Dataflows de Qlik"
         description="Revisa los Dataflows que ya conectaste desde Qlik Cloud, mira cómo se transforman tus datos, y crea una automatización en un par de clics."
         actions={
-          tenants.length > 1 ? (
+          vistaRestringida ? null : tenants.length > 1 ? (
             <Button onClick={() => setModalTenantsAbierto(true)}>
               Crear flujo en Qlik Cloud
             </Button>
@@ -123,6 +150,7 @@ export function PaginaFlujos() {
         errorEspacios={espacios.isError}
         espacioFiltrado={espacioFiltrado}
         onEspacioChange={establecerEspacioId}
+        mostrarFiltroEspacio={!vistaRestringida}
       />
 
       <ListaFlujos

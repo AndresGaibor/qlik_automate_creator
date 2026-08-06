@@ -22,7 +22,7 @@ let cerrando = false;
 async function cerrarOrdenadamente(senal: string): Promise<void> {
   if (cerrando) return;
   cerrando = true;
-  console.info(`\n👋 Cerrando API...`);
+  console.info("\n👋 Cerrando API...");
   servidor.stop();
   await cerrarConexion();
   process.exit(0);

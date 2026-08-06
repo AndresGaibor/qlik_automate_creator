@@ -1,6 +1,9 @@
 import { eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
-import { configuracionesPlataforma, usuarios } from "../../../plataforma/persistencia/esquema.js";
+import {
+  configuracionesPlataforma,
+  usuarios,
+} from "../../../plataforma/persistencia/esquema.js";
 import type {
   EntradaGuardarConfiguracionOauth,
   EstadoOrganizacion,
@@ -159,7 +162,8 @@ export class RepositorioAdministracionPostgres
       where: eq(configuracionesPlataforma.id, 1),
     });
     const rawModo = fila?.modoAutomatizacionActivo ?? 1;
-    const modoValido: ModoPlantilla = rawModo === 1 || rawModo === 2 ? rawModo : 1;
+    const modoValido: ModoPlantilla =
+      rawModo === 1 || rawModo === 2 ? rawModo : 1;
     return { modoAutomatizacionActivo: modoValido };
   }
 
@@ -181,7 +185,8 @@ export class RepositorioAdministracionPostgres
         })
         .returning();
       const rawModo = nueva.modoAutomatizacionActivo;
-      const modoValido: ModoPlantilla = rawModo === 1 || rawModo === 2 ? rawModo : 1;
+      const modoValido: ModoPlantilla =
+        rawModo === 1 || rawModo === 2 ? rawModo : 1;
       return { modoAutomatizacionActivo: modoValido };
     }
 
@@ -196,7 +201,8 @@ export class RepositorioAdministracionPostgres
       .returning();
 
     const rawModo = actualizada.modoAutomatizacionActivo;
-    const modoValido: ModoPlantilla = rawModo === 1 || rawModo === 2 ? rawModo : 1;
+    const modoValido: ModoPlantilla =
+      rawModo === 1 || rawModo === 2 ? rawModo : 1;
     return { modoAutomatizacionActivo: modoValido };
   }
 

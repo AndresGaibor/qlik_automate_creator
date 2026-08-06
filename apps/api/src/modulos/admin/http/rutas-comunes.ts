@@ -28,10 +28,15 @@ export function obtenerParametroRequerido(c: Context, nombre: string): string {
 
 export function responderErrorAdmin(c: Context, error: unknown) {
   if (error instanceof ErrorAplicacion) {
-    return responderError(c, error.message, error.estadoHttp as ContentfulStatusCode, {
-      codigo: error.codigo,
-      detalles: error.detalles,
-    });
+    return responderError(
+      c,
+      error.message,
+      error.estadoHttp as ContentfulStatusCode,
+      {
+        codigo: error.codigo,
+        detalles: error.detalles,
+      },
+    );
   }
   if (error instanceof Error && error.message === "No hay sesión") {
     return responderError(c, "Sesión requerida", 401, {
@@ -46,7 +51,10 @@ export function responderErrorAdmin(c: Context, error: unknown) {
   if (error instanceof Error && error.message.includes("permisos")) {
     return responderError(c, error.message, 403, { codigo: "NO_AUTORIZADO" });
   }
-  if (error instanceof Error && error.message.startsWith("Falta el parámetro")) {
+  if (
+    error instanceof Error &&
+    error.message.startsWith("Falta el parámetro")
+  ) {
     return responderError(c, error.message, 400, {
       codigo: "PARAMETRO_FALTANTE",
     });
@@ -62,7 +70,9 @@ export function responderErrorAdmin(c: Context, error: unknown) {
     });
   }
   const mensaje =
-    error instanceof Error && error.message ? error.message : "Error inesperado";
+    error instanceof Error && error.message
+      ? error.message
+      : "Error inesperado";
   return responderError(c, mensaje, 500, { codigo: "ERROR_INTERNO" });
 }
 

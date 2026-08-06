@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { esquemaIdQlik } from "../qlik/comunes.js";
 import { esquemaTipoDestino } from "../destinos/index.js";
+import { esquemaIdQlik } from "../qlik/comunes.js";
 
 export const esquemaTenantResumen = z.object({
   id: z.string(),
@@ -230,3 +230,5 @@ export const esquemaAgregarSuperadmin = z.object({
 
 export type Superadmin = z.infer<typeof esquemaSuperadmin>;
 export type AgregarSuperadmin = z.infer<typeof esquemaAgregarSuperadmin>;
+
+export * from "./espacios-visibles";

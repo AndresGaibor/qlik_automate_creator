@@ -295,4 +295,74 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
       }),
     );
   });
+
+  it("limita secretos al workspace y no los filtra a respuesta, outbox o auditoría", async () => {
+    const qlik = crearQlik();
+    qlik.obtenerAutomatizacion = vi.fn(async () => ({
+      id: "copia-1",
+      name: "Nueva",
+      schedules: [],
+      workspace: {
+        variables: [
+          { name: "Appid", value: "" },
+          { name: "DFScript", value: "" },
+          { name: "ConexionJSON", value: "" },
+          { name: "BaseDestinoJSON", value: "" },
+          { name: "SECRETOSJSON", value: "" },
+        ],
+        blocks: [],
+      },
+      description: "Plantilla",
+      maxConcurrentRuns: 1,
+    }));
+    const idempotencia = crearIdempotencia();
+    const outbox = crearOutbox();
+    const auditoria = crearAuditoria();
+    const caso = new CrearAutomatizacionDesdePlantilla(
+      qlik,
+      idempotencia.puerto,
+      outbox.puerto,
+      auditoria.puerto,
+    );
+    const secreto = "CLAVE_SUPER_SECRETA";
+    const pem = "-----BEGIN OPENSSH PRIVATE KEY-----";
+    const parametros: ParametrosPlantilla = {
+      modo: 1,
+      Appid: "flujo-1",
+      DFScript: "LOAD *;",
+      ConexionJSON: "[]",
+      BaseDestinoJSON: "{}",
+      SECRETOSJSON: JSON.stringify({ JDBC: secreto, SFTP: pem }),
+    };
+
+    const resultado = await caso.ejecutar(
+      {
+        nombre: "Nueva",
+        plantillaIdQlik: "plantilla-1",
+        flujoId: "flujo-1",
+        destinoId: "destino-1",
+        reemplazosWorkspace: [],
+      },
+      contexto,
+      { parametros, modoPlantilla: 1 },
+    );
+
+    const actualizarAutomatizacion =
+      qlik.actualizarAutomatizacion as ReturnType<typeof vi.fn>;
+    const actualizacion = JSON.stringify(
+      actualizarAutomatizacion.mock.calls[0]?.[1],
+    );
+    expect(actualizacion).toContain(secreto);
+    expect(actualizacion).toContain(pem);
+    for (const frontera of [
+      resultado,
+      outbox.guardar.mock.calls,
+      auditoria.registrar.mock.calls,
+    ]) {
+      const serializada = JSON.stringify(frontera);
+      expect(serializada).not.toContain(secreto);
+      expect(serializada).not.toContain(pem);
+      expect(serializada).not.toContain("postgres://writer:clave@");
+    }
+  });
 });

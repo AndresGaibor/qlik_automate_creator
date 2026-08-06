@@ -401,6 +401,40 @@ export const auditoriaEventos = pgTable(
   }),
 );
 
+export const configuracionEspaciosVisibles = pgTable(
+  "configuracion_espacios_visibles",
+  {
+    tenantQlikId: uuid("tenant_qlik_id")
+      .primaryKey()
+      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
+    permitirRecursosSinEspacio: boolean("permitir_recursos_sin_espacio")
+      .notNull()
+      .default(false),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+    actualizadoPorUsuarioId: uuid("actualizado_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+  },
+);
+
+export const espaciosVisiblesUsuarioFinal = pgTable(
+  "espacios_visibles_usuario_final",
+  {
+    tenantQlikId: uuid("tenant_qlik_id")
+      .notNull()
+      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
+    espacioIdQlik: text("espacio_id_qlik").notNull(),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    uqEspacioVisible: unique("espacios_visibles_usuario_final_unique").on(
+      t.tenantQlikId,
+      t.espacioIdQlik,
+    ),
+  }),
+);
+
 export const espaciosQlikCache = pgTable(
   "espacios_qlik_cache",
   {
@@ -528,6 +562,7 @@ export const conexionesDestino = pgTable(
     secretoRefs: jsonb("secreto_refs").notNull().default({}),
     estado: text("estado").notNull().default("activo"),
     mensajeError: text("mensaje_error"),
+    probadaEn: timestamp("probada_en"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },
@@ -542,6 +577,25 @@ export const conexionesDestino = pgTable(
   }),
 );
 
+export const secretosConexionDestino = pgTable(
+  "secretos_conexion_destino",
+  {
+    conexionDestinoId: uuid("conexion_destino_id")
+      .notNull()
+      .references(() => conexionesDestino.id, { onDelete: "cascade" }),
+    nombre: text("nombre").notNull(),
+    valorCifrado: text("valor_cifrado").notNull(),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    uqNombre: unique("uq_secreto_conexion_destino_nombre").on(
+      t.conexionDestinoId,
+      t.nombre,
+    ),
+  }),
+);
+
 export const conexionesOrigen = pgTable(
   "conexiones_origen",
   {
@@ -552,6 +606,9 @@ export const conexionesOrigen = pgTable(
     tipo: text("tipo").notNull(),
     nombre: text("nombre").notNull(),
     config: jsonb("config").notNull().default({}),
+    estado: text("estado").notNull().default("sin_probar"),
+    probadaEn: timestamp("probada_en"),
+    mensajeError: text("mensaje_error"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },

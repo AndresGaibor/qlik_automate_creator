@@ -8,6 +8,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -b --pretty false",
     "doctor": "npx react-doctor@latest"
   },
@@ -29,6 +30,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/coverage-v8": "4.1.10",
     "@vitest/ui": "^4.1.10",
     "autoprefixer": "^10.5.4",
     "jsdom": "^29.1.1",

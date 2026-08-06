@@ -18,11 +18,16 @@ export class ErrorClienteApi extends Error {
 
 export class ClienteApi {
   private _onUnauthorized?: (codigo?: string) => void;
+  private vistaUsuarioFinal = false;
 
   constructor(private readonly baseUrl = "/api") {}
 
   set onUnauthorized(fn: ((codigo?: string) => void) | undefined) {
     this._onUnauthorized = fn;
+  }
+
+  setVistaUsuarioFinal(activa: boolean) {
+    this.vistaUsuarioFinal = activa;
   }
 
   get<T>(ruta: string, configuracion?: ConfiguracionSolicitud): Promise<T> {
@@ -86,6 +91,9 @@ export class ClienteApi {
       headers: {
         Accept: "application/json",
         ...(opcionesFetch.body ? { "Content-Type": "application/json" } : {}),
+        ...(this.vistaUsuarioFinal && !ruta.startsWith("/admin/")
+          ? { "X-Vista-Usuario-Final": "1" }
+          : {}),
         ...opcionesFetch.headers,
       },
     });

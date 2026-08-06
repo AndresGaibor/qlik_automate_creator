@@ -21,11 +21,17 @@ export class ClienteSftp implements PuertoDestino {
 
   constructor(opciones: OpcionesSftp) {
     if (!opciones.host.trim()) throw new Error("El host SFTP es obligatorio");
-    if (!opciones.user.trim()) throw new Error("El usuario SFTP es obligatorio");
+    if (!opciones.user.trim())
+      throw new Error("El usuario SFTP es obligatorio");
     if (!opciones.password && !opciones.privateKey) {
       throw new Error("SFTP requiere contraseña o llave privada");
     }
     this.opciones = { ...opciones, rutaBase: opciones.rutaBase?.trim() || "/" };
+  }
+
+  async probar(): Promise<void> {
+    const cliente = await this.conectar();
+    await cliente.end().catch(() => undefined);
   }
 
   obtenerCapacidades(): CapacidadesDestino {
@@ -79,7 +85,9 @@ export class ClienteSftp implements PuertoDestino {
       port: this.opciones.port ?? 22,
       username: this.opciones.user,
       ...(this.opciones.password ? { password: this.opciones.password } : {}),
-      ...(this.opciones.privateKey ? { privateKey: this.opciones.privateKey } : {}),
+      ...(this.opciones.privateKey
+        ? { privateKey: this.opciones.privateKey }
+        : {}),
     });
     return cliente;
   }

@@ -1,9 +1,9 @@
+import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
+import type { TenantQlik } from "@/modulos/admin/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { TenantQlik } from "@/modulos/admin/api";
-import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { SeccionConfigurarAutomatizacionBase } from "./seccion-configurar-automatizacion-base";
 
 const { listarMock, configurarMock } = vi.hoisted(() => ({
@@ -168,7 +168,9 @@ describe("SeccionConfigurarAutomatizacionBase", () => {
     renderizar(
       <SeccionConfigurarAutomatizacionBase
         organizacionId="org-1"
-        tenantQlik={crearTenantQlik({ automatizacionPlantillaModo1IdQlik: null })}
+        tenantQlik={crearTenantQlik({
+          automatizacionPlantillaModo1IdQlik: null,
+        })}
       />,
     );
     const selector1 = screen.getByLabelText(

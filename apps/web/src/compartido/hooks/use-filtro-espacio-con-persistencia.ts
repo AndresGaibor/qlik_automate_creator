@@ -34,30 +34,45 @@ function persistirEspacio(espacioId: string, tenantId?: string) {
 }
 
 /** El filtro es propio del tenant: un espacio de otro entorno nunca se reutiliza. */
-export function useFiltroEspacioConPersistencia(tenantId?: string) {
+export function useFiltroEspacioConPersistencia(
+  tenantId?: string,
+  opciones: { habilitado?: boolean } = {},
+) {
+  const habilitado = opciones.habilitado ?? true;
   const tenantInicial = useRef(tenantId);
   const [espacioId, setEspacioId] = useState(() =>
-    obtenerEspacioInicial(tenantId),
+    habilitado ? obtenerEspacioInicial(tenantId) : "",
   );
 
   useEffect(() => {
+    if (!habilitado) {
+      persistirEspacio("", tenantId);
+      setEspacioId("");
+      return;
+    }
     if (tenantInicial.current === tenantId) return;
     tenantInicial.current = tenantId;
     setEspacioId(obtenerEspacioInicial(tenantId, false));
-  }, [tenantId]);
+  }, [habilitado, tenantId]);
 
   useEffect(() => {
+    if (!habilitado) return;
     const sincronizar = () => setEspacioId(obtenerEspacioInicial(tenantId));
     window.addEventListener("popstate", sincronizar);
     return () => window.removeEventListener("popstate", sincronizar);
-  }, [tenantId]);
+  }, [habilitado, tenantId]);
 
   const establecerEspacioId = useCallback(
     (valor: string) => {
+      if (!habilitado) {
+        setEspacioId("");
+        persistirEspacio("", tenantId);
+        return;
+      }
       setEspacioId(valor);
       persistirEspacio(valor, tenantId);
     },
-    [tenantId],
+    [habilitado, tenantId],
   );
 
   return { espacioId, establecerEspacioId };

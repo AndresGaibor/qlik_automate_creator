@@ -4,8 +4,8 @@ import {
   auditoriaEventos,
   automatizacionesQlikCache,
   configuracionesAutomatizacion,
-  configuracionesPlataforma,
   configuracionesOauthQlik,
+  configuracionesPlataforma,
   credencialesQlik,
   destinosCache,
   espaciosQlikCache,
@@ -16,8 +16,8 @@ import {
   membresiasOrganizacion,
   organizaciones,
   programacionesAutomatizacion,
-  sesionesUsuario,
   secretosConexionOrigen,
+  sesionesUsuario,
   solicitudesIdempotentes,
   tenantsQlik,
   usuarios,
@@ -223,5 +223,18 @@ describe("Esquema Drizzle", () => {
   it("intentosOauthQlik tiene indice en expiraEn", () => {
     const idxs = idxNames(getTableConfig(intentosOauthQlik));
     expect(idxs).toContain("idx_intentos_oauth_expira");
+  });
+  it("declara secretos destino y estado de prueba sin reutilizar 0014", async () => {
+    const sql = await Bun.file(
+      new URL(
+        "../drizzle/0015_secretos_destino_y_estado_pruebas.sql",
+        import.meta.url,
+      ),
+    ).text();
+    expect(sql).toContain(
+      'CREATE TABLE IF NOT EXISTS "secretos_conexion_destino"',
+    );
+    expect(sql).toContain('"probada_en"');
+    expect(sql).not.toContain("DROP TABLE");
   });
 });

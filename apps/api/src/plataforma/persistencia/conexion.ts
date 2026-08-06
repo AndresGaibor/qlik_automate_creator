@@ -1,9 +1,9 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./esquema.js";
-import { readFileSync, readdirSync } from "fs";
-import { join } from "path";
 
 class DbHolder {
   private _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
@@ -80,7 +80,7 @@ export async function ejecutarMigraciones(): Promise<void> {
       await db.execute(sql.raw(contenido));
       console.log("✓ Migración:", archivo);
     } catch (error) {
-      console.warn("✗ Error en migración", archivo + ":", error);
+      console.warn("✗ Error en migración", `${archivo}:`, error);
     }
   }
 }

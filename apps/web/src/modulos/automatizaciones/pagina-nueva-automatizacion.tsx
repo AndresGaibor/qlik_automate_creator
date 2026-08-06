@@ -1,22 +1,24 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { useFiltroEspacioConPersistencia } from "@/compartido/hooks/use-filtro-espacio-con-persistencia";
 import {
-  type ConfiguracionTenant,
   type ConexionDestino,
+  type ConfiguracionTenant,
+  type PreflightAutomatizacion,
   type RecursoDestino,
   type ResultadoCrearDesdePlantilla,
   type ResumenAutomatizacion,
-  type TablaImpala,
   crearAutomatizacionDesdePlantilla,
   obtenerAutomatizaciones,
   obtenerConexionesDestino,
   obtenerConfiguracionTenant,
   obtenerFlujosConFiltros,
+  obtenerPreflightAutomatizacion,
   obtenerRecursosDestino,
-  obtenerTablasImpala,
+  probarConexionOrigen,
 } from "@/modulos/automatizaciones/api";
 import { AlertaConfiguracionTenant } from "@/modulos/automatizaciones/componentes/alerta-configuracion-tenant";
 import { FormularioCrearAutomatizacion } from "@/modulos/automatizaciones/componentes/formulario-crear-automatizacion";
+import { FormularioCrearAutomatizacionModo1 } from "@/modulos/automatizaciones/componentes/formulario-crear-automatizacion-modo-1";
 import type { ResumenFlujo } from "@qlik/contratos";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -27,16 +29,16 @@ export function PaginaNuevaAutomatizacion() {
   const queryClient = useQueryClient();
   const { mostrarError, mostrarExito } = useNotificaciones();
   const { espacioId: espacioIdPersistente } = useFiltroEspacioConPersistencia();
-
-  const searchParams = new URLSearchParams(window.location.search);
+  const parametrosUrl = new URLSearchParams(window.location.search);
   const espacioIdActual =
-    searchParams.get("espacioId") || espacioIdPersistente || undefined;
-  const flujoIdParam = searchParams.get("flujoId") || "";
+    parametrosUrl.get("espacioId") || espacioIdPersistente || undefined;
+  const flujoIdParam = parametrosUrl.get("flujoId") || "";
 
   const [flujoId, setFlujoId] = useState(flujoIdParam);
   const [tablaId, setTablaId] = useState("");
   const [destinoId, setDestinoId] = useState<string | undefined>();
   const [nombre, setNombre] = useState("");
+  const [confirmacionSecretos, setConfirmacionSecretos] = useState(false);
 
   const { data: configTenant, isLoading: cargandoConfig } =
     useQuery<ConfiguracionTenant>({
@@ -44,7 +46,6 @@ export function PaginaNuevaAutomatizacion() {
       queryFn: obtenerConfiguracionTenant,
       retry: false,
     });
-
   const modoActivo = configTenant?.modoAutomatizacionActivo ?? 1;
   const configurada = configTenant?.configurada ?? false;
 
@@ -53,7 +54,6 @@ export function PaginaNuevaAutomatizacion() {
     queryFn: obtenerAutomatizaciones,
     retry: false,
   });
-
   const { data: flujos = [], isLoading: cargandoFlujos } = useQuery<
     ResumenFlujo[]
   >({
@@ -62,7 +62,6 @@ export function PaginaNuevaAutomatizacion() {
     retry: false,
     enabled: configurada,
   });
-
   const { data: conexiones = [] } = useQuery<ConexionDestino[]>({
     queryKey: ["destinos-conexiones"],
     queryFn: obtenerConexionesDestino,
@@ -70,77 +69,73 @@ export function PaginaNuevaAutomatizacion() {
     enabled: configurada,
   });
 
-  const destinoActivo =
-    modoActivo === 2
-      ? conexiones.find((destino) => destino.id === destinoId)
-      : conexiones.find((destino) => destino.id === destinoId) ?? conexiones[0];
+  const preflight = useQuery<PreflightAutomatizacion>({
+    queryKey: ["automatizaciones-preflight", flujoId],
+    queryFn: () => obtenerPreflightAutomatizacion(flujoId),
+    retry: false,
+    enabled: configurada && modoActivo === 1 && Boolean(flujoId),
+  });
 
-  useEffect(() => {
-    if (destinoId) {
-      setTablaId("");
-    }
-  }, [destinoId]);
+  const probarOrigen = useMutation({
+    mutationFn: (conexionId: string) => probarConexionOrigen(conexionId),
+    onError: (error: Error) => mostrarError(error.message),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["automatizaciones-preflight", flujoId],
+      });
+    },
+  });
 
+  const destinoModo2 = conexiones.find((destino) => destino.id === destinoId);
   const { data: recursosDestino = [], isLoading: cargandoRecursos } = useQuery<
     RecursoDestino[]
   >({
-    queryKey: ["destinos-recursos", destinoActivo?.id],
-    queryFn: () => obtenerRecursosDestino(destinoActivo?.id ?? ""),
+    queryKey: ["destinos-recursos", destinoModo2?.id],
+    queryFn: () => obtenerRecursosDestino(destinoModo2?.id ?? ""),
     retry: false,
-    enabled: configurada && Boolean(destinoActivo),
+    enabled: configurada && modoActivo === 2 && Boolean(destinoModo2?.id),
   });
 
-  const { data: tablasHeredadas = [], isLoading: cargandoTablasHeredadas } = useQuery<
-    { nombre: string }[]
-  >({
-    queryKey: ["impala-tablas"],
-    queryFn: obtenerTablasImpala,
-    retry: false,
-    enabled: configurada && modoActivo === 1 && !destinoActivo,
-  });
-
-  const tablas: RecursoDestino[] =
-    modoActivo === 2
-      ? recursosDestino
-      : tablasHeredadas.map((tabla) => ({
-          id: tabla.nombre,
-          nombre: tabla.nombre,
-          tipo: "tabla",
-          espacioDeNombres: "default",
-          metadatos: {},
-        }));
+  useEffect(() => {
+    if (destinoId && modoActivo === 2) setTablaId("");
+  }, [destinoId, modoActivo]);
 
   useEffect(() => {
-    if (flujoIdParam && !flujoId) {
-      setFlujoId(flujoIdParam);
-    }
-  }, [flujoIdParam, flujoId]);
-
-  useEffect(() => {
-    if (flujoId && tablaId && !nombre) {
-      const flujo = flujos.find((f) => f.id === flujoId);
-      if (flujo) setNombre(`${flujo.nombre} hacia ${tablaId}`);
-    }
-  }, [flujoId, tablaId, flujos, nombre]);
+    if (!flujoId || nombre) return;
+    const flujo = flujos.find((item) => item.id === flujoId);
+    if (!flujo) return;
+    if (modoActivo === 1) setNombre(`Automatización - ${flujo.nombre}`);
+    else if (tablaId) setNombre(`${flujo.nombre} hacia ${tablaId}`);
+  }, [flujoId, tablaId, flujos, nombre, modoActivo]);
 
   const crear = useMutation<ResultadoCrearDesdePlantilla>({
     mutationFn: async () => {
-      const flujoObj = flujos.find((f) => f.id === flujoId);
-      if (!flujoObj)
-        throw new Error("Debes seleccionar un flujo de datos válido");
-      if (!tablaId)
-        throw new Error("Debes seleccionar un recurso de destino");
-      if (modoActivo === 2 && !destinoId) {
+      const flujo = flujos.find((item) => item.id === flujoId);
+      if (!flujo) throw new Error("Debes seleccionar un Dataflow válido");
+      if (modoActivo === 1) {
+        if (!destinoId)
+          throw new Error("Selecciona una base destino PostgreSQL");
+        if (!confirmacionSecretos) {
+          throw new Error("Confirma el uso de SECRETOSJSON antes de continuar");
+        }
+        return crearAutomatizacionDesdePlantilla({
+          nombre: nombre.trim() || `Automatización - ${flujo.nombre}`,
+          flujoId,
+          destinoId,
+          espacioIdQlik: espacioIdActual,
+        });
+      }
+      if (!destinoId || !tablaId) {
         throw new Error(
           "El modo 2 requiere seleccionar una conexión destino y una tabla.",
         );
       }
       return crearAutomatizacionDesdePlantilla({
-        nombre: nombre.trim() || `Auto - ${flujoObj.nombre} a ${tablaId}`,
+        nombre: nombre.trim() || `Auto - ${flujo.nombre} a ${tablaId}`,
         espacioIdQlik: espacioIdActual,
-         flujoId,
-         tablaId,
-         destinoId,
+        flujoId,
+        tablaId,
+        destinoId,
         reemplazosWorkspace: [],
       });
     },
@@ -152,30 +147,30 @@ export function PaginaNuevaAutomatizacion() {
     onError: (error: Error) => mostrarError(error.message),
   });
 
-  function onCrear() {
-    if (!flujoId) {
-      mostrarError("Por favor selecciona un flujo de datos");
-      return;
-    }
-    if (!tablaId) {
-      mostrarError("Por favor selecciona un recurso de destino");
-      return;
-    }
-    crear.mutate();
-  }
+  const tieneCambiosSinGuardar = Boolean(
+    flujoId || tablaId || destinoId || nombre.trim(),
+  );
+  useEffect(() => {
+    if (!tieneCambiosSinGuardar || crear.isPending) return;
+    const protegerSalida = (evento: BeforeUnloadEvent) => {
+      evento.preventDefault();
+      evento.returnValue = "";
+    };
+    window.addEventListener("beforeunload", protegerSalida);
+    return () => window.removeEventListener("beforeunload", protegerSalida);
+  }, [tieneCambiosSinGuardar, crear.isPending]);
 
   if (cargandoConfig) {
     return (
-      <div className="mx-auto max-w-3xl flex items-center justify-center py-20 text-gray-500 text-sm gap-2">
-        Verificando configuración del tenant...
+      <div className="mx-auto flex max-w-3xl items-center justify-center py-20 text-sm text-ink-500">
+        Verificando configuración del tenant…
       </div>
     );
   }
-
   if (!configurada) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-ink-900">
           Nueva automatización
         </h2>
         <AlertaConfiguracionTenant
@@ -183,6 +178,50 @@ export function PaginaNuevaAutomatizacion() {
           onVolver={() => navegar({ to: "/automatizaciones" })}
         />
       </div>
+    );
+  }
+
+  if (modoActivo === 1) {
+    return (
+      <FormularioCrearAutomatizacionModo1
+        flujos={flujos}
+        flujoId={flujoId}
+        onFlujoChange={(id) => {
+          setFlujoId(id);
+          setDestinoId(undefined);
+          setConfirmacionSecretos(false);
+        }}
+        preflight={preflight.data}
+        cargandoPreflight={preflight.isLoading}
+        conexiones={conexiones}
+        destinoId={destinoId}
+        onDestinoChange={(id) => setDestinoId(id || undefined)}
+        nombre={nombre}
+        onNombreChange={setNombre}
+        confirmacion={confirmacionSecretos}
+        onConfirmacionChange={setConfirmacionSecretos}
+        onConexionGuardada={() => {
+          queryClient.invalidateQueries({
+            queryKey: ["automatizaciones-preflight", flujoId],
+          });
+        }}
+        onDestinoGuardado={(id) => {
+          setDestinoId(id);
+          queryClient.invalidateQueries({ queryKey: ["destinos-conexiones"] });
+          queryClient.invalidateQueries({
+            queryKey: ["automatizaciones-preflight", flujoId],
+          });
+        }}
+        puedeAdministrarConexiones={
+          configTenant?.puedeAdministrarConexiones ?? false
+        }
+        conexionProbandoId={
+          probarOrigen.isPending ? probarOrigen.variables : undefined
+        }
+        onProbarConexion={(id) => probarOrigen.mutate(id)}
+        onCrear={() => crear.mutate()}
+        creando={crear.isPending}
+      />
     );
   }
 
@@ -195,21 +234,21 @@ export function PaginaNuevaAutomatizacion() {
       nombre={nombre}
       setNombre={setNombre}
       flujos={flujos}
-      tablas={tablas}
+      tablas={recursosDestino}
       automatizaciones={automatizaciones}
       espacioId={espacioIdActual}
       isLoadingFlujos={cargandoFlujos}
-      isLoadingTablas={cargandoRecursos || cargandoTablasHeredadas}
-      onCrear={onCrear}
+      isLoadingTablas={cargandoRecursos}
+      onCrear={() => crear.mutate()}
       isCreating={crear.isPending}
-      puedeCrear={!!(flujoId && tablaId && nombre.trim() && (modoActivo !== 2 || Boolean(destinoId)))}
-      modoActivo={modoActivo}
+      puedeCrear={Boolean(flujoId && tablaId && nombre.trim() && destinoId)}
+      modoActivo={2}
       plantillaEfectivaNombre={configTenant?.plantillaEfectivaNombre ?? null}
       destinoId={destinoId}
       setDestinoId={setDestinoId}
       conexiones={conexiones}
-      requiereDestino={modoActivo === 2}
-      etiquetaDestino={destinoActivo?.nombre ?? "Impala heredado"}
+      requiereDestino={true}
+      etiquetaDestino={destinoModo2?.nombre ?? "Destino"}
     />
   );
 }

@@ -64,7 +64,10 @@ declare module "ssh2-sftp-client" {
   class sftp {
     constructor(name?: string, callbacks?: Callbacks);
     connect(options: ConnectOptions): Promise<SFTPWrapper>;
-    list(remoteFilePath: string, filter?: ListFilterFunction): Promise<FileInfo[]>;
+    list(
+      remoteFilePath: string,
+      filter?: ListFilterFunction,
+    ): Promise<FileInfo[]>;
     exists(remotePath: string): Promise<false | FileInfoType>;
     stat(remotePath: string): Promise<FileStats>;
     realPath(remotePath: string): Promise<string>;
@@ -90,11 +93,21 @@ declare module "ssh2-sftp-client" {
     ): Promise<string>;
     createReadStream(
       path: string,
-      options?: { flags?: string; encoding?: string; mode?: number; autoClose?: boolean },
+      options?: {
+        flags?: string;
+        encoding?: string;
+        mode?: number;
+        autoClose?: boolean;
+      },
     ): NodeJS.ReadableStream;
     createWriteStream(
       path: string,
-      options?: { flags?: string; encoding?: string; mode?: number; autoClose?: boolean },
+      options?: {
+        flags?: string;
+        encoding?: string;
+        mode?: number;
+        autoClose?: boolean;
+      },
     ): NodeJS.WritableStream;
     mkdir(remoteFilePath: string, createRecursive?: boolean): Promise<string>;
     rmdir(remoteFilePath: string, recursive?: boolean): Promise<string>;

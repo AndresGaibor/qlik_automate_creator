@@ -6,11 +6,6 @@ import type {
   RepositorioConexionesOrigen,
 } from "../puertos/repositorio-conexiones-origen.js";
 
-export interface ContextoRevelarSecretos {
-  organizacionId: string;
-  usuarioId?: string;
-}
-
 export class GestionarConexionesOrigen {
   constructor(
     private readonly repositorio: RepositorioConexionesOrigen,
@@ -75,31 +70,6 @@ export class GestionarConexionesOrigen {
     nombre: string,
   ): Promise<string | null> {
     return this.repositorio.leerSecreto(organizacionId, conexionId, nombre);
-  }
-
-  async revelarSecretos(
-    contexto: ContextoRevelarSecretos,
-  ): Promise<Record<string, string>> {
-    const resultado = await this.repositorio.revelarSecretos(
-      contexto.organizacionId,
-    );
-    if (resultado.faltantes.length > 0) {
-      throw new ErrorAplicacion(
-        "SECRETOS_FALTANTES",
-        "Secretos no encontrados en el sistema",
-        422,
-        { nombres: resultado.faltantes },
-      );
-    }
-
-    await this.auditoria.registrar({
-      organizacionId: contexto.organizacionId,
-      usuarioId: contexto.usuarioId,
-      accion: "conexion-origen.revelar-contexto-secretos",
-      entidadTipo: "conexion_origen",
-      resultado: "exito",
-    });
-    return resultado.secretos;
   }
 }
 

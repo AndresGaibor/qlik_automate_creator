@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "bun:test";
+import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { ParametrosPlantilla } from "./preparar-parametros-plantilla.js";
 import { copiarAutomatizacion } from "./servicio-copia-automatizacion.js";
-import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
 
 type EntradaExtendida = CrearDesdePlantilla & {
   parametros?: ParametrosPlantilla;
@@ -41,8 +41,7 @@ function crearMockQlik(mocks?: {
     cambiarEspacioAutomatizacion:
       mocks?.cambiarEspacioAutomatizacion ?? vi.fn(async () => undefined),
     cambiarPropietarioAutomatizacion:
-      mocks?.cambiarPropietarioAutomatizacion ??
-      vi.fn(async () => undefined),
+      mocks?.cambiarPropietarioAutomatizacion ?? vi.fn(async () => undefined),
   } as unknown as PuertoQlik;
 }
 
@@ -99,11 +98,11 @@ describe("copiarAutomatizacion", () => {
       schedules: [],
       workspace: {
         variables: [
-          { name: "DataflowId", value: "" },
-          { name: "DataflowScriptContenido", value: "" },
-          { name: "ConexionesContenido", value: "" },
-          { name: "EjecucionId", value: "" },
-          { name: "TablaDestino", value: "" },
+          { name: "Appid", value: "" },
+          { name: "DFScript", value: "" },
+          { name: "ConexionJSON", value: "" },
+          { name: "BaseDestinoJSON", value: "" },
+          { name: "SECRETOSJSON", value: "" },
         ],
         blocks: [],
       },
@@ -113,18 +112,19 @@ describe("copiarAutomatizacion", () => {
     const qlik = crearMockQlik({
       obtenerAutomatizacion: vi.fn(async () => automatizacionClon),
       actualizarAutomatizacion: vi.fn(async (_id: string, def: unknown) => {
-        capturedWorkspace = (def as Record<string, unknown>)?.workspace as Record<string, unknown>;
+        capturedWorkspace = (def as Record<string, unknown>)
+          ?.workspace as Record<string, unknown>;
         return { id: "copia-id-1", ...(def as Record<string, unknown>) };
       }) as unknown as PuertoQlik["actualizarAutomatizacion"],
     });
 
     const params: ParametrosPlantilla = {
       modo: 1,
-      DataflowId: "flujo-x",
-      DataflowScriptContenido: "script-x",
-      ConexionesContenido: "{}",
-      EjecucionId: "ejec-x",
-      TablaDestino: "tabla-x",
+      Appid: "flujo-x",
+      DFScript: "script-x",
+      ConexionJSON: "{}",
+      BaseDestinoJSON: "ejec-x",
+      SECRETOSJSON: "tabla-x",
     };
 
     const resultado = await copiarAutomatizacion(qlik, {
@@ -135,9 +135,13 @@ describe("copiarAutomatizacion", () => {
 
     expect(qlik.actualizarAutomatizacion).toHaveBeenCalled();
     expect(capturedWorkspace).toBeDefined();
-    const vars = (capturedWorkspace?.variables as Array<{ name: string; value: string }>) ?? [];
+    const vars =
+      (capturedWorkspace?.variables as Array<{
+        name: string;
+        value: string;
+      }>) ?? [];
     expect(vars.length).toBeGreaterThan(0);
-    const dataflowVar = vars.find((v) => v.name === "DataflowId");
+    const dataflowVar = vars.find((v) => v.name === "Appid");
     expect(dataflowVar?.value).toBe("flujo-x");
     expect(resultado.error).toBeUndefined();
   });
@@ -145,11 +149,11 @@ describe("copiarAutomatizacion", () => {
   it("valida el workspace de la plantilla ANTES de copiar cuando se proporcionan parametros", async () => {
     const plantillaWorkspace = {
       variables: [
-        { name: "DataflowId", value: "" },
-        { name: "DataflowScriptContenido", value: "" },
-        { name: "ConexionesContenido", value: "" },
-        { name: "EjecucionId", value: "" },
-        { name: "TablaDestino", value: "" },
+        { name: "Appid", value: "" },
+        { name: "DFScript", value: "" },
+        { name: "ConexionJSON", value: "" },
+        { name: "BaseDestinoJSON", value: "" },
+        { name: "SECRETOSJSON", value: "" },
       ],
       blocks: [],
     };
@@ -177,11 +181,11 @@ describe("copiarAutomatizacion", () => {
 
     const params: ParametrosPlantilla = {
       modo: 1,
-      DataflowId: "flujo-x",
-      DataflowScriptContenido: "script-x",
-      ConexionesContenido: "{}",
-      EjecucionId: "ejec-x",
-      TablaDestino: "tabla-x",
+      Appid: "flujo-x",
+      DFScript: "script-x",
+      ConexionJSON: "{}",
+      BaseDestinoJSON: "ejec-x",
+      SECRETOSJSON: "tabla-x",
     };
 
     await copiarAutomatizacion(qlik, {
@@ -204,11 +208,11 @@ describe("copiarAutomatizacion", () => {
       schedules: [],
       workspace: {
         variables: [
-          { name: "DataflowId", value: "" },
-          { name: "DataflowScriptContenido", value: "" },
-          { name: "ConexionesContenido", value: "" },
-          { name: "EjecucionId", value: "" },
-          { name: "TablaDestino", value: "" },
+          { name: "Appid", value: "" },
+          { name: "DFScript", value: "" },
+          { name: "ConexionJSON", value: "" },
+          { name: "BaseDestinoJSON", value: "" },
+          { name: "SECRETOSJSON", value: "" },
         ],
         blocks: [],
       },
@@ -225,11 +229,11 @@ describe("copiarAutomatizacion", () => {
 
     const params: ParametrosPlantilla = {
       modo: 1,
-      DataflowId: "flujo-x",
-      DataflowScriptContenido: "script-x",
-      ConexionesContenido: "{}",
-      EjecucionId: "ejec-x",
-      TablaDestino: "tabla-x",
+      Appid: "flujo-x",
+      DFScript: "script-x",
+      ConexionJSON: "{}",
+      BaseDestinoJSON: "ejec-x",
+      SECRETOSJSON: "tabla-x",
     };
 
     const resultado = await copiarAutomatizacion(qlik, {
@@ -249,11 +253,11 @@ describe("copiarAutomatizacion", () => {
       schedules: [],
       workspace: {
         variables: [
-          { name: "DataflowId", value: "" },
-          { name: "DataflowScriptContenido", value: "" },
-          { name: "ConexionesContenido", value: "" },
-          { name: "EjecucionId", value: "" },
-          { name: "TablaDestino", value: "" },
+          { name: "Appid", value: "" },
+          { name: "DFScript", value: "" },
+          { name: "ConexionJSON", value: "" },
+          { name: "BaseDestinoJSON", value: "" },
+          { name: "SECRETOSJSON", value: "" },
         ],
         blocks: [
           {
@@ -273,24 +277,21 @@ describe("copiarAutomatizacion", () => {
 
     const params: ParametrosPlantilla = {
       modo: 1,
-      DataflowId: "flujo-x",
-      DataflowScriptContenido: "script-x",
-      ConexionesContenido: "{}",
-      EjecucionId: "ejec-x",
-      TablaDestino: "tabla-x",
+      Appid: "flujo-x",
+      DFScript: "script-x",
+      ConexionJSON: "{}",
+      BaseDestinoJSON: "ejec-x",
+      SECRETOSJSON: "tabla-x",
     };
 
-    await copiarAutomatizacion(
-      qlik,
-      {
-        nombre: "Nueva",
-        plantillaIdQlik: "plantilla-1",
-        parametros: params,
-        reemplazosWorkspace: [
-          { ruta: "/blocks/0/settings/table", valor: "ventas" },
-        ],
-      } as unknown as EntradaExtendida,
-    );
+    await copiarAutomatizacion(qlik, {
+      nombre: "Nueva",
+      plantillaIdQlik: "plantilla-1",
+      parametros: params,
+      reemplazosWorkspace: [
+        { ruta: "/blocks/0/settings/table", valor: "ventas" },
+      ],
+    } as unknown as EntradaExtendida);
 
     expect(qlik.actualizarAutomatizacion).toHaveBeenCalledWith(
       "copia-id-1",

@@ -9,9 +9,7 @@ interface Props {
   tenant: DetalleTenant;
   onActualizarEstado: (estado: "activa" | "suspendida") => void;
   onActualizarNombre: (nombre: string) => void;
-  actualizar: {
-    isPending: boolean;
-  };
+  actualizar: { isPending: boolean };
 }
 
 export function SeccionInfoTenant({
@@ -20,104 +18,140 @@ export function SeccionInfoTenant({
   onActualizarNombre,
   actualizar,
 }: Props) {
+  const [detallesAbiertos, setDetallesAbiertos] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     mensaje: string;
     onConfirm: () => void;
-  }>({ open: false, mensaje: "", onConfirm: () => {} });
+  }>({ open: false, mensaje: "", onConfirm: () => undefined });
+  const activa = tenant.estado === "activa";
 
   return (
     <>
-      <div className="space-y-4">
-        {/* Card: datos básicos */}
-        <Card className="border-line-200 bg-surface shadow-card">
-          <CardContent className="pt-5 pb-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-              {/* Info */}
-              <div className="space-y-3">
-                {/* Nombre editable */}
+      <Card className="border-line-200 bg-surface shadow-card">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-50 text-brand-700">
+                  <Icon name="gear" size="sm" />
+                </span>
                 <div>
-                  <p className="text-xs font-semibold text-ink-500 mb-1.5">
-                    Nombre de la organización
+                  <h2 className="font-display text-base font-semibold text-ink-900">
+                    General
+                  </h2>
+                  <p className="text-xs text-ink-500">
+                    Información principal de la plataforma.
                   </p>
-                  <NombreEditor
-                    nombre={tenant.nombre}
-                    isPending={actualizar.isPending}
-                    onActualizarNombre={onActualizarNombre}
-                  />
-                </div>
-
-                {/* Slug */}
-                <div>
-                  <p className="text-xs font-semibold text-ink-500 mb-1">
-                    Identificador interno (slug)
-                  </p>
-                  <code className="inline-block bg-app border border-line-200 px-2 py-1 rounded font-mono text-xs text-ink-700">
-                    {tenant.slug}
-                  </code>
                 </div>
               </div>
 
-              {/* Acción de estado */}
-              <div className="flex flex-col items-start sm:items-end gap-2">
-                <p className="text-xs text-ink-500">Estado actual</p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <NombreEditor
+                  nombre={tenant.nombre}
+                  isPending={actualizar.isPending}
+                  onActualizarNombre={onActualizarNombre}
+                />
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mb-1 ${
-                    tenant.estado === "activa"
-                      ? "bg-brand-50 text-brand-700 border border-brand-100"
-                      : "bg-red-50 text-danger-600 border border-red-100"
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                    activa
+                      ? "border-brand-100 bg-brand-50 text-brand-700"
+                      : "border-red-200 bg-red-50 text-danger-600"
                   }`}
                 >
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      tenant.estado === "activa"
-                        ? "bg-brand-600 animate-dot-pulse"
-                        : "bg-danger-600"
-                    }`}
+                    className={`h-1.5 w-1.5 rounded-full ${activa ? "bg-brand-600" : "bg-danger-600"}`}
                   />
-                  {tenant.estado === "activa" ? "Activa" : "Suspendida"}
+                  {activa ? "Plataforma activa" : "Plataforma suspendida"}
                 </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-expanded={detallesAbiertos}
+              onClick={() => setDetallesAbiertos((actual) => !actual)}
+              className="shrink-0 gap-1.5"
+            >
+              <Icon name="more" size="sm" />
+              {detallesAbiertos ? "Ocultar detalles" : "Detalles y acciones"}
+            </Button>
+          </div>
+
+          {detallesAbiertos && (
+            <div className="mt-5 grid gap-4 border-t border-line-200 pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.7fr)]">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg border border-line-200 bg-app/40 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+                    Identificador interno (slug)
+                  </p>
+                  <code className="mt-2 block font-mono text-sm text-ink-800">
+                    {tenant.slug}
+                  </code>
+                </div>
+                <div className="rounded-lg border border-line-200 bg-app/40 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+                    Registrada
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-ink-800">
+                    {new Intl.DateTimeFormat("es-EC", {
+                      dateStyle: "medium",
+                    }).format(new Date(tenant.creadoEn))}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-red-200 bg-red-50/60 p-4">
+                <p className="text-sm font-semibold text-danger-700">
+                  Zona de riesgo
+                </p>
+                <p className="mt-1 text-xs leading-5 text-red-700">
+                  {activa
+                    ? "Desactivar impide temporalmente que los usuarios ingresen."
+                    : "Activa la plataforma para permitir nuevamente el acceso."}
+                </p>
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
-                  className={
-                    tenant.estado === "activa"
-                      ? "text-danger-600 hover:bg-red-50 border-red-200 text-xs"
-                      : "text-brand-700 hover:bg-brand-50 border-brand-200 text-xs"
-                  }
+                  disabled={actualizar.isPending}
+                  className={`mt-3 gap-1.5 ${
+                    activa
+                      ? "border-red-200 text-danger-600 hover:bg-red-100"
+                      : "border-brand-200 text-brand-700 hover:bg-brand-50"
+                  }`}
                   onClick={() => {
-                    const nuevoEstado =
-                      tenant.estado === "activa" ? "suspendida" : "activa";
+                    const nuevoEstado = activa ? "suspendida" : "activa";
                     setConfirmDialog({
                       open: true,
-                      mensaje:
-                        nuevoEstado === "suspendida"
-                          ? `¿Desactivar "${tenant.nombre}"? Los usuarios no podrán iniciar sesión mientras esté suspendida.`
-                          : `¿Activar "${tenant.nombre}"? Los usuarios autorizados podrán volver a iniciar sesión.`,
+                      mensaje: activa
+                        ? `¿Desactivar la plataforma "${tenant.nombre}"? Los usuarios no podrán iniciar sesión mientras esté suspendida.`
+                        : `¿Activar la plataforma "${tenant.nombre}"? Los usuarios autorizados podrán volver a iniciar sesión.`,
                       onConfirm: () => onActualizarEstado(nuevoEstado),
                     });
                   }}
                 >
-                  <Icon
-                    name={tenant.estado === "activa" ? "pause" : "play"}
-                    size="sm"
-                  />
-                  {tenant.estado === "activa" ? "Desactivar" : "Activar"}
+                  <Icon name={activa ? "pause" : "play"} size="sm" />
+                  {activa ? "Desactivar plataforma" : "Activar plataforma"}
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+      </Card>
 
       <ConfirmDialog
         open={confirmDialog.open}
-        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+        onCancel={() =>
+          setConfirmDialog((actual) => ({ ...actual, open: false }))
+        }
         onConfirm={() => {
           confirmDialog.onConfirm();
-          setConfirmDialog((prev) => ({ ...prev, open: false }));
+          setConfirmDialog((actual) => ({ ...actual, open: false }));
         }}
-        titulo="Cambiar estado de la organización"
+        titulo="Cambiar estado de la plataforma"
         mensaje={confirmDialog.mensaje}
       />
     </>
@@ -141,55 +175,63 @@ function NombreEditor({
     if (editando) campoNombreRef.current?.focus();
   }, [editando]);
 
+  function cancelar() {
+    setNuevoNombre(nombre);
+    setEditando(false);
+  }
+
   function guardar() {
-    if (nuevoNombre.trim() && nuevoNombre.trim() !== nombre) {
-      onActualizarNombre(nuevoNombre.trim());
-    }
+    const limpio = nuevoNombre.trim();
+    if (limpio && limpio !== nombre) onActualizarNombre(limpio);
     setEditando(false);
   }
 
   if (editando) {
     return (
-      <div className="flex items-center gap-2 max-w-sm">
+      <div className="flex w-full max-w-md flex-col gap-2 sm:flex-row sm:items-center">
         <input
           ref={campoNombreRef}
           type="text"
+          aria-label="Nombre de la empresa"
           value={nuevoNombre}
-          onChange={(e) => setNuevoNombre(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") guardar();
-            if (e.key === "Escape") {
-              setNuevoNombre(nombre);
-              setEditando(false);
-            }
+          onChange={(evento) => setNuevoNombre(evento.target.value)}
+          onKeyDown={(evento) => {
+            if (evento.key === "Enter") guardar();
+            if (evento.key === "Escape") cancelar();
           }}
-          className="flex-1 rounded-md border border-line-200 px-3 py-1.5 text-sm font-semibold text-ink-900 focus:border-brand-600 focus:outline-none"
+          className="h-10 min-w-0 flex-1 rounded-md border border-line-200 px-3 text-sm font-semibold text-ink-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
         />
-        <Button size="sm" onClick={guardar} disabled={isPending}>
-          Guardar
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setNuevoNombre(nombre);
-            setEditando(false);
-          }}
-        >
-          Cancelar
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            onClick={guardar}
+            disabled={isPending || !nuevoNombre.trim()}
+          >
+            Guardar
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={cancelar}
+            disabled={isPending}
+          >
+            Cancelar
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="font-semibold text-ink-900 text-base">{nombre}</span>
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="truncate font-display text-xl font-semibold text-ink-900">
+        {nombre}
+      </span>
       <button
         type="button"
         onClick={() => setEditando(true)}
-        className="text-ink-400 hover:text-ink-700 transition-colors"
-        title="Editar nombre"
+        aria-label="Editar nombre de la empresa"
+        className="grid h-9 w-9 place-items-center rounded-md text-ink-400 transition-colors hover:bg-hover hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
         <Icon name="edit" size="sm" />
       </button>

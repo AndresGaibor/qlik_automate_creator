@@ -1,7 +1,9 @@
+import { ErrorClienteApi } from "@/compartido/api/cliente";
+import { EstadoAccesoRecursoQlik } from "@/compartido/componentes/feedback/estado-acceso-recurso-qlik";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { estaEnCurso } from "@/compartido/utiles/estados-ejecucion";
 import { obtenerSesion } from "@/modulos/autenticacion/publico";
 import {
@@ -111,11 +113,15 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   });
 
   if (cargandoDetalle) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-ink-500 font-medium">Cargando automatización…</p>
-      </div>
-    );
+    return <EstadoCarga mensaje="Cargando automatización…" />;
+  }
+
+  if (
+    errorDetalle &&
+    errorDetalleMsg instanceof ErrorClienteApi &&
+    errorDetalleMsg.codigo === "ESPACIO_NO_AUTORIZADO"
+  ) {
+    return <EstadoAccesoRecursoQlik />;
   }
 
   if (errorDetalle) {
@@ -137,33 +143,45 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   const ejecutandoActiva = ejecuciones?.find((e: EjecucionResumen) =>
     estaEnCurso(e.estado),
   );
+  const ultimaEjecucion = [...(ejecuciones ?? [])].sort(
+    (a, b) =>
+      new Date(b.iniciadoEn ?? 0).getTime() -
+      new Date(a.iniciadoEn ?? 0).getTime(),
+  )[0];
   const hostQlik = sesion?.tenantHost?.trim();
   const urlQlik = hostQlik
     ? new URL(`/automations/${id}`, `https://${hostQlik}`).toString()
     : null;
 
   return (
-    <div className="space-y-6">
-      {/* Botón Volver */}
-      <div>
+    <div className="mx-auto max-w-6xl space-y-5">
+      <header className="border-b border-line-200 pb-5">
         <Link
           to="/automatizaciones"
-          className="inline-flex items-center gap-2 text-sm text-ink-500 hover:text-ink-900 transition-colors font-medium"
+          className="inline-flex items-center gap-2 text-sm font-medium text-ink-500 transition-colors hover:text-ink-900"
         >
           <Icon name="chev" size="sm" className="rotate-180" />
           Volver a automatizaciones
         </Link>
-      </div>
-
-      {/* Encabezado con PageHeader */}
-      <PageHeader
-        title={auto.nombre}
-        description={`Orquestación configurada para el espacio ${auto.espacioNombre || "Personal"}`}
-      />
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-brand-700">
+          <Icon name="zap" size="sm" />
+          Automatización de Qlik Automate
+        </div>
+        <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink-900 sm:text-[28px]">
+          {auto.nombre}
+        </h1>
+        <p className="mt-1 max-w-2xl text-sm text-ink-500">
+          Orquestación configurada para el espacio{" "}
+          <span className="font-medium text-ink-700">
+            {auto.espacioNombre || "Personal"}
+          </span>
+        </p>
+      </header>
 
       <TarjetaDetalleAutomatizacion
         automatizacion={auto}
         ejecutandoActiva={ejecutandoActiva}
+        ultimaEjecucion={ultimaEjecucion}
         urlQlik={urlQlik}
         onEjecutar={() => mutationEjecutar.mutate()}
         onDetener={(runId) => mutationDetener.mutate(runId)}

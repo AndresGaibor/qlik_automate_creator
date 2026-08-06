@@ -21,7 +21,8 @@ function mensajeCatalogo(error: unknown): string {
 }
 
 export type ResolverCatalogoDestinos =
-  PuertoCatalogoDestinos | ((c: Context) => Promise<PuertoCatalogoDestinos>);
+  | PuertoCatalogoDestinos
+  | ((c: Context) => Promise<PuertoCatalogoDestinos>);
 
 interface CatalogoConConsulta extends PuertoCatalogoDestinos {
   ejecutarConsulta(consulta: string): Promise<unknown[]>;

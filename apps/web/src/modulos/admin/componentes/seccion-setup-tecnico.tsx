@@ -1,9 +1,9 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
-import { obtenerConexionesDestino } from "@/modulos/automatizaciones/publico";
 import { Button } from "@/compartido/componentes/ui/button";
 import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
+import { obtenerConexionesDestino } from "@/modulos/automatizaciones/publico";
 import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -598,13 +598,14 @@ export function SeccionSetupTecnico({
     queryFn: obtenerConexionesDestino,
     retry: false,
   });
-  const tieneDestino = conexionesDestino.length > 0 || tenantsQlik.some((t) => !!t.impalaHost);
+  const tieneDestino =
+    conexionesDestino.length > 0 || tenantsQlik.some((t) => !!t.impalaHost);
 
   const primerPasoAbierto = !tieneQlik
     ? 0
     : !tienePlantilla
       ? 1
-       : !tieneDestino
+      : !tieneDestino
         ? 2
         : -1;
   const [pasoAbierto, setPasoAbierto] = useState<number>(primerPasoAbierto);
@@ -662,13 +663,14 @@ export function SeccionSetupTecnico({
       ),
     },
     {
-       titulo: "Conexiones de destino",
-       descripcionCorta:
-         "Agrega PostgreSQL, BigQuery, SFTP o Impala para seleccionar recursos de destino.",
-       listo: tieneDestino,
-       resumen: tieneDestino ? (
-         <p className="text-xs text-ink-500 font-mono truncate">
-           {conexionesDestino.map((destino) => destino.nombre).join(", ") || "Destino heredado"}
+      titulo: "Conexiones de destino",
+      descripcionCorta:
+        "Agrega PostgreSQL, BigQuery, SFTP o Impala para seleccionar recursos de destino.",
+      listo: tieneDestino,
+      resumen: tieneDestino ? (
+        <p className="text-xs text-ink-500 font-mono truncate">
+          {conexionesDestino.map((destino) => destino.nombre).join(", ") ||
+            "Destino heredado"}
         </p>
       ) : null,
       contenido: tieneQlik ? (
@@ -683,7 +685,7 @@ export function SeccionSetupTecnico({
 
   return (
     <div className="space-y-3">
-       {tieneQlik && tienePlantilla && tieneDestino ? (
+      {tieneQlik && tienePlantilla && tieneDestino ? (
         <div className="flex items-center gap-3 border-l-4 border-brand-600 bg-brand-50 px-4 py-3 mb-4">
           <Icon name="check" size="md" className="text-brand-700" />
           <div>
@@ -701,7 +703,7 @@ export function SeccionSetupTecnico({
             <p className="text-sm font-semibold text-amber-900">
               Completa los{" "}
               {3 -
-                 [tieneQlik, tienePlantilla, tieneDestino].filter(Boolean)
+                [tieneQlik, tienePlantilla, tieneDestino].filter(Boolean)
                   .length}{" "}
               pasos pendientes
             </p>

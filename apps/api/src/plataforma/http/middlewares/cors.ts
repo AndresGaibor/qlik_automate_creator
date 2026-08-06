@@ -11,6 +11,12 @@ export async function crearMiddlewareCors(
     return cors({
       origin: new URL(origenEstatico).origin,
       credentials: true,
+      allowHeaders: [
+        "Content-Type",
+        "Authorization",
+        "Idempotency-Key",
+        "X-Vista-Usuario-Final",
+      ],
     });
   }
 
@@ -31,6 +37,12 @@ export async function crearMiddlewareCors(
     return cors({
       origin: new URL(frontendOrigin).origin,
       credentials: true,
+      allowHeaders: [
+        "Content-Type",
+        "Authorization",
+        "Idempotency-Key",
+        "X-Vista-Usuario-Final",
+      ],
     });
   }
 
@@ -40,5 +52,11 @@ export async function crearMiddlewareCors(
       return req.headers.get("Origin") ?? "*";
     },
     credentials: true,
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Idempotency-Key",
+      "X-Vista-Usuario-Final",
+    ],
   });
 }

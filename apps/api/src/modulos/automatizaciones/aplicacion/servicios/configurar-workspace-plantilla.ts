@@ -1,14 +1,8 @@
-import type { ParametrosPlantilla } from "./preparar-parametros-plantilla.js";
 import { ErrorAplicacion } from "../../../../nucleo/errores/error-aplicacion.js";
+import type { ParametrosPlantilla } from "./preparar-parametros-plantilla.js";
 
 const VARIABLES_POR_MODO = {
-  1: [
-    "DataflowId",
-    "DataflowScriptContenido",
-    "ConexionesContenido",
-    "EjecucionId",
-    "TablaDestino",
-  ],
+  1: ["Appid", "DFScript", "ConexionJSON", "BaseDestinoJSON", "SECRETOSJSON"],
   2: [
     "DataflowId",
     "RutasSftpContenido",
@@ -24,72 +18,64 @@ function clonarWorkspace(
   return structuredClone(workspace);
 }
 
-function obtenerOperaciones(
+function obtenerOperacionVariable(
   block: Record<string, unknown>,
-): Array<Record<string, unknown>> {
-  const b = block as Record<string, unknown>;
-  const ops = b.operations ?? b["operations"];
-  return Array.isArray(ops) ? (ops as Array<Record<string, unknown>>) : [];
+  modo: 1 | 2,
+): Record<string, unknown> | undefined {
+  const operaciones = Array.isArray(block.operations)
+    ? (block.operations as Array<Record<string, unknown>>)
+    : [];
+  return (
+    operaciones.find((operacion) => operacion.id === "set_value") ??
+    (modo === 2 ? operaciones[0] : undefined)
+  );
 }
 
-function recopilarVariablesWorkspace(
+function nombresDisponibles(
   workspace: Record<string, unknown>,
-): Map<string, unknown> {
-  const valores = new Map<string, unknown>();
-
+  modo: 1 | 2,
+): Set<string> {
+  const nombres = new Set<string>();
   const variables = Array.isArray(workspace.variables)
     ? (workspace.variables as Array<Record<string, unknown>>)
     : [];
-  for (const v of variables) {
-    const name = String(v.name ?? "");
-    if (name) {
-      valores.set(name, v.value);
-    }
+  for (const variable of variables) {
+    const nombre = String(variable.name ?? "");
+    if (nombre) nombres.add(nombre);
   }
-
-  const blocks = Array.isArray(workspace.blocks)
+  const bloques = Array.isArray(workspace.blocks)
     ? (workspace.blocks as Array<Record<string, unknown>>)
     : [];
-  for (const block of blocks) {
-    if (String(block.type ?? "") === "VariableBlock") {
-      const name = String(block.name ?? "");
-      const ops = obtenerOperaciones(block);
-      if (name && ops.length > 0) {
-        valores.set(name, ops[0].value);
-      }
-    }
+  for (const bloque of bloques) {
+    if (bloque.type !== "VariableBlock") continue;
+    const nombre = String(bloque.name ?? "");
+    if (nombre && obtenerOperacionVariable(bloque, modo)) nombres.add(nombre);
   }
-
-  return valores;
+  return nombres;
 }
 
-function aplicarVariablesEnWorkspace(
+function aplicarVariables(
   workspace: Record<string, unknown>,
   valores: Map<string, unknown>,
+  modo: 1 | 2,
 ): void {
   const variables = Array.isArray(workspace.variables)
     ? (workspace.variables as Array<Record<string, unknown>>)
     : [];
-  for (const v of variables) {
-    const name = String(v.name ?? "");
-    if (name && valores.has(name)) {
-      v.value = valores.get(name);
-    }
+  for (const variable of variables) {
+    const nombre = String(variable.name ?? "");
+    if (valores.has(nombre)) variable.value = valores.get(nombre);
   }
 
-  const blocks = Array.isArray(workspace.blocks)
+  const bloques = Array.isArray(workspace.blocks)
     ? (workspace.blocks as Array<Record<string, unknown>>)
     : [];
-  for (const block of blocks) {
-    if (String(block.type ?? "") === "VariableBlock") {
-      const name = String(block.name ?? "");
-      if (name && valores.has(name)) {
-        const ops = obtenerOperaciones(block);
-        if (ops.length > 0) {
-          ops[0].value = valores.get(name);
-        }
-      }
-    }
+  for (const bloque of bloques) {
+    if (bloque.type !== "VariableBlock") continue;
+    const nombre = String(bloque.name ?? "");
+    if (!valores.has(nombre)) continue;
+    const operacion = obtenerOperacionVariable(bloque, modo);
+    if (operacion) operacion.value = valores.get(nombre);
   }
 }
 
@@ -97,47 +83,37 @@ export function configurarWorkspacePlantilla(
   workspace: Record<string, unknown>,
   parametros: ParametrosPlantilla,
 ): Record<string, unknown> {
-  const modo = parametros.modo;
-  const nombresRequeridos = VARIABLES_POR_MODO[modo];
-
-  const result = clonarWorkspace(workspace);
-  const valoresActuales = recopilarVariablesWorkspace(result);
-
-  const faltantes: string[] = [];
-  for (const nombre of nombresRequeridos) {
-    if (!valoresActuales.has(nombre)) {
-      faltantes.push(nombre);
-    }
-  }
+  const resultado = clonarWorkspace(workspace);
+  const requeridas = VARIABLES_POR_MODO[parametros.modo];
+  const disponibles = nombresDisponibles(resultado, parametros.modo);
+  const faltantes = requeridas.filter((nombre) => !disponibles.has(nombre));
 
   if (faltantes.length > 0) {
     throw new ErrorAplicacion(
-      "PLANTILLA_INCOMPATIBLE",
-      `La plantilla no define las variables requeridas para el modo ${modo}: ${faltantes.join(", ")}`,
+      parametros.modo === 1
+        ? "VARIABLES_PLANTILLA_FALTANTES"
+        : "PLANTILLA_INCOMPATIBLE",
+      `La plantilla no define las variables requeridas para el modo ${parametros.modo}: ${faltantes.join(", ")}`,
       422,
-      { modo, variablesFaltantes: faltantes },
+      { modo: parametros.modo, variablesFaltantes: faltantes },
     );
   }
 
-  const nuevosValores = new Map<string, unknown>();
-  if (modo === 1) {
-    const p =
-      parametros as import("./preparar-parametros-plantilla.js").ParametrosPlantillaModo1;
-    nuevosValores.set("DataflowId", p.DataflowId);
-    nuevosValores.set("DataflowScriptContenido", p.DataflowScriptContenido);
-    nuevosValores.set("ConexionesContenido", p.ConexionesContenido);
-    nuevosValores.set("EjecucionId", p.EjecucionId);
-    nuevosValores.set("TablaDestino", p.TablaDestino);
+  const valores = new Map<string, unknown>();
+  if (parametros.modo === 1) {
+    valores.set("Appid", parametros.Appid);
+    valores.set("DFScript", parametros.DFScript);
+    valores.set("ConexionJSON", parametros.ConexionJSON);
+    valores.set("BaseDestinoJSON", parametros.BaseDestinoJSON);
+    valores.set("SECRETOSJSON", parametros.SECRETOSJSON);
   } else {
-    const p =
-      parametros as import("./preparar-parametros-plantilla.js").ParametrosPlantillaModo2;
-    nuevosValores.set("DataflowId", p.DataflowId);
-    nuevosValores.set("RutasSftpContenido", p.RutasSftpContenido);
-    nuevosValores.set("EsquemaTablaDestino", p.EsquemaTablaDestino);
-    nuevosValores.set("EjecucionId", p.EjecucionId);
-    nuevosValores.set("TablaDestino", p.TablaDestino);
+    valores.set("DataflowId", parametros.DataflowId);
+    valores.set("RutasSftpContenido", parametros.RutasSftpContenido);
+    valores.set("EsquemaTablaDestino", parametros.EsquemaTablaDestino);
+    valores.set("EjecucionId", parametros.EjecucionId);
+    valores.set("TablaDestino", parametros.TablaDestino);
   }
 
-  aplicarVariablesEnWorkspace(result, nuevosValores);
-  return result;
+  aplicarVariables(resultado, valores, parametros.modo);
+  return resultado;
 }

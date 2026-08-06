@@ -1,3 +1,4 @@
+import { Button } from "@/compartido/componentes/ui/button";
 import {
   Card,
   CardContent,
@@ -8,39 +9,17 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import type { TenantQlik } from "@/modulos/admin/api";
 import { obtenerConexionesDestino } from "@/modulos/automatizaciones/publico";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import {
+  nombreVisibleEntornoQlik,
+  normalizarHostQlik,
+} from "../utiles-presentacion-qlik";
 import { SeccionConfigurarAutomatizacionBase } from "./seccion-configurar-automatizacion-base";
 import { SeccionConfigurarDestinosTenant } from "./seccion-configurar-destinos-tenant";
 
 interface Props {
   organizacionId: string;
   tenantsQlik: TenantQlik[];
-}
-
-function EstadoPaso({
-  listo,
-  textoListo,
-  textoPendiente,
-}: {
-  listo: boolean;
-  textoListo: string;
-  textoPendiente: string;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-        listo
-          ? "bg-brand-50 text-brand-700 border border-brand-100"
-          : "bg-amber-50 text-amber-700 border border-amber-200"
-      }`}
-    >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          listo ? "bg-brand-600" : "bg-amber-500 animate-pulse"
-        }`}
-      />
-      {listo ? textoListo : textoPendiente}
-    </span>
-  );
 }
 
 export function SeccionAutomatizacionBaseTenant({
@@ -58,194 +37,281 @@ export function SeccionAutomatizacionBaseTenant({
   return (
     <Card className="border-line-200 bg-surface shadow-card">
       <CardHeader className="border-b border-line-200 bg-app/30 pb-4">
-        <CardTitle className="font-display text-lg font-semibold text-ink-900 flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 font-display text-lg font-semibold text-ink-900">
           <Icon name="robot" className="text-brand-600" />
-          Configuración técnica del entorno
+          Plantilla y destinos
         </CardTitle>
-        <p className="text-xs text-ink-500 mt-1">
-          Para que los usuarios puedan crear automatizaciones, cada entorno Qlik
-          necesita dos cosas: una <strong>plantilla base</strong> y una{" "}
-           <strong>al menos una conexión de destino</strong>.
+        <p className="mt-1 text-xs text-ink-500">
+          Define qué automatización se clonará en cada modo y dónde se
+          escribirán los resultados.
         </p>
       </CardHeader>
-
-      {/* Caja azul explicativa de plantilla base */}
-      <div className="mx-6 mt-5 rounded-xl border border-brand-100 bg-brand-50/60 p-4 flex gap-3">
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700 text-base">
-          <Icon name="sparkles" className="h-4 w-4 text-brand-700" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-brand-900">
-            ¿Qué es la plantilla base?
-          </p>
-          <p className="mt-1 text-xs text-brand-800 leading-relaxed">
-            Es una automatización en Qlik Cloud que actúa como molde. Cuando un
-            usuario crea una nueva automatización, el sistema la{" "}
-            <strong>clona automáticamente</strong> y la personaliza con el
-             Dataflow y el recurso de destino que eligió. Los usuarios finales nunca la
-            ven directamente.
-          </p>
-          <p className="mt-1.5 text-xs text-amber-700 font-medium flex items-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
-            Sin ella configurada, los usuarios no podrán crear automatizaciones.
-          </p>
-        </div>
-      </div>
-
-      <CardContent className="pt-6 space-y-6">
-        {tenantsQlik.map((tQlik, idx) => {
-          const tienePlantilla = !!tQlik.automatizacionBaseIdQlik;
-           const tieneDestino = conexionesDestino.length > 0 || !!tQlik.impalaHost;
-           const todoListo = tienePlantilla && tieneDestino;
-
-          return (
-            <div
-              key={tQlik.id}
-              className="rounded-xl border border-line-200 bg-surface overflow-hidden"
-            >
-              {/* Cabecera del entorno Qlik */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 bg-app/40 px-5 py-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-obj-100 text-obj-700 font-bold text-sm">
-                    Q{idx + 1}
-                  </div>
-                  <div className="min-w-0">
-                    <span className="font-semibold text-ink-900 text-sm block truncate">
-                      {tQlik.nombre || "Entorno Qlik Cloud"}
-                    </span>
-                    <span className="font-mono text-xs text-ink-500 block truncate">
-                      {tQlik.host}
-                    </span>
-                  </div>
-                </div>
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                    todoListo
-                      ? "bg-brand-50 text-brand-700 border border-brand-100"
-                      : "bg-amber-50 text-amber-700 border border-amber-200"
-                  }`}
-                >
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      todoListo ? "bg-brand-600" : "bg-amber-500 animate-pulse"
-                    }`}
-                  />
-                  {todoListo ? "Listo para usar" : "Requiere configuración"}
-                </span>
-              </div>
-
-              {/* Grid de dos columnas — siempre visibles */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-line-200">
-                {/* ── PASO 1: Plantilla base ── */}
-                <div className="p-5 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                        tienePlantilla
-                          ? "bg-brand-600 text-white"
-                          : "bg-amber-400 text-white"
-                      }`}
-                    >
-                      {tienePlantilla ? <Icon name="check" size="sm" /> : "1"}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-ink-900 text-sm">
-                        Plantilla base
-                      </span>
-                      <EstadoPaso
-                        listo={tienePlantilla}
-                        textoListo="Configurada"
-                        textoPendiente="Pendiente"
-                      />
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-ink-500 leading-relaxed">
-                    Selecciona la automatización de Qlik Automate que servirá
-                    como molde. Debe existir previamente en tu entorno Qlik.
-                  </p>
-
-                  {/* Plantilla actualmente configurada */}
-                  {tQlik.automatizacionBaseNombre && (
-                    <div className="rounded-lg border border-brand-100 bg-brand-50/40 p-3 flex items-start gap-2">
-                      <Icon
-                        name="star"
-                        size="sm"
-                        className="text-brand-600 mt-0.5 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <span className="text-xs text-ink-500 block">
-                          Plantilla activa:
-                        </span>
-                        <span className="font-bold text-brand-800 text-sm block truncate">
-                          {tQlik.automatizacionBaseNombre}
-                        </span>
-                        <span className="text-ink-400 font-mono text-[10px] block mt-0.5 truncate">
-                          ID: {tQlik.automatizacionBaseIdQlik}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <SeccionConfigurarAutomatizacionBase
-                    organizacionId={organizacionId}
-                    tenantQlik={tQlik}
-                  />
-                </div>
-
-                {/* ── PASO 2: Conexión de destino ── */}
-                <div className="p-5 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                         tieneDestino
-                          ? "bg-brand-600 text-white"
-                          : "bg-amber-400 text-white"
-                      }`}
-                    >
-                       {tieneDestino ? <Icon name="check" size="sm" /> : "2"}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-ink-900 text-sm">
-                         Conexión de destino
-                      </span>
-                      <EstadoPaso
-                         listo={tieneDestino}
-                        textoListo="Conectado"
-                        textoPendiente="Sin configurar"
-                      />
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-ink-500 leading-relaxed">
-                     Agrega PostgreSQL, BigQuery, SFTP o Impala para que los usuarios
-                     puedan elegir recursos de destino al crear automatizaciones.
-                  </p>
-
-                   {tieneDestino && (
-                    <div className="rounded-lg border border-obj-100 bg-obj-50/40 p-3 flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-obj-600 animate-pulse shrink-0" />
-                      <span className="font-mono text-xs text-obj-700 font-medium truncate">
-                        {tQlik.impalaHost}:{tQlik.impalaPort || 21050}
-                      </span>
-                      {tQlik.impalaDatabase && (
-                        <span className="text-xs text-ink-400 truncate">
-                          · base: <strong>{tQlik.impalaDatabase}</strong>
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                   <SeccionConfigurarDestinosTenant
-                    organizacionId={organizacionId}
-                    tenantQlik={tQlik}
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <CardContent className="space-y-4 p-4 sm:p-5">
+        {tenantsQlik.map((tenantQlik) => (
+          <ConfiguracionTecnicaPorEntorno
+            key={tenantQlik.id}
+            organizacionId={organizacionId}
+            tenantQlik={tenantQlik}
+            cantidadDestinos={conexionesDestino.length}
+          />
+        ))}
       </CardContent>
     </Card>
+  );
+}
+
+function ConfiguracionTecnicaPorEntorno({
+  organizacionId,
+  tenantQlik,
+  cantidadDestinos,
+}: {
+  organizacionId: string;
+  tenantQlik: TenantQlik;
+  cantidadDestinos: number;
+}) {
+  const tienePlantilla = Boolean(
+    tenantQlik.automatizacionPlantillaModo1IdQlik ||
+      tenantQlik.automatizacionBaseIdQlik ||
+      tenantQlik.automatizacionPlantillaModo2IdQlik,
+  );
+  const tieneDestino = cantidadDestinos > 0 || Boolean(tenantQlik.impalaHost);
+  const lista = tienePlantilla && tieneDestino;
+  const [forzarEdicion, setForzarEdicion] = useState(false);
+  const mostrarEditor = !lista || forzarEdicion;
+  const nombreEntorno = nombreVisibleEntornoQlik(tenantQlik);
+  const hostVisible = normalizarHostQlik(tenantQlik.host);
+  const plantillaModo1 =
+    tenantQlik.automatizacionPlantillaModo1Nombre ||
+    tenantQlik.automatizacionBaseNombre ||
+    "Sin configurar";
+  const plantillaModo2 =
+    tenantQlik.automatizacionPlantillaModo2Nombre || "Sin configurar";
+  const cantidadVisible =
+    cantidadDestinos > 0
+      ? `${cantidadDestinos} ${cantidadDestinos === 1 ? "conexión" : "conexiones"}`
+      : tenantQlik.impalaHost
+        ? "Impala configurado"
+        : "Sin destinos";
+
+  if (!mostrarEditor) {
+    return (
+      <article className="rounded-xl border border-line-200 bg-app/20 p-4 sm:p-5">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(220px,0.8fr)_minmax(0,1.8fr)_auto] xl:items-center">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+                <Icon name="robot" size="sm" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-ink-900">
+                  {nombreEntorno}
+                </p>
+                <p className="truncate font-mono text-xs text-ink-500">
+                  {hostVisible}
+                </p>
+              </div>
+            </div>
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
+              <Icon name="check" size="sm" />
+              Listo para crear automatizaciones
+            </span>
+          </div>
+
+          <div className="grid min-w-0 gap-3 sm:grid-cols-3">
+            <DatoResumen
+              etiqueta="Modo 1 · Spark/Python"
+              valor={plantillaModo1}
+              configurado={plantillaModo1 !== "Sin configurar"}
+            />
+            <DatoResumen
+              etiqueta="Modo 2 · SFTP/Talend"
+              valor={plantillaModo2}
+              configurado={plantillaModo2 !== "Sin configurar"}
+            />
+            <DatoResumen
+              etiqueta="Destinos"
+              valor={cantidadVisible}
+              configurado={tieneDestino}
+            />
+          </div>
+
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="w-full shrink-0 gap-1.5 xl:w-auto"
+            onClick={() => setForzarEdicion(true)}
+          >
+            <Icon name="edit" size="sm" />
+            Gestionar plantillas y destinos
+          </Button>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <article className="rounded-xl border border-line-200 bg-surface">
+      <div className="flex flex-col gap-3 rounded-t-xl border-b border-line-200 bg-app/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
+            <Icon name="robot" size="sm" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-ink-900">
+              {nombreEntorno}
+            </p>
+            <p className="truncate font-mono text-xs text-ink-500">
+              {hostVisible}
+            </p>
+          </div>
+          <EstadoGeneral listo={lista} />
+        </div>
+        {lista && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="gap-1.5"
+            onClick={() => setForzarEdicion(false)}
+          >
+            <Icon name="x" size="sm" />
+            Cerrar edición
+          </Button>
+        )}
+      </div>
+
+      {!lista && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+          Completa los elementos pendientes para habilitar la creación de
+          automatizaciones.
+        </div>
+      )}
+
+      <div className="space-y-4 rounded-b-xl bg-app/15 p-4 sm:p-5">
+        <section className="rounded-xl border border-line-200 bg-surface">
+          <div className="rounded-t-xl border-b border-line-200 bg-app/30 px-4 py-3 sm:px-5">
+            <CabeceraBloque
+              numero="1"
+              titulo="Plantillas por modo"
+              lista={tienePlantilla}
+              descripcion="Elige el molde específico para procesos Spark/Python y para procesos SFTP/Talend."
+            />
+          </div>
+          <div className="p-4 sm:p-5">
+            <SeccionConfigurarAutomatizacionBase
+              organizacionId={organizacionId}
+              tenantQlik={tenantQlik}
+            />
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-line-200 bg-surface">
+          <div className="rounded-t-xl border-b border-line-200 bg-app/30 px-4 py-3 sm:px-5">
+            <CabeceraBloque
+              numero="2"
+              titulo="Conexiones de destino"
+              lista={tieneDestino}
+              descripcion="Administra los recursos donde las automatizaciones escribirán sus resultados."
+            />
+          </div>
+          <div className="p-4 sm:p-5">
+            <SeccionConfigurarDestinosTenant
+              organizacionId={organizacionId}
+              tenantQlik={tenantQlik}
+              cantidadExistentes={cantidadDestinos}
+            />
+          </div>
+        </section>
+      </div>
+    </article>
+  );
+}
+
+function EstadoGeneral({ listo }: { listo: boolean }) {
+  return (
+    <span
+      className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold sm:inline-flex ${
+        listo
+          ? "border-brand-100 bg-brand-50 text-brand-700"
+          : "border-amber-200 bg-amber-50 text-amber-700"
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${listo ? "bg-brand-600" : "bg-amber-500"}`}
+      />
+      {listo ? "Configuración lista" : "Requiere atención"}
+    </span>
+  );
+}
+
+function DatoResumen({
+  etiqueta,
+  valor,
+  configurado,
+}: {
+  etiqueta: string;
+  valor: string;
+  configurado: boolean;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-line-200 bg-surface px-3.5 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-ink-400">
+          {etiqueta}
+        </p>
+        <span
+          className={`h-2 w-2 shrink-0 rounded-full ${configurado ? "bg-brand-600" : "bg-amber-500"}`}
+          aria-label={configurado ? "Configurado" : "Pendiente"}
+        />
+      </div>
+      <p
+        className={`mt-1.5 text-sm font-semibold leading-5 ${
+          configurado ? "text-ink-800" : "text-amber-700"
+        }`}
+        title={valor}
+      >
+        {valor}
+      </p>
+    </div>
+  );
+}
+
+function CabeceraBloque({
+  numero,
+  titulo,
+  lista,
+  descripcion,
+}: {
+  numero: string;
+  titulo: string;
+  lista: boolean;
+  descripcion: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ${
+          lista ? "bg-brand-600 text-white" : "bg-amber-400 text-white"
+        }`}
+      >
+        {lista ? <Icon name="check" size="sm" /> : numero}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-semibold text-ink-900">{titulo}</h3>
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+              lista
+                ? "border-brand-100 bg-brand-50 text-brand-700"
+                : "border-amber-200 bg-amber-50 text-amber-700"
+            }`}
+          >
+            {lista ? "Listo" : "Pendiente"}
+          </span>
+        </div>
+        <p className="mt-1 text-xs leading-5 text-ink-500">{descripcion}</p>
+      </div>
+    </div>
   );
 }

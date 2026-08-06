@@ -1,9 +1,9 @@
+import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { LayoutPrincipal } from "./layout-principal";
 
 const mocks = vi.hoisted(() => {
@@ -58,6 +58,18 @@ const sesionAdmin = {
   membresias: [{ rol: "admin" }],
 };
 
+const sesionAdminMultiples = {
+  ...sesionAdmin,
+  tenantsDisponibles: [
+    { id: "ten-1", nombre: "Tenant Demo", host: "demo.us.qlikcloud.com" },
+    {
+      id: "ten-2",
+      nombre: "Tenant Secundario",
+      host: "secundario.us.qlikcloud.com",
+    },
+  ],
+};
+
 const sesionNoAdmin = {
   ...sesionAdmin,
   esSuperadmin: false,
@@ -98,8 +110,47 @@ describe("LayoutPrincipal", () => {
       screen.getByRole("link", { name: "Configuración" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Organizaciones" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("link", { name: "Organizaciones" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Superadministradores" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("mantiene una sola organización visible aunque la sesión devuelva varias", async () => {
+    mocks.obtenerSesion.mockResolvedValue(sesionAdminMultiples);
+    renderizar();
+
+    await screen.findByRole("link", { name: "Configuración" });
+    expect(
+      screen.queryByRole("button", { name: /Tenant Demo/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Tenant Secundario")).not.toBeInTheDocument();
+  });
+
+  it("no redirige configuración mientras la sesión todavía está cargando", async () => {
+    mocks.setPathname("/configuracion");
+    let resolverSesion: ((valor: typeof sesionAdmin) => void) | undefined;
+    mocks.obtenerSesion.mockReturnValue(
+      new Promise((resolve) => {
+        resolverSesion = resolve;
+      }),
+    );
+
+    renderizar();
+
+    await waitFor(() => expect(mocks.obtenerSesion).toHaveBeenCalled());
+    expect(mocks.navegar).not.toHaveBeenCalledWith({
+      to: "/tablas",
+      replace: true,
+    });
+
+    resolverSesion?.(sesionAdmin);
+    await screen.findByRole("link", { name: "Configuración" });
+    expect(mocks.navegar).not.toHaveBeenCalledWith({
+      to: "/tablas",
+      replace: true,
+    });
   });
 
   it("no-admin no ve el checkbox", async () => {

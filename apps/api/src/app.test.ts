@@ -180,8 +180,12 @@ describe("API", () => {
           impalaPasswordMascara: null,
           creadoEn: new Date(),
         }),
-        obtenerModoAutomatizacionGlobal: async () => ({ modoAutomatizacionActivo: 1 }),
-        actualizarModoAutomatizacionGlobal: async () => ({ modoAutomatizacionActivo: 1 }),
+        obtenerModoAutomatizacionGlobal: async () => ({
+          modoAutomatizacionActivo: 1,
+        }),
+        actualizarModoAutomatizacionGlobal: async () => ({
+          modoAutomatizacionActivo: 1,
+        }),
         eliminarTenantQlik: async () => "ELIMINADO",
         configurarDestinoTenant: async () => null,
         configurarImpalaTenant: async () => null,

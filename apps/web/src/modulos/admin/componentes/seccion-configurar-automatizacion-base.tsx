@@ -2,8 +2,8 @@ import { useNotificaciones } from "@/compartido/componentes/feedback/notificacio
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
 import type { TenantQlik } from "@/modulos/admin/api";
 import {
-  listarAutomatizacionesParaAdmin,
   configurarPlantillaAutomatizacionTenant,
+  listarAutomatizacionesParaAdmin,
 } from "@/modulos/admin/api";
 import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,16 +82,16 @@ export function SeccionConfigurarAutomatizacionBase({
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <p className="text-xs text-ink-500">
-          Cada modo define cómo se clona y ejecuta la automatización. El{' '}
+    <div className="space-y-4">
+      <div className="rounded-lg border border-brand-100 bg-brand-50/40 px-3.5 py-3">
+        <p className="text-xs leading-5 text-brand-800">
+          Cada modo define cómo se clona y ejecuta la automatización. El{" "}
           <strong>Modo 1</strong> clona el script del Dataflow y el catálogo
           Spark. El <strong>Modo 2</strong> exige conexión destino y tabla, e
           inyecta rutas SFTP y esquema.
         </p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <SelectBuscable
           etiqueta={ETIQUETA_MODO_1}
           placeholder="Busca y selecciona la plantilla Modo 1…"

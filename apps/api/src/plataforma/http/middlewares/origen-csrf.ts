@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
-import { responderError } from "../respuestas.js";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
+import { responderError } from "../respuestas.js";
 
 const METODOS_INSEGUROS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const FRONTEND_KEY = "frontend_url";
@@ -23,7 +23,8 @@ export function crearMiddlewareOrigenCsrf(
         });
         origenPermitido =
           fila && typeof fila.valor === "object"
-            ? new URL((fila.valor as Record<string, unknown>).valor as string).origin
+            ? new URL((fila.valor as Record<string, unknown>).valor as string)
+                .origin
             : null;
       } catch {
         origenPermitido = null;
@@ -31,11 +32,7 @@ export function crearMiddlewareOrigenCsrf(
     }
 
     if (!origenPermitido) {
-      const origen = c.req.header("origin");
-      if (!origen) return responderError(c, "Origen de solicitud no permitido", 403, {
-        codigo: "ORIGEN_NO_PERMITIDO",
-      });
-      return siguiente();
+      origenPermitido = "http://localhost:5173";
     }
 
     const origen = c.req.header("origin");
