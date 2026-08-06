@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const esquemaEstadoRequisitoConexion = z.enum([
   "faltante",
+  "incompleta",
   "sin_probar",
   "incompleta",
   "disponible",

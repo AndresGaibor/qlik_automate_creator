@@ -125,7 +125,7 @@ export async function crearNucleoComposicion(
   const consultaConexionesOrigen = {
     async listarPorOrganizacion(organizacionId: string) {
       return (await gestorConexionesOrigen.listar(organizacionId)).map(
-        ({ id, tipo, nombre, config, estado, probadaEn, mensajeError }) => ({
+        ({
           id,
           tipo,
           nombre,
@@ -133,6 +133,16 @@ export async function crearNucleoComposicion(
           estado,
           probadaEn,
           mensajeError,
+          secretoConfigurado,
+        }) => ({
+          id,
+          tipo,
+          nombre,
+          config,
+          estado,
+          probadaEn,
+          mensajeError,
+          secretoConfigurado,
         }),
       );
     },

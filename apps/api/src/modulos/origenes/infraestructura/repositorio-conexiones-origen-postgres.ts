@@ -170,6 +170,7 @@ export class RepositorioConexionesOrigenPostgres
     const fila = await this.db.query.secretosConexionOrigen.findFirst({
       where: (tabla, { and, eq }) =>
         and(eq(tabla.conexionOrigenId, conexionId), eq(tabla.nombre, nombre)),
+      columns: { nombre: true },
     });
     return Boolean(fila);
   }

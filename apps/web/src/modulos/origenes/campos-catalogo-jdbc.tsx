@@ -93,6 +93,7 @@ export function CamposCatalogoJdbc({
           </label>
           <input
             id="secreto-jdbc"
+            required
             value={estado.valorSecretoJdbc}
             onChange={(event) =>
               actualizar("valorSecretoJdbc", event.target.value)

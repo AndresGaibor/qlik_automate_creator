@@ -12,20 +12,12 @@ export class GestionarConexionesOrigen {
     private readonly auditoria: PuertoAuditoria,
   ) {}
 
-  async listar(organizacionId: string): Promise<ConexionOrigen[]> {
+  async listar(organizacionId: string) {
     const conexiones = await this.repositorio.listar(organizacionId);
     return Promise.all(
-      conexiones.map(async (conexion) => {
-        const nombre = nombreSecreto(conexion);
-        const secretoConfigurado = nombre
-          ? await this.repositorio.existeSecreto(
-              organizacionId,
-              conexion.id,
-              nombre,
-            )
-          : false;
-        return sanitizarConexion({ ...conexion, secretoConfigurado });
-      }),
+      conexiones.map((conexion) =>
+        this.publicarConexion(organizacionId, conexion),
+      ),
     );
   }
 
@@ -43,7 +35,7 @@ export class GestionarConexionesOrigen {
       organizacionId,
       prepararEntrada(entrada),
     );
-    return sanitizarConexion(creada);
+    return this.publicarConexion(organizacionId, creada);
   }
 
   async actualizar(
@@ -69,7 +61,7 @@ export class GestionarConexionesOrigen {
       prepararEntrada(entrada),
     );
     if (!actualizada) throw errorConexionNoEncontrada();
-    return sanitizarConexion(actualizada);
+    return this.publicarConexion(organizacionId, actualizada);
   }
 
   async eliminar(organizacionId: string, id: string): Promise<boolean> {
@@ -83,14 +75,23 @@ export class GestionarConexionesOrigen {
   ): Promise<string | null> {
     return this.repositorio.leerSecreto(organizacionId, conexionId, nombre);
   }
-}
-
-function nombreSecreto(conexion: ConexionOrigen): string {
-  const campo =
-    conexion.tipo === "jdbc"
-      ? conexion.config.secreto_nombre
-      : conexion.config.secreto_clave_privada_nombre;
-  return typeof campo === "string" ? campo.trim() : "";
+  private async publicarConexion(
+    organizacionId: string,
+    conexion: ConexionOrigen,
+  ) {
+    const nombre = nombreSecreto(conexion);
+    const secretoConfigurado = nombre
+      ? await this.repositorio.existeSecreto(
+          organizacionId,
+          conexion.id,
+          nombre,
+        )
+      : false;
+    return {
+      ...sanitizarConexion(conexion),
+      secretoConfigurado,
+    };
+  }
 }
 
 function prepararEntrada(
@@ -126,4 +127,12 @@ function errorConexionExistente(): ErrorAplicacion {
 
 function errorConexionNoEncontrada(): ErrorAplicacion {
   return new ErrorAplicacion("NO_ENCONTRADA", "Conexión no encontrada", 404);
+}
+
+function nombreSecreto(conexion: ConexionOrigen): string {
+  const clave =
+    conexion.tipo === "jdbc"
+      ? conexion.config.secreto_nombre
+      : conexion.config.secreto_clave_privada_nombre;
+  return typeof clave === "string" ? clave.trim() : "";
 }

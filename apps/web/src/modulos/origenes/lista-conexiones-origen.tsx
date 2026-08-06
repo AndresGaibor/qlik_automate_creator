@@ -41,6 +41,11 @@ export function ListaConexionesOrigen({
                     ? `Base de datos PostgreSQL: ${String(conexion.config.url)}`
                     : `Servidor SFTP: ${String(conexion.config.usuario)}@${String(conexion.config.host)}:${String(conexion.config.puerto)}`}
                 </p>
+                {conexion.secretoConfigurado === false && (
+                  <p className="mt-2 text-xs font-semibold text-amber-700">
+                    Credencial pendiente
+                  </p>
+                )}
               </div>
               <div className="flex shrink-0 gap-1">
                 <Button

@@ -106,6 +106,7 @@ export function CamposCatalogoSftp({
           </label>
           <textarea
             id="secreto-sftp"
+            required
             value={estado.valorSecretoClavePrivada}
             onChange={(event) =>
               actualizar("valorSecretoClavePrivada", event.target.value)
