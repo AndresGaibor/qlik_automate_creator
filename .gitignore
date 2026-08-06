@@ -44,3 +44,5 @@ apps/web/node_modules/
 .superpowers/
 
 .worktrees/
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
