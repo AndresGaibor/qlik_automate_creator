@@ -18,6 +18,7 @@ import { obtenerEstadoSetup } from "@/modulos/setup/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { VistaProvider, useVistaUsuarioFinal } from "./contexto-vista";
 
 // Rutas de primer nivel. Subconjunto explícito de tu routeTree → tipa sin `any`.
 type RutaNav =
@@ -40,7 +41,12 @@ const NAVEGACION: readonly {
   { to: "/flujos", etiqueta: "Dataflows", icono: "flow" },
   { to: "/automatizaciones", etiqueta: "Automatizaciones", icono: "zap" },
   { to: "/tablas", etiqueta: "Resultados", icono: "db" },
-  { to: "/configuracion", etiqueta: "Configuración", icono: "admin" },
+  {
+    to: "/configuracion",
+    etiqueta: "Configuración",
+    icono: "admin",
+    admin: true,
+  },
   {
     to: "/admin/tenants",
     etiqueta: "Organizaciones",
@@ -90,11 +96,20 @@ function HeaderLink({
 }
 
 export function LayoutPrincipal() {
+  return (
+    <VistaProvider>
+      <ContenidoLayoutPrincipal />
+    </VistaProvider>
+  );
+}
+
+function ContenidoLayoutPrincipal() {
   const navegar = useNavigate();
   const queryClient = useQueryClient();
   const ubicacion = useLocation();
   const { mostrarError } = useNotificaciones();
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+  const { estado, setModoUsuarioFinal } = useVistaUsuarioFinal();
 
   const esLogin = ubicacion.pathname === "/login";
   const esSetup = ubicacion.pathname === "/setup";
@@ -144,6 +159,20 @@ export function LayoutPrincipal() {
       else mostrarError(consulta.error.message);
     }
   }, [consulta.error, esLogin, mostrarError, navegar]);
+
+  const esSuperadmin = consulta.data?.esSuperadmin ?? false;
+  const esAdmin =
+    esSuperadmin ||
+    (consulta.data?.membresias.some((m) => m.rol === "admin") ?? false);
+  const puedeVerAdministracion = esAdmin && !estado.modoUsuarioFinal;
+
+  useEffect(() => {
+    if (puedeVerAdministracion) return;
+    const rutaBloqueada =
+      ubicacion.pathname === "/configuracion" ||
+      ubicacion.pathname.startsWith("/admin/");
+    if (rutaBloqueada) navegar({ to: "/tablas", replace: true });
+  }, [puedeVerAdministracion, ubicacion.pathname, navegar]);
 
   if (consultaSetup.isLoading) {
     return (
@@ -215,9 +244,6 @@ export function LayoutPrincipal() {
       sesion.tenantsDisponibles.map((tenant) => [tenant.id, tenant]),
     ).values(),
   );
-  const esSuperadmin = sesion.esSuperadmin ?? false;
-  const esAdmin =
-    esSuperadmin || sesion.membresias.some((m) => m.rol === "admin");
   const nombre = sesion.usuario?.nombre?.trim() || "Usuario Qlik";
 
   return (
@@ -242,6 +268,8 @@ export function LayoutPrincipal() {
             {NAVEGACION.filter((item) => {
               if (item.superadmin && !esSuperadmin) return false;
               if (item.admin && !esAdmin) return false;
+              if (estado.modoUsuarioFinal && (item.admin || item.superadmin))
+                return false;
               return true;
             }).map((item) => (
               <HeaderLink key={item.to} {...item} />
@@ -257,6 +285,20 @@ export function LayoutPrincipal() {
                 cargando={cambiarTenant.isPending}
                 onCambiar={(id) => cambiarTenant.mutate(id)}
               />
+            )}
+
+            {esAdmin && (
+              <label className="flex cursor-pointer items-center gap-2 select-none">
+                <input
+                  type="checkbox"
+                  checked={estado.modoUsuarioFinal}
+                  onChange={(e) => setModoUsuarioFinal(e.target.checked)}
+                  className="h-4 w-4 accent-brand-600"
+                />
+                <span className="hidden xl:inline text-xs font-medium text-ink-600">
+                  Vista usuario final
+                </span>
+              </label>
             )}
 
             <div className="flex items-center gap-2.5 border-l border-line-200 pl-4">
@@ -306,7 +348,9 @@ export function LayoutPrincipal() {
               {NAVEGACION.filter(
                 (item) =>
                   (!item.superadmin || esSuperadmin) &&
-                  (!item.admin || esAdmin),
+                  (!item.admin || esAdmin) &&
+                  (!estado.modoUsuarioFinal ||
+                    (!item.admin && !item.superadmin)),
               ).map((item) => (
                 <HeaderLink key={item.to} {...item} />
               ))}
