@@ -11,7 +11,7 @@ import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
-import { obtenerSesion } from "@/modulos/autenticacion/api";
+import { obtenerSesion } from "@/modulos/autenticacion/publico";
 import {
   type ConexionDestino,
   type RecursoDestino,
@@ -22,7 +22,7 @@ import {
   obtenerDetalleRecursoDestino,
   obtenerRecursosDestino,
   obtenerTablasImpala,
-} from "@/modulos/automatizaciones/api";
+} from "@/modulos/automatizaciones/publico";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { Link, useNavigate } from "@tanstack/react-router";

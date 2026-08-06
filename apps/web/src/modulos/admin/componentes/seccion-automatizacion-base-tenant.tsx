@@ -6,7 +6,7 @@ import {
 } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { TenantQlik } from "@/modulos/admin/api";
-import { obtenerConexionesDestino } from "@/modulos/automatizaciones/api";
+import { obtenerConexionesDestino } from "@/modulos/automatizaciones/publico";
 import { useQuery } from "@tanstack/react-query";
 import { SeccionConfigurarAutomatizacionBase } from "./seccion-configurar-automatizacion-base";
 import { SeccionConfigurarDestinosTenant } from "./seccion-configurar-destinos-tenant";

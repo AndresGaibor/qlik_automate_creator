@@ -1,5 +1,5 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
-import { obtenerConexionesDestino } from "@/modulos/automatizaciones/api";
+import { obtenerConexionesDestino } from "@/modulos/automatizaciones/publico";
 import { Button } from "@/compartido/componentes/ui/button";
 import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { Icon } from "@/compartido/componentes/ui/icon";

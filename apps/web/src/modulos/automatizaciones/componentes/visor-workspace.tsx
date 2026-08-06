@@ -9,7 +9,7 @@ import type { WorkspaceAutomatizacion } from "@/modulos/automatizaciones/api";
 import {
   type ResumenFlujo,
   obtenerFlujosConFiltros,
-} from "@/modulos/flujos/api";
+} from "@/modulos/flujos/publico";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";

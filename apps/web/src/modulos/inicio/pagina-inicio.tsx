@@ -1,7 +1,7 @@
 import { Icon, type IconName } from "@/compartido/componentes/ui/icon";
 import { Reveal } from "@/compartido/componentes/ui/reveal";
 import { useVistaUsuarioFinal } from "@/app/contexto-vista";
-import { obtenerSesion } from "@/modulos/autenticacion/api";
+import { obtenerSesion } from "@/modulos/autenticacion/publico";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 

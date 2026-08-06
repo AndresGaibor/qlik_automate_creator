@@ -3,7 +3,7 @@ import { useNotificaciones } from "@/compartido/componentes/feedback/notificacio
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { estaEnCurso } from "@/compartido/utiles/estados-ejecucion";
-import { obtenerSesion } from "@/modulos/autenticacion/api";
+import { obtenerSesion } from "@/modulos/autenticacion/publico";
 import {
   type DetalleAutomatizacion,
   type EjecucionResumen,

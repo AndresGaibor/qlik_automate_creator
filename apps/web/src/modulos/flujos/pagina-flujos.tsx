@@ -14,7 +14,7 @@ import { construirUrlCrearFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import {
   type ResumenAutomatizacion,
   obtenerAutomatizaciones,
-} from "@/modulos/automatizaciones/api";
+} from "@/modulos/automatizaciones/publico";
 import {
   type ResumenFlujo,
   obtenerEspacios,

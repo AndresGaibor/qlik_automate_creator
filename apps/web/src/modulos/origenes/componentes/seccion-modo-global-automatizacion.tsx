@@ -2,8 +2,8 @@ import { useNotificaciones } from "@/compartido/componentes/feedback/notificacio
 import {
   obtenerModoGlobalAutomatizacion,
   guardarModoGlobalAutomatizacion,
-} from "@/modulos/admin/api";
-import type { ModoPlantilla } from "@/modulos/admin/api";
+} from "@/modulos/admin/publico";
+import type { ModoPlantilla } from "@/modulos/admin/publico";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const MODO_1_LABEL = "Modo 1 — Dataflow Spark/Python";

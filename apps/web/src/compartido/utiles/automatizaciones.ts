@@ -1,4 +1,4 @@
-import type { ResumenAutomatizacion } from "@/modulos/automatizaciones/api";
+import type { ResumenAutomatizacion } from "@/modulos/automatizaciones/publico";
 
 export function estadoVisual(auto: ResumenAutomatizacion): string {
   if (auto.ejecucionActiva) return "En proceso";

@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { iniciarVerificacionOauth } from "@/modulos/autenticacion/api";
+import { iniciarVerificacionOauth } from "@/modulos/autenticacion/publico";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { ConfiguracionOauthQlik, TenantQlik } from "../api";

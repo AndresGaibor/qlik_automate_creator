@@ -1,4 +1,4 @@
-import { obtenerSesion } from "@/modulos/autenticacion/api";
+import { obtenerSesion } from "@/modulos/autenticacion/publico";
 import type { TenantSesionDisponible } from "@qlik/contratos/autenticacion";
 import { useQuery } from "@tanstack/react-query";
 

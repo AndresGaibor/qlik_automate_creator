@@ -4,7 +4,7 @@ import { crearRutasAutomatizaciones } from "@/modulos/automatizaciones/publico";
 import { crearRutasFlujos } from "@/modulos/flujos/publico";
 import { crearRutasInicio } from "@/modulos/inicio/publico";
 import { crearRutasSetup } from "@/modulos/setup/publico";
-import { crearRutasTablas } from "@/modulos/tablas/rutas";
+import { crearRutasTablas } from "@/modulos/tablas/publico";
 import { createRootRoute, createRouter } from "@tanstack/react-router";
 import { LayoutPrincipal } from "./layout-principal";
 

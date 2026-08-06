@@ -13,8 +13,8 @@ import {
   cambiarTenantActivo,
   cerrarSesion,
   obtenerSesion,
-} from "@/modulos/autenticacion/api";
-import { obtenerEstadoSetup } from "@/modulos/setup/api";
+} from "@/modulos/autenticacion/publico";
+import { obtenerEstadoSetup } from "@/modulos/setup/publico";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";

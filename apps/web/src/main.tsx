@@ -3,7 +3,7 @@ import { clienteConsultas } from "@/app/cliente-consultas";
 import { Proveedores } from "@/app/proveedores";
 import { clienteApi } from "@/compartido/api/cliente";
 import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
-import { obtenerMotivoSesion } from "@/modulos/autenticacion/motivo-sesion";
+import { obtenerMotivoSesion } from "@/modulos/autenticacion/publico";
 import { RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import ReactDOM from "react-dom/client";
