@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act } from "react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TenantQlik } from "@/modulos/admin/api";
@@ -8,7 +9,7 @@ import { SeccionConfigurarAutomatizacionBase } from "./seccion-configurar-automa
 
 const { listarMock, configurarMock } = vi.hoisted(() => ({
   listarMock: vi.fn<() => Promise<unknown[]>>(),
-  configurarMock: vi.fn<() => Promise<unknown>>(),
+  configurarMock: vi.fn(),
 }));
 
 vi.mock("@/modulos/admin/api", () => ({
@@ -142,11 +143,24 @@ describe("SeccionConfigurarAutomatizacionBase", () => {
     const botonModo2 = screen.getByLabelText(
       "Plantilla Modo 2 — Dataflow → SFTP → Talend",
     );
-    fireEvent.click(botonModo2);
-    const opciones = await screen.findAllByText((content, element) => {
-      return element?.textContent?.includes("Talend SFTP") ?? false;
+    await act(async () => {
+      fireEvent.click(botonModo2);
     });
-    expect(opciones.length).toBeGreaterThan(0);
+    const dropdown = screen.queryByRole("dialog");
+    if (dropdown) {
+      const opcionTalend = within(dropdown).getByText(/^Talend SFTP$/);
+      await act(async () => {
+        fireEvent.click(opcionTalend);
+      });
+    }
+    expect(configurarMock).toHaveBeenCalled();
+    expect(configurarMock).toHaveBeenCalledWith(
+      "org-1",
+      "tenant-1",
+      2,
+      "plantilla-2",
+      "Talend SFTP",
+    );
   });
 
   it("modo 1 sin plantilla propia muestra fallback legacy de baseIdQlik", () => {

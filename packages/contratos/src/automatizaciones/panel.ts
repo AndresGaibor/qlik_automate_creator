@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { esquemaIdQlik } from "../qlik/comunes.js";
-
-export const esquemaModoPlantilla = z.union([z.literal(1), z.literal(2)]);
-export type ModoPlantilla = z.infer<typeof esquemaModoPlantilla>;
+import { esquemaModoPlantilla, type ModoPlantilla } from "../admin/index.js";
+export { esquemaModoPlantilla, type ModoPlantilla };
 
 export const esquemaResumenAutomatizacion = z.object({
   id: esquemaIdQlik,

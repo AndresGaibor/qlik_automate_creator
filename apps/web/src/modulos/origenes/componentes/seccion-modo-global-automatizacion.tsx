@@ -4,13 +4,14 @@ import {
   guardarModoGlobalAutomatizacion,
 } from "@/modulos/admin/api";
 import type { ModoPlantilla } from "@/modulos/admin/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const MODO_1_LABEL = "Modo 1 — Dataflow Spark/Python";
 const MODO_2_LABEL = "Modo 2 — Dataflow → SFTP → Talend";
 
 export function SeccionModoGlobalAutomatizacion() {
   const { mostrarExito, mostrarError } = useNotificaciones();
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["modo-global-automatizacion"],
     queryFn: obtenerModoGlobalAutomatizacion,
@@ -19,7 +20,10 @@ export function SeccionModoGlobalAutomatizacion() {
   const guardar = useMutation({
     mutationFn: (modo: ModoPlantilla) =>
       guardarModoGlobalAutomatizacion(modo),
-    onSuccess: () => mostrarExito("Modo global actualizado"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["modo-global-automatizacion"] });
+      mostrarExito("Modo global actualizado");
+    },
     onError: (err: Error) => mostrarError(err.message),
   });
 
