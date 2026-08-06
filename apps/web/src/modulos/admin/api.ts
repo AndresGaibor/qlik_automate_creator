@@ -1,6 +1,7 @@
 import { clienteApi } from "@/compartido/api/cliente";
 import type {
   ActualizarTenant,
+  ActualizarModoAutomatizacion,
   ActualizarUsuario,
   AgregarSuperadmin,
   AgregarUsuario,
@@ -9,9 +10,11 @@ import type {
   ConfigurarConexionDestino,
   ConfigurarImpalaTenant,
   ConfigurarOauthQlik,
+  ConfigurarPlantillaAutomatizacion,
   CrearTenant,
   CrearTenantQlik,
   DetalleTenant,
+  ModoPlantilla,
   Superadmin,
   TenantQlik,
   TenantResumen,
@@ -23,13 +26,16 @@ export type {
   AgregarSuperadmin,
   AgregarUsuario,
   ActualizarTenant,
+  ActualizarModoAutomatizacion,
+  ActualizarUsuario,
   CrearTenant,
   ConfiguracionOauthQlik,
   ConfigurarOauthQlik,
+  ConfigurarPlantillaAutomatizacion,
   DetalleTenant,
+  ModoPlantilla,
   Superadmin,
   TenantResumen,
-  ActualizarUsuario,
   TenantQlik,
   CrearTenantQlik,
   ConfigurarDestinoTenant,
@@ -131,18 +137,29 @@ export function eliminarTenantQlik(
   );
 }
 
-export function configurarAutomatizacionBaseTenant(
+export function configurarPlantillaAutomatizacionTenant(
   organizacionId: string,
   tenantQlikId: string,
+  modo: ModoPlantilla,
   automatizacionBaseIdQlik: string,
   automatizacionBaseNombre?: string,
 ) {
   return clienteApi.put<TenantQlik>(
     `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/automatizacion-base`,
-    {
-      automatizacionBaseIdQlik,
-      automatizacionBaseNombre,
-    },
+    { modo, automatizacionBaseIdQlik, automatizacionBaseNombre },
+  );
+}
+
+export function obtenerModoGlobalAutomatizacion() {
+  return clienteApi.get<ActualizarModoAutomatizacion>(
+    "/admin/configuracion-plataforma/modo-automatizacion",
+  );
+}
+
+export function guardarModoGlobalAutomatizacion(modo: ModoPlantilla) {
+  return clienteApi.put<ActualizarModoAutomatizacion>(
+    "/admin/configuracion-plataforma/modo-automatizacion",
+    { modoAutomatizacionActivo: modo },
   );
 }
 

@@ -10,8 +10,8 @@ import { useEffect, useState } from "react";
 import {
   type ConfigurarImpalaTenant,
   type TenantQlik,
-  configurarAutomatizacionBaseTenant,
   configurarImpalaTenant,
+  configurarPlantillaAutomatizacionTenant,
   listarAutomatizacionesParaAdmin,
 } from "../api";
 import { SeccionConfigurarDestinosTenant } from "./seccion-configurar-destinos-tenant";
@@ -290,9 +290,10 @@ function PasoPlantillaBase({
       tenantQlikId: string;
       auto: ResumenAutomatizacion;
     }) =>
-      configurarAutomatizacionBaseTenant(
+      configurarPlantillaAutomatizacionTenant(
         organizacionId,
         tenantQlikId,
+        1,
         auto.id,
         auto.nombre,
       ),

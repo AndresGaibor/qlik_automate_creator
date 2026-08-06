@@ -6,6 +6,7 @@ import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { SeccionModoGlobalAutomatizacion } from "./componentes/seccion-modo-global-automatizacion";
 
 type TipoConexionOrigen = "jdbc" | "sftp";
 
@@ -180,6 +181,7 @@ export function PaginaCatalogoOrigen() {
         title="Conexiones para automatizaciones"
         description="Selecciona una conexión detectada y completa dónde se encuentran los datos. La configuración técnica se prepara automáticamente."
       />
+      <SeccionModoGlobalAutomatizacion />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <div className="min-w-0 space-y-4">
           {sugerenciasPendientes.length > 0 && (
