@@ -17,6 +17,7 @@ const ETIQUETA_ESTADO = {
   sin_probar: "Sin probar",
   disponible: "Disponible",
   error: "Con error",
+  incompleta: "Credencial pendiente",
   faltante: "No configurada",
 } as const;
 
@@ -27,6 +28,7 @@ export function TarjetaConexionOrigenGuardada({
   onProbar,
 }: Props) {
   const esError = requisito.estado === "error";
+  const esIncompleta = requisito.estado === "incompleta";
   const etiquetaAccion = esError
     ? "Volver a probar"
     : "Probar conexión guardada";
@@ -73,22 +75,26 @@ export function TarjetaConexionOrigenGuardada({
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          size="sm"
-          disabled={!conexionId || probando}
-          onClick={() => {
-            if (conexionId) onProbar(conexionId);
-          }}
-        >
-          {probando ? "Probando…" : etiquetaAccion}
-        </Button>
+        {!esIncompleta && (
+          <Button
+            type="button"
+            size="sm"
+            disabled={!conexionId || probando}
+            onClick={() => {
+              if (conexionId) onProbar(conexionId);
+            }}
+          >
+            {probando ? "Probando…" : etiquetaAccion}
+          </Button>
+        )}
         {puedeAdministrar && conexionId && (
           <a
             href={`/configuracion#conexion-origen-${conexionId}`}
             className="text-sm font-semibold text-brand-700 hover:underline"
           >
-            Editar en Configuración
+            {esIncompleta
+              ? "Completar en Configuración"
+              : "Editar en Configuración"}
           </a>
         )}
       </div>
