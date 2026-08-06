@@ -1,9 +1,4 @@
-import { eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
-import {
-  configuracionesPlataforma,
-  usuarios,
-} from "../../../plataforma/persistencia/esquema.js";
 import type {
   EntradaGuardarConfiguracionOauth,
   EstadoOrganizacion,
@@ -21,7 +16,9 @@ import {
   guardarConfiguracionOauth,
   obtenerConfiguracionOauth,
 } from "./consulta-configuracion-oauth-postgres.js";
+import { ConsultaConfiguracionPlataforma } from "./consulta-configuracion-plataforma-postgres.js";
 import { ConsultaOrganizacion } from "./consulta-organizacion-postgres.js";
+import { ConsultaSuperadmin } from "./consulta-superadmin-postgres.js";
 import { ConsultaTenantQlik } from "./consulta-tenant-qlik-postgres.js";
 import { ConsultaUsuario } from "./consulta-usuario-postgres.js";
 
@@ -155,55 +152,21 @@ export class RepositorioAdministracionPostgres
     );
   }
 
-  async obtenerModoAutomatizacionGlobal(): Promise<{
-    modoAutomatizacionActivo: ModoPlantilla;
-  }> {
-    const fila = await this.db.query.configuracionesPlataforma.findFirst({
-      where: eq(configuracionesPlataforma.id, 1),
-    });
-    const rawModo = fila?.modoAutomatizacionActivo ?? 1;
-    const modoValido: ModoPlantilla =
-      rawModo === 1 || rawModo === 2 ? rawModo : 1;
-    return { modoAutomatizacionActivo: modoValido };
+  async obtenerModoAutomatizacionGlobal() {
+    return ConsultaConfiguracionPlataforma.obtenerModoAutomatizacionGlobal(
+      this.db,
+    );
   }
 
   async actualizarModoAutomatizacionGlobal(
     modo: ModoPlantilla,
     usuarioId?: string,
-  ): Promise<{ modoAutomatizacionActivo: ModoPlantilla }> {
-    const existente = await this.db.query.configuracionesPlataforma.findFirst({
-      where: eq(configuracionesPlataforma.id, 1),
-    });
-
-    if (!existente) {
-      const [nueva] = await this.db
-        .insert(configuracionesPlataforma)
-        .values({
-          id: 1,
-          modoAutomatizacionActivo: modo,
-          actualizadoPorUsuarioId: usuarioId ?? null,
-        })
-        .returning();
-      const rawModo = nueva.modoAutomatizacionActivo;
-      const modoValido: ModoPlantilla =
-        rawModo === 1 || rawModo === 2 ? rawModo : 1;
-      return { modoAutomatizacionActivo: modoValido };
-    }
-
-    const [actualizada] = await this.db
-      .update(configuracionesPlataforma)
-      .set({
-        modoAutomatizacionActivo: modo,
-        actualizadoEn: new Date(),
-        actualizadoPorUsuarioId: usuarioId ?? null,
-      })
-      .where(eq(configuracionesPlataforma.id, 1))
-      .returning();
-
-    const rawModo = actualizada.modoAutomatizacionActivo;
-    const modoValido: ModoPlantilla =
-      rawModo === 1 || rawModo === 2 ? rawModo : 1;
-    return { modoAutomatizacionActivo: modoValido };
+  ) {
+    return ConsultaConfiguracionPlataforma.actualizarModoAutomatizacionGlobal(
+      this.db,
+      modo,
+      usuarioId,
+    );
   }
 
   async configurarDestinoTenant(
@@ -282,114 +245,17 @@ export class RepositorioAdministracionPostgres
   }
 
   async listarSuperadmins(): Promise<SuperadminAdministrable[]> {
-    const rows = await this.db.query.usuarios.findMany({
-      where: eq(usuarios.esSuperadmin, true),
-    });
-    return rows.map((u) => ({
-      id: u.id,
-      nombre: u.nombre,
-      correo: u.correo,
-      estado: u.estado as "activo" | "suspendido",
-      esSuperadmin: u.esSuperadmin,
-      creadoEn: u.creadoEn,
-    }));
+    return ConsultaSuperadmin.listarSuperadmins(this.db);
   }
 
   async agregarSuperadmin(entrada: {
     nombre: string;
     correo: string;
   }): Promise<SuperadminAdministrable | null> {
-    const existente = await this.db.query.usuarios.findFirst({
-      where: eq(usuarios.correo, entrada.correo.toLowerCase()),
-    });
-
-    if (existente) {
-      if (existente.esSuperadmin) {
-        throw new Error("Ya existe un superadministrador con este correo");
-      }
-      const [actualizado] = await this.db
-        .update(usuarios)
-        .set({
-          nombre: entrada.nombre,
-          estado: "activo",
-          esSuperadmin: true,
-          actualizadoEn: new Date(),
-        })
-        .where(eq(usuarios.id, existente.id))
-        .returning();
-      if (!actualizado) return null;
-      return {
-        id: actualizado.id,
-        nombre: actualizado.nombre,
-        correo: actualizado.correo,
-        estado: actualizado.estado as "activo" | "suspendido",
-        esSuperadmin: actualizado.esSuperadmin,
-        creadoEn: actualizado.creadoEn,
-      };
-    }
-
-    const [nuevo] = await this.db
-      .insert(usuarios)
-      .values({
-        nombre: entrada.nombre,
-        correo: entrada.correo.toLowerCase(),
-        estado: "activo",
-        esSuperadmin: true,
-      })
-      .returning();
-    if (!nuevo) return null;
-    return {
-      id: nuevo.id,
-      nombre: nuevo.nombre,
-      correo: nuevo.correo,
-      estado: nuevo.estado as "activo" | "suspendido",
-      esSuperadmin: nuevo.esSuperadmin,
-      creadoEn: nuevo.creadoEn,
-    };
+    return ConsultaSuperadmin.agregarSuperadmin(this.db, entrada);
   }
 
   async eliminarSuperadmin(id: string): Promise<ResultadoEliminarSuperadmin> {
-    const superadmin = await this.db.query.usuarios.findFirst({
-      where: eq(usuarios.id, id),
-    });
-
-    if (!superadmin) {
-      return {
-        exito: false,
-        mensaje: "Superadministrador no encontrado",
-        codigo: "NO_ENCONTRADO",
-      };
-    }
-
-    if (!superadmin.esSuperadmin) {
-      return {
-        exito: false,
-        mensaje: "El usuario no es un superadministrador",
-        codigo: "NO_ES_SUPERADMIN",
-      };
-    }
-
-    const todosSuperadmins = await this.db.query.usuarios.findMany({
-      where: eq(usuarios.esSuperadmin, true),
-    });
-
-    if (todosSuperadmins.length <= 1) {
-      return {
-        exito: false,
-        mensaje: "No puedes eliminar al último superadministrador",
-        codigo: "ULTIMO_SUPERADMIN",
-      };
-    }
-
-    await this.db
-      .update(usuarios)
-      .set({
-        esSuperadmin: false,
-        estado: "suspendido",
-        actualizadoEn: new Date(),
-      })
-      .where(eq(usuarios.id, id));
-
-    return { exito: true };
+    return ConsultaSuperadmin.eliminarSuperadmin(this.db, id);
   }
 }
